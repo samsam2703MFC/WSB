@@ -1627,7 +1627,7 @@ CREATE TABLE IF NOT EXISTS `wsm_forms` (
 CREATE TABLE IF NOT EXISTS `wsm_form_entries` (
   `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `form_id`     INT UNSIGNED NOT NULL,
-  `dane`        TEXT NOT NULL,
+  `dane`        MEDIUMTEXT NOT NULL,
   `email`       VARCHAR(200) NOT NULL DEFAULT '',
   `status`      VARCHAR(12)  NOT NULL DEFAULT 'nowe',
   `zgoda_tekst` VARCHAR(600) NOT NULL DEFAULT '',

@@ -35,8 +35,10 @@
       + (location.protocol === 'https:' ? '; Secure' : '');
   }
   function forget() {
-    var host = location.hostname, parts = host.split('.'), domains = ['', host];
-    if (parts.length > 2) domains.push('.' + parts.slice(-2).join('.'));
+    // Le cookie peut avoir été posé sur n'importe quel domaine parent
+    // (.szoko.com.pl, pas seulement .com.pl) : on les essaie tous.
+    var parts = location.hostname.split('.'), domains = [''];
+    for (var i = 0; i < parts.length - 1; i++) domains.push('.' + parts.slice(i).join('.'));
     document.cookie.split('; ').forEach(function (c) {
       var n = c.split('=')[0];
       if (!/^(_ga|_gid|_gat|_gcl_|_fbp|_fbc)/.test(n)) return;
@@ -47,12 +49,26 @@
   }
 
   // ---------------------------------------------------------------- chargement
-  var loaded = { g: false, p: false };
+  var loaded = { g: false, p: false, ga4: false, ads: false };
   function gtag() { window.dataLayer.push(arguments); }
 
   function loadGoogle(z) {
     var ga = z.a && cfg.ga4, ads = z.m && cfg.ads;
-    if (loaded.g || (!ga && !ads)) return;
+    if (loaded.g) {
+      // Déjà chargé, et l'accord vient de s'élargir (analytique puis
+      // marketing, par exemple) : on le DIT à gtag et on configure ce qui
+      // manque, sans recharger le script.
+      gtag('consent', 'update', {
+        analytics_storage: z.a ? 'granted' : 'denied',
+        ad_storage: z.m ? 'granted' : 'denied',
+        ad_user_data: z.m ? 'granted' : 'denied',
+        ad_personalization: z.m ? 'granted' : 'denied'
+      });
+      if (ga && !loaded.ga4) { gtag('config', cfg.ga4); loaded.ga4 = true; }
+      if (ads && !loaded.ads) { gtag('config', cfg.ads); loaded.ads = true; }
+      return;
+    }
+    if (!ga && !ads) return;
     loaded.g = true;
     window.dataLayer = window.dataLayer || [];
     window.gtag = gtag;
@@ -63,8 +79,8 @@
       ad_personalization: z.m ? 'granted' : 'denied'
     });
     gtag('js', new Date());
-    if (ga) gtag('config', cfg.ga4);
-    if (ads) gtag('config', cfg.ads);
+    if (ga) { gtag('config', cfg.ga4); loaded.ga4 = true; }
+    if (ads) { gtag('config', cfg.ads); loaded.ads = true; }
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ga ? cfg.ga4 : cfg.ads);
@@ -126,14 +142,22 @@
     }
   }
 
+  // L'accord en vigueur, relu par l'écouteur du panier à chaque ajout.
+  var cur = null, started = false;
   function start(z) {
+    cur = z;
     loadGoogle(z);
     loadPixel(z);
+    // UNE FOIS PAR PAGE : les événements de la page et l'écouteur du panier.
+    // Rouvrir la bannière et enregistrer à nouveau ne doit ni recompter la
+    // vue du produit, ni doubler chaque ajout au panier.
+    if (started) return;
+    started = true;
     (cfg.events || []).forEach(function (ev) { send(ev, z); });
     document.addEventListener('wsm:dodano', function (e) {
       var d = e.detail || {};
-      if (!d.id) return;
-      send({ n: 'add_to_cart', value: (d.price || 0) * (d.qty || 1), items: [{ id: d.id, price: d.price || 0, qty: d.qty || 1 }] }, z);
+      if (!d.id || !cur) return;
+      send({ n: 'add_to_cart', value: (d.price || 0) * (d.qty || 1), items: [{ id: d.id, price: d.price || 0, qty: d.qty || 1 }] }, cur);
     });
   }
 

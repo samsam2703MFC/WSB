@@ -120,6 +120,13 @@ ok('sans la case : aucune inscription', wsm_mkt_sub_by_email($pdo, 'drugi.' . $s
 $n = 0;
 for ($i = 0; $i < 8; $i++) { $b = $bon; $b['p']['email'] = "seria$i.$sfx@example.com"; [, $e] = wsm_form_submit($pdo, $f, $b, $tx); if (isset($e['_limit'])) { $n = $i; break; } }
 ok('plafond par IP atteint : refus dit à l\'écran', $n > 0, $n);
+$ip('203.0.113.' . random_int(201, 250));
+$gros = $bon; $gros['p']['wiadomosc'] = str_repeat('🍫', 5000); $gros['p']['firma'] = str_repeat('Ж', 300);
+$f20 = $f; $f20['pola_list'] = array_merge($f['pola_list'], array_map(fn($i) => ['id' => 'extra' . $i, 'typ' => 'textarea', 'etykieta' => 'X' . $i, 'wymagane' => false, 'opcje' => []], range(1, 8)));
+foreach (range(1, 8) as $i) $gros['p']['extra' . $i] = str_repeat('🍫', 4999);
+ok('réponse énorme (robot) : refusée avant la base, pas de 500', isset(wsm_form_submit($pdo, $f20, $gros, $tx)[1]['_limit']));
+[, $e] = wsm_form_save($pdo, $fid2, ['nazwa' => 'X', 'slug' => $f2['slug'], 'pola' => $f2['pola_list'], 'powiadom' => str_repeat('a', 190) . '@example.com']);
+ok('adresse de notification > 200 signes : refusée', (bool) array_filter($e, fn($x) => str_contains($x, '200')), $e);
 
 // ---- 4. La sortie ------------------------------------------------------------------------------------
 echo "\n-- eksport i obsługa --\n";

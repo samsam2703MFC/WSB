@@ -28,7 +28,7 @@ require_once __DIR__ . '/mediateka.php';
 const WSM_SOCIAL_MAX_ZDJEC   = 10;
 const WSM_SOCIAL_MAX_ZNAKOW  = 2200;   // la limite d'Instagram ; Facebook en accepte plus
 const WSM_SOCIAL_MAX_HASHTAG = 30;     // au-delà, Instagram refuse le post entier
-const WSM_SOCIAL_ZAWIESZONY  = 900;    // secondes avant qu'un « publikowanie » soit déclaré interrompu
+const WSM_SOCIAL_ZAWIESZONY  = 1800;   // secondes sans signe de vie avant qu'un « publikowanie » soit déclaré interrompu
 
 const WSM_SOCIAL_STATUSY = [
     'szkic' => 'Szkic', 'zaplanowany' => 'Zaplanowany', 'publikowanie' => 'Publikowanie…',
@@ -160,6 +160,13 @@ function wsm_social_save(PDO $pdo, ?int $id, array $in, string $akcja, string $a
                               fb_error = '', ig_error = ''
                         WHERE id = ? AND status IN ('szkic','zaplanowany','blad')")
             ->execute(array_merge($vals, [$id]));
+        // La pompe a pu réclamer le post entre la lecture et l'écriture : on
+        // relit plutôt que d'annoncer « zapisano » pour rien. (Pas rowCount :
+        // MySQL compte 0 ligne quand rien n'a changé.)
+        $apres = wsm_social_get($pdo, $id);
+        if (!$apres || (string) $apres['status'] !== $status || (string) $apres['tekst'] !== $p['tekst']) {
+            return [$id, ['_' => 'Ten post właśnie się publikuje — odśwież stronę i sprawdź jego stan.']];
+        }
     } else {
         $pdo->prepare("INSERT INTO wsm_social_posts (tekst, media, product_id, kanaly, termin, status, updated_at, created_by, created_at)
                        VALUES (?,?,?,?,?,?,?,?,?)")
@@ -322,6 +329,10 @@ function wsm_social_publish(PDO $pdo, int $id, string $shopUrl, bool $force = fa
             $r = ['ok' => false, 'error' => 'błąd: ' . mb_substr($e->getMessage(), 0, 200)];
         }
         $res[$k] = $r['ok'];
+        // Signe de vie après chaque canal : un envoi de dix photos prend du
+        // temps, et wsm_social_stale() ne doit pas déclarer interrompu un post
+        // encore en route (on le republierait, donc en double).
+        $pdo->prepare("UPDATE wsm_social_posts SET claimed_at = ? WHERE id = ? AND status = 'publikowanie'")->execute([date('Y-m-d H:i:s'), $id]);
         if ($r['ok']) {
             $pdo->prepare("UPDATE wsm_social_posts SET {$k}_status = 'ok', {$k}_id = ?, {$k}_url = ?, {$k}_error = '' WHERE id = ?")
                 ->execute([mb_substr((string) $r['id'], 0, 80), mb_substr((string) $r['url'], 0, 255), $id]);
@@ -332,7 +343,7 @@ function wsm_social_publish(PDO $pdo, int $id, string $shopUrl, bool $force = fa
     }
     $ok = count(array_filter($res));
     $etat = $ok === count($res) ? 'opublikowany' : ($ok > 0 ? 'czesciowo' : 'blad');
-    $pdo->prepare("UPDATE wsm_social_posts SET status = ?, published_at = ?, updated_at = ? WHERE id = ?")
+    $pdo->prepare("UPDATE wsm_social_posts SET status = ?, published_at = ?, updated_at = ? WHERE id = ? AND status = 'publikowanie'")
         ->execute([$etat, $ok > 0 ? date('Y-m-d H:i:s') : null, date('Y-m-d H:i:s'), $id]);
     return $etat;
 }
@@ -475,7 +486,9 @@ function wsm_social_okazje(int $rok): array {
     $i = intdiv($c, 4); $k = $c % 4; $l = (32 + 2 * $e + 2 * $i - $h - $k) % 7; $m = intdiv($a + 11 * $h + 22 * $l, 451);
     $mois = intdiv($h + $l - 7 * $m + 114, 31); $jour = (($h + $l - 7 * $m + 114) % 31) + 1;
     $wielkanoc = mktime(12, 0, 0, $mois, $jour, $rok);
-    $bf = strtotime("fourth friday of november $rok");
+    // Le lendemain du quatrième JEUDI (Thanksgiving) — pas le « quatrième
+    // vendredi » : quand novembre commence un vendredi, ce n'est pas le même jour.
+    $bf = strtotime("fourth thursday of november $rok") + 86400;
     $o = [
         "$rok-01-21" => 'Dzień Babci', "$rok-01-22" => 'Dzień Dziadka',
         date('Y-m-d', $wielkanoc - 52 * 86400) => 'Tłusty czwartek',

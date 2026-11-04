@@ -146,7 +146,7 @@ function wsm_form_save(PDO $pdo, ?int $id, array $in): array {
     [$pola, $e2] = wsm_form_pola_clean((array) ($in['pola'] ?? []));
     $err = array_merge($err, $e2);
     $powiadom = strtolower(trim((string) ($in['powiadom'] ?? '')));
-    if ($powiadom !== '' && !filter_var($powiadom, FILTER_VALIDATE_EMAIL)) $err[] = 'Adres powiadomień jest nieprawidłowy.';
+    if ($powiadom !== '' && (!filter_var($powiadom, FILTER_VALIDATE_EMAIL) || strlen($powiadom) > 200)) $err[] = 'Adres powiadomień jest nieprawidłowy (do 200 znaków).';
     if ($err) return [$id ?? 0, $err];
     $vals = [$slug, mb_substr($nazwa, 0, 120), trim((string) ($in['wstep'] ?? '')),
              json_encode($pola, JSON_UNESCAPED_UNICODE), mb_substr(trim((string) ($in['podziekowanie'] ?? '')), 0, 500),
@@ -278,11 +278,15 @@ function wsm_form_submit(PDO $pdo, array $form, array $in, array $teksty, string
     }
     if (empty($in['zgoda'])) $e['zgoda'] = 'zgoda wymagana, żebyśmy mogli odpowiedzieć';
     if ($e) return [null, $e];
+    $json = json_encode($dane, JSON_UNESCAPED_UNICODE);
+    // Une réponse de plus de 60 ko n'est pas un humain qui écrit : un robot
+    // qui remplit tous les champs au maximum. Refusée avant la base.
+    if ($json === false || strlen($json) > 60000) return [null, ['_limit' => 'zgłoszenie jest za długie — skróć wiadomość']];
 
     $nl = !empty($form['newsletter']) && !empty($in['zgoda_nl']) && $email !== '';
     $pdo->prepare("INSERT INTO wsm_form_entries (form_id, dane, email, status, zgoda_tekst, newsletter, ip, lang, created_at)
                    VALUES (?,?,?, 'nowe', ?,?,?,?,?)")
-        ->execute([(int) $form['id'], json_encode($dane, JSON_UNESCAPED_UNICODE), mb_substr($email, 0, 200),
+        ->execute([(int) $form['id'], $json, mb_substr($email, 0, 200),
                    mb_substr((string) ($teksty['zgoda'] ?? ''), 0, 600), $nl ? 1 : 0, $ip, substr($lang, 0, 5), date('Y-m-d H:i:s')]);
     $entryId = (int) $pdo->lastInsertId();
 

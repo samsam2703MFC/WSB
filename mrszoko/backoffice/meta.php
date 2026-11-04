@@ -63,7 +63,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 }
 if (isset($_GET['ok'])) { $flash = (string) $_GET['ok']; $kind = ($_GET['k'] ?? '') === 'err' ? 'err' : 'ok'; }
 
-$pompe = wsm_capi_pump($pdo, 5);
+$pompe = $isAdmin ? wsm_capi_pump($pdo, 5) : ['wyslane' => 0, 'bledy' => 0];   // un rôle en lecture ne déclenche rien
 $cfg = wsm_ads_cfg();
 $view = wsm_settings_view($pdo);
 $shop = wsm_shop_base_url();

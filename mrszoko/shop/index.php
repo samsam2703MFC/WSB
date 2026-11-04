@@ -830,7 +830,7 @@ layout_head($S, $lang, $langs, $p['name'], $p['desc'], 'p', $ogImg);
     // plus bas : un écart entre les deux fait retirer les résultats enrichis
     // du site entier, et ce serait mérité.
     seo_product($p, $lang, WSM_SHOP_DEFAULT_LANG,
-                function_exists('wsm_ads_ship_min') ? ['ship' => wsm_ads_ship_min($pdo), 'handling' => wsm_ads_handling_days()] : []);
+                function_exists('wsm_ads_ship_min') ? ['ship' => wsm_ads_ship_min($pdo, (int) $p['weight_g']), 'handling' => wsm_ads_handling_days()] : []);
     ?>
 <main class="wrap block">
   <?php // Le fil d'Ariane passe par le RAYON du produit : « Sklep › Mąki ›

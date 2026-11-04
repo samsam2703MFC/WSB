@@ -118,12 +118,14 @@ $zjs = (string) @file_get_contents($racine . '/mrszoko/shop/zgody.js');
 ok('zgody.js ne charge gtag/pixel qu\'après choix (start() sur cookie lu)', str_contains($zjs, "if (z) start(z); else show(false);") && str_contains($zjs, 'loadPixel'));
 ok('retirer l\'accord efface les cookies de mesure et recharge', str_contains($zjs, 'forget(); location.reload()'));
 ok('l\'achat porte le même eventID que le serveur', str_contains($zjs, "{ eventID: ev.id }"));
+ok('événements de la page envoyés une seule fois, accord élargi annoncé à gtag', str_contains($zjs, 'if (started) return;') && str_contains($zjs, "gtag('consent', 'update'"));
+ok('retrait : cookies effacés sur chaque domaine parent', str_contains($zjs, "for (var i = 0; i < parts.length - 1; i++)"));
 ok('les deux boutons principaux : accepter ET refuser au premier niveau', str_contains((string) @file_get_contents($racine . '/mrszoko/shop/lib.php'), 'data-zgody="none"'));
 
 // ---- 3. La Conversions API --------------------------------------------------------------------------
 echo "\n-- Conversions API (zakup z serwera) --\n";
 $imgA = $img(800, 800);
-$pA = $mk('Czekolada test reklama ' . $sfx, 2460, '5901234123457', $imgA);
+$pA = $mk('Czekolada test reklama ' . $sfx, 2460, '5901234123457', $imgA, 100);
 $base = ['lang' => 'pl', 'delivery_method' => 'inpost_locker', 'inpost_point' => 'WRO01A', 'phone' => '600 100 200', 'consent_terms' => 1,
          'client_type' => 'osoba', 'first_name' => 'Anna', 'last_name' => 'Kowalska', 'ship_city' => 'Wrocław', 'ship_postcode' => '50-001'];
 $cmd = function (string $mail) use ($pdo, $base, $pA, &$commandes): array {
@@ -191,6 +193,21 @@ wsm_graph_transport(fn($m, $u, $p, $f) => [200, '{"events_received":1}']);
 $p = wsm_capi_pump($pdo, 10);
 ok('passé le délai : renvoyé et « wyslane »', $p['wyslane'] === 1 && $pdo->query("SELECT status FROM wsm_capi_events WHERE id = " . (int) $r4['id'])->fetchColumn() === 'wyslane', $p);
 ok('envoi réclamé avant : un événement déjà envoyé ne repart pas', wsm_capi_send($pdo, (int) $r4['id'])['ok'] === false);
+// Le processus meurt après la réclamation : l'événement ne reste pas bloqué.
+$pdo->prepare("UPDATE wsm_capi_events SET status = 'wysylanie', tried_at = ? WHERE id = ?")->execute([date('Y-m-d H:i:s', time() - 3600), (int) $r4['id']]);
+$avantBloque = $pdo->query("SELECT status FROM wsm_capi_events WHERE id = " . (int) $r4['id'])->fetchColumn();
+wsm_capi_pump($pdo, 10);
+ok('événement resté « wysylanie » 1 h : repris par la pompe', $avantBloque === 'wysylanie'
+   && $pdo->query("SELECT status FROM wsm_capi_events WHERE id = " . (int) $r4['id'])->fetchColumn() === 'wyslane');
+// Une exception en route retombe en « błąd », pas en « wysylanie ».
+[$o5] = $cmd('wyjatek.' . $sfx . '@example.com');
+wsm_ads_order_capture($pdo, (int) $o5['id'], ['analityczne' => false, 'marketingowe' => true], [], '203.0.113.13', 'UA', '');
+$delai = null;
+wsm_graph_transport(function ($m, $u, $p, $f, $t = 0) use (&$delai) { $delai = $t; throw new RuntimeException('réseau coupé'); });
+wsm_order_mark_paid($pdo, (int) $o5['id'], 'test');
+ok('exception pendant l\'envoi : « błąd », donc en file (jamais bloqué)', $pdo->query("SELECT status FROM wsm_capi_events WHERE order_id = " . (int) $o5['id'])->fetchColumn() === 'blad');
+ok('depuis le paiement, l\'essai est court (3 s) : la page de commande n\'attend pas Meta', $delai === 3, $delai);
+wsm_graph_transport(fn($m, $u, $p, $f) => [200, '{"events_received":1}']);
 wsm_config_overlay(['meta' => ['test_event_code' => 'TEST12345']]);
 $cap1 = wsm_ads_order_row($pdo, (int) $o1['id']);
 ok('code de test présent dans le corps quand il est réglé', (wsm_capi_payload(wsm_order_by_id($pdo, (int) $o1['id']), $cap1, wsm_ads_cfg(), 'https://x')['test_event_code'] ?? '') === 'TEST12345');
@@ -224,6 +241,16 @@ $sans = array_values(array_filter($feed['pominiete'], fn($x) => $x['id'] === $pS
 ok('sans photo : ÉCARTÉ, avec la raison', $sans !== null && in_array('brak zdjęcia', $sans['powody'], true));
 $mv = array_values(array_filter($feed['items'], fn($i) => $i['id'] === $pMauvais))[0] ?? null;
 ok('EAN faux : pas de gtin, MPN (SKU) à la place ; rupture = out_of_stock', $mv && !isset($mv['gtin']) && isset($mv['mpn']) && $mv['availability'] === 'out_of_stock');
+// Le tarif de port suit le poids : un sac lourd n'a pas le tarif Paczkomat.
+$lourd = (int) $pdo->query("SELECT MAX(max_weight_g) FROM wsm_shipping_methods WHERE active = 1 AND max_weight_g > 0")->fetchColumn();
+$attendu = null;
+foreach (wsm_shipping_methods($pdo, 'pl', 'PL', 26000) as $mm) if ($attendu === null || $mm['price'] < $attendu) $attendu = $mm['price'];
+$s26 = wsm_ads_ship_min($pdo, 26000);
+ok('port pour 26 kg = le moins cher des modes qui PRENNENT 26 kg', ($s26['price'] ?? null) === $attendu, [$s26, $attendu]);
+$pExt = $mk('Zdjęcie zewnętrzne ' . $sfx, 1200, '', 'http://cdn.example/foto.jpg');
+$fx = wsm_feed_produkty($pdo, 'pl', 'https://sklep.example/shop');
+$ix = array_values(array_filter($fx['items'], fn($i) => $i['id'] === $pExt))[0] ?? null;
+ok('photo externe en http : adresse gardée telle quelle (pas collée au domaine)', ($ix['image_link'] ?? '') === 'http://cdn.example/foto.jpg', $ix['image_link'] ?? null);
 $xml = wsm_feed_xml($feed['items'], 'Szoko & Co', 'https://sklep.example/shop/');
 $sx = @simplexml_load_string($xml);
 ok('XML bien formé, espace de noms g:', $sx !== false && isset($sx->getNamespaces(true)['g']));

@@ -220,7 +220,7 @@ function wsm_graph_transport(?callable $set = null): callable {
     return $t ?? 'wsm_graph_http';
 }
 
-function wsm_graph_http(string $method, string $url, array $params, array $files = []): array {
+function wsm_graph_http(string $method, string $url, array $params, array $files = [], int $timeout = 0): array {
     if (!function_exists('curl_init')) return [0, '{"error":{"message":"brak rozszerzenia curl"}}'];
     $flat = [];
     foreach ($params as $k => $v) $flat[$k] = is_array($v) ? json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : (string) $v;
@@ -237,8 +237,8 @@ function wsm_graph_http(string $method, string $url, array $params, array $files
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($flat));
         }
     }
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 5,
-                            CURLOPT_TIMEOUT => $files ? 60 : 15, CURLOPT_USERAGENT => 'SzokoShop/1.0']);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => $timeout > 0 ? min(5, $timeout) : 5,
+                            CURLOPT_TIMEOUT => $timeout > 0 ? $timeout : ($files ? 60 : 15), CURLOPT_USERAGENT => 'SzokoShop/1.0']);
     $body = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $err  = curl_error($ch);
@@ -254,11 +254,11 @@ function wsm_graph_http(string $method, string $url, array $params, array $files
  * l'adresse appelée ; on remplace toute occurrence du jeton avant de la
  * rendre, parce que ce message finit à l'écran et dans le journal.
  */
-function wsm_graph_call(string $method, string $path, array $params, string $token, array $files = [], ?string $version = null): array {
+function wsm_graph_call(string $method, string $path, array $params, string $token, array $files = [], ?string $version = null, int $timeout = 0): array {
     $version ??= wsm_ads_cfg()['graph'];
     $url = 'https://graph.facebook.com/' . $version . '/' . ltrim($path, '/');
     $params['access_token'] = $token;
-    [$code, $body] = (wsm_graph_transport())($method, $url, $params, $files);
+    [$code, $body] = (wsm_graph_transport())($method, $url, $params, $files, $timeout);
     $data = json_decode($body, true);
     $data = is_array($data) ? $data : [];
     $ok = $code >= 200 && $code < 300 && !isset($data['error']);
@@ -397,7 +397,10 @@ function wsm_capi_on_paid(PDO $pdo, int $orderId): void {
                               VALUES (?, 'Purchase', 'nowe', 0, ?)");
         try { $ins->execute([$orderId, date('Y-m-d H:i:s')]); }
         catch (Throwable $e) { return; }                                // déjà notée : le webhook rejoué ne renvoie pas
-        wsm_capi_send($pdo, (int) $pdo->lastInsertId());
+        // UN ESSAI COURT : on est dans le webhook de Stripe, ou dans la page
+        // de commande que le client regarde. Trois secondes au plus ; au-delà
+        // la file (kolejka.php, écran Meta) reprend l'événement.
+        wsm_capi_send($pdo, (int) $pdo->lastInsertId(), 3);
     } catch (Throwable $e) { /* le paiement d'abord */ }
 }
 
@@ -405,7 +408,7 @@ function wsm_capi_on_paid(PDO $pdo, int $orderId): void {
  * Envoie un événement de la file. On le RÉCLAME d'abord (nowe/błąd →
  * wysyłanie) : deux pompes simultanées ne l'envoient pas deux fois.
  */
-function wsm_capi_send(PDO $pdo, int $eventId): array {
+function wsm_capi_send(PDO $pdo, int $eventId, int $timeout = 0): array {
     $claim = $pdo->prepare("UPDATE wsm_capi_events SET status = 'wysylanie', attempts = attempts + 1, tried_at = ?
                              WHERE id = ? AND status IN ('nowe','blad')");
     $claim->execute([date('Y-m-d H:i:s'), $eventId]);
@@ -417,6 +420,19 @@ function wsm_capi_send(PDO $pdo, int $eventId): array {
         $pdo->prepare("UPDATE wsm_capi_events SET status = ?, response = ?, sent_at = ? WHERE id = ?")
             ->execute([$status, mb_substr($msg, 0, 500), $status === 'wyslane' ? date('Y-m-d H:i:s') : null, $eventId]);
     };
+    // RÉCLAMÉ = TERMINÉ, QUOI QU'IL ARRIVE. Une exception entre la réclamation
+    // et la fin laisserait l'événement « wysylanie » pour toujours : aucune
+    // pompe ne le reprendrait. Il retombe donc en « błąd », donc en file.
+    try {
+        return wsm_capi_send_claimed($pdo, $ev, $fin, $timeout);
+    } catch (Throwable $e) {
+        $fin('blad', 'błąd: ' . mb_substr($e->getMessage(), 0, 200));
+        return ['ok' => false, 'error' => 'błąd wewnętrzny'];
+    }
+}
+
+/** La suite de wsm_capi_send(), une fois l'événement réclamé. */
+function wsm_capi_send_claimed(PDO $pdo, array $ev, callable $fin, int $timeout): array {
     $cfg = wsm_ads_cfg();
     if (!wsm_capi_ready($cfg)) { $fin('blad', 'brak piksela albo tokenu Conversions API'); return ['ok' => false, 'error' => 'brak konfiguracji']; }
     require_once __DIR__ . '/shop.php';
@@ -427,7 +443,7 @@ function wsm_capi_send(PDO $pdo, int $eventId): array {
         return ['ok' => false, 'error' => 'pominięte'];
     }
     $body = wsm_capi_payload($order, $cap, $cfg, wsm_shop_base_url());
-    $r = wsm_graph_call('POST', $cfg['pixel'] . '/events', $body, $cfg['capi'], [], $cfg['graph']);
+    $r = wsm_graph_call('POST', $cfg['pixel'] . '/events', $body, $cfg['capi'], [], $cfg['graph'], $timeout);
     if ($r['ok']) {
         $fin('wyslane', 'przyjęte: ' . (int) ($r['data']['events_received'] ?? 0) . ($cfg['test_code'] !== '' ? ' (test)' : ''));
         return ['ok' => true, 'error' => ''];
@@ -446,6 +462,10 @@ function wsm_capi_pump(PDO $pdo, int $max = 10): array {
     try {
         wsm_ads_ensure($pdo);
         if (!wsm_capi_ready()) return $out;
+        // Un envoi resté « wysylanie » dix minutes : le processus est mort en
+        // route. Il repasse « błąd » et sera retenté comme les autres.
+        $pdo->prepare("UPDATE wsm_capi_events SET status = 'blad', response = 'przerwane — ponowione'
+                        WHERE status = 'wysylanie' AND tried_at < ?")->execute([date('Y-m-d H:i:s', time() - 600)]);
         $rows = $pdo->query("SELECT id, status, attempts, tried_at FROM wsm_capi_events
                               WHERE status IN ('nowe','blad') AND attempts < " . WSM_CAPI_PROBY . "
                               ORDER BY id LIMIT 50")->fetchAll();
@@ -455,7 +475,8 @@ function wsm_capi_pump(PDO $pdo, int $max = 10): array {
                 $wait = 60 * (2 ** max(1, (int) $r['attempts']));
                 if ((strtotime((string) $r['tried_at']) ?: 0) > time() - $wait) continue;
             }
-            $res = wsm_capi_send($pdo, (int) $r['id']);
+            try { $res = wsm_capi_send($pdo, (int) $r['id']); }
+            catch (Throwable $e) { $res = ['ok' => false]; }        // un événement en panne n'arrête pas les autres
             $res['ok'] ? $out['wyslane']++ : $out['bledy']++;
         }
     } catch (Throwable $e) {}
@@ -531,16 +552,25 @@ function wsm_feed_text(string $s, int $max): string {
     return mb_substr($s, 0, $max);
 }
 
-/** Le transporteur le moins cher vers la Pologne (prix TTC en grosze), ou null. */
-function wsm_ads_ship_min(PDO $pdo): ?array {
+/**
+ * Le transporteur le moins cher vers la Pologne pour CE poids (prix TTC en
+ * grosze), ou null. Le poids compte : un sac de 30 kg ne part pas en
+ * Paczkomat, et annoncer à Google le tarif Paczkomat pour lui serait un
+ * écart avec la caisse — la deuxième cause de refus dans Merchant Center.
+ * Poids inconnu (0) : les modes ordinaires seulement, sans les palettes.
+ */
+function wsm_ads_ship_min(PDO $pdo, int $poidsG = 0): ?array {
+    static $cache = [];
+    $k = spl_object_id($pdo) . ':' . $poidsG;
+    if (array_key_exists($k, $cache)) return $cache[$k];
     try {
         require_once __DIR__ . '/shop.php';
         $best = null;
-        foreach (wsm_shipping_methods($pdo, 'pl', 'PL') as $m) {
-            if ((int) $m['min_weight_g'] > 0) continue;                    // palettes : pas un tarif « à partir de »
+        foreach (wsm_shipping_methods($pdo, 'pl', 'PL', $poidsG > 0 ? $poidsG : -1) as $m) {
+            if ($poidsG <= 0 && (int) $m['min_weight_g'] > 0) continue;     // palettes : pas un tarif « à partir de »
             if ($best === null || $m['price'] < $best['price']) $best = $m;
         }
-        return $best ? ['price' => (int) $best['price'], 'free_from' => (int) $best['free_from']] : null;
+        return $cache[$k] = $best ? ['price' => (int) $best['price'], 'free_from' => (int) $best['free_from']] : null;
     } catch (Throwable $e) { return null; }
 }
 
@@ -567,8 +597,12 @@ function wsm_feed_produkty(PDO $pdo, string $lang, string $shopUrl, bool $jpg = 
     require_once __DIR__ . '/shop.php';
     $shopUrl = rtrim($shopUrl, '/');
     $marque = wsm_brand_name();
-    $ship = wsm_ads_ship_min($pdo);
     $items = []; $out = [];
+    // Les versions JPEG se fabriquent au plus 25 par appel : l'adresse du flux
+    // est publique, et la première lecture ne doit pas convertir tout le
+    // catalogue d'un coup. Les suivantes (et kolejka.php) finissent le travail ;
+    // en attendant, l'original (WebP, que Google accepte) est donné.
+    $nouveaux = 0;
     foreach (wsm_shop_products($pdo, $lang) as $p) {
         $pow = [];
         $title = wsm_feed_text((string) $p['name'], 150);
@@ -579,10 +613,14 @@ function wsm_feed_produkty(PDO $pdo, string $lang, string $shopUrl, bool $jpg = 
         if ($pow) { $out[] = ['id' => $p['id'], 'name' => $p['name'], 'powody' => $pow]; continue; }
 
         $link = $shopUrl . '/p/' . rawurlencode((string) $p['slug']) . ($lang !== 'pl' ? '?lang=' . rawurlencode($lang) : '');
-        if (preg_match('#^https://#i', $img)) {
-            $imgUrl = $img;
+        if (preg_match('#^https?://#i', $img)) {
+            $imgUrl = $img;                                                // adresse externe : telle quelle
         } else {
-            $j = $jpg && function_exists('wsm_media_jpg') ? wsm_media_jpg($img, 'feed') : null;
+            $j = null;
+            if ($jpg && function_exists('wsm_media_jpg') && preg_match('#^media/([a-f0-9]{24})\.#', $img, $mm)) {
+                $deja = is_file(wsm_media_dir() . '/jpg/' . $mm[1] . '-feed.jpg');
+                if ($deja || $nouveaux < 25) { $j = wsm_media_jpg($img, 'feed'); if (!$deja && $j) $nouveaux++; }
+            }
             $imgUrl = $shopUrl . '/' . ltrim($j ?? $img, '/');
         }
         $desc = wsm_feed_text(trim((string) $p['desc']) !== '' ? (string) $p['desc'] : trim($p['subtitle'] . ' ' . $p['name']), 5000);
@@ -608,6 +646,7 @@ function wsm_feed_produkty(PDO $pdo, string $lang, string $shopUrl, bool $jpg = 
             $it['unit_pricing_measure'] = $w . 'g';
             $it['unit_pricing_base_measure'] = '1kg';
         }
+        $ship = wsm_ads_ship_min($pdo, (int) $p['weight_g']);
         if ($ship !== null) {
             $prix = ($ship['free_from'] > 0 && (int) $p['price'] >= $ship['free_from']) ? 0 : $ship['price'];
             $it['shipping'] = ['country' => 'PL', 'service' => 'Standard', 'price' => number_format($prix / 100, 2, '.', '') . ' PLN'];

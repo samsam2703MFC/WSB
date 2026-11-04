@@ -81,8 +81,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 }
 if (isset($_GET['ok'])) { $flash = (string) $_GET['ok']; $kind = in_array($_GET['k'] ?? '', ['ok', 'err', 'warn'], true) ? (string) $_GET['k'] : 'ok'; }
 
-// La file : à chaque ouverture, au plus un post dû part (la tâche de fond fait le reste).
-$pompe = wsm_social_pump($pdo, $shop, 1);
+// La file : à chaque ouverture, au plus un post dû part (la tâche de fond fait
+// le reste). Seulement pour qui a le droit de publier : un rôle en lecture ne
+// déclenche rien en ouvrant l'écran.
+$pompe = $isAdmin ? wsm_social_pump($pdo, $shop, 1) : ['opublikowane' => 0, 'bledy' => 0];
 $cfg = wsm_social_cfg();
 $igAdres = wsm_social_ig_adres($shop);
 $post = $id > 0 ? wsm_social_get($pdo, $id) : null;

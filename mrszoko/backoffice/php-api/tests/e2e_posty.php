@@ -83,6 +83,7 @@ ok('catégorie inconnue refusée', wsm_mediateka_meta_set($pdo, $carre, ['katego
 ok('produit inconnu refusé', wsm_mediateka_meta_set($pdo, $carre, ['product_id' => 'nie-ma-' . $sfx], 'test') === 'nieznany produkt');
 ok('chemin étranger refusé', wsm_mediateka_meta_set($pdo, 'media/../../api/config.php', [], 'test') === 'nieznany plik');
 $l = wsm_mediateka_list($pdo, ['okazja' => 'walentynki', 'kategoria' => 'pralinki']);
+ok('tags trop longs : coupés à des étiquettes entières, jamais plus de 250 signes', mb_strlen(wsm_mediateka_tagi(implode(' ', array_map(fn($i) => str_repeat(chr(97 + $i), 30), range(0, 9))))) <= 250);
 ok('filtre catégorie + occasion', in_array($carre, array_column($l, 'url'), true) && !in_array($haute, array_column($l, 'url'), true));
 ok('filtre texte (tags)', in_array($carre, array_column(wsm_mediateka_list($pdo, ['q' => 'kakao']), 'url'), true));
 ok('filtre « sans alt »', in_array($haute, array_column(wsm_mediateka_list($pdo, ['bez_alt' => true]), 'url'), true)
@@ -212,6 +213,23 @@ $pdo->prepare("UPDATE wsm_social_posts SET status = 'publikowanie', claimed_at =
 ok('post resté « publikowanie » 1 h : déclaré interrompu', wsm_social_stale($pdo) >= 1 && wsm_social_get($pdo, $id5)['status'] === 'blad');
 ok('… avec la consigne de vérifier avant de relancer', str_contains(wsm_social_get($pdo, $id5)['fb_error'], 'sprawdź'));
 
+// La pompe réclame le post pendant qu'on l'édite : pas de faux « zapisano ».
+[$id7] = wsm_social_save($pdo, null, ['tekst' => 'Wyścig ' . $sfx, 'kanaly' => ['fb'], 'media' => [$carre], 'termin' => date('Y-m-d\TH:i', time() + 3600)], 'zaplanuj', 'test');
+$posts[] = $id7;
+$pdo->prepare("UPDATE wsm_social_posts SET status = 'publikowanie', claimed_at = ? WHERE id = ?")->execute([date('Y-m-d H:i:s'), $id7]);
+[, $e7] = wsm_social_save($pdo, $id7, ['tekst' => 'Zmiana ' . $sfx, 'kanaly' => ['fb'], 'media' => [$carre]], 'szkic', 'test');
+ok('édition d\'un post en cours de publication : refusée, pas « zapisano »', isset($e7['_']) && wsm_social_get($pdo, $id7)['tekst'] === 'Wyścig ' . $sfx, $e7);
+// Un post déclaré interrompu pendant qu'il finissait : l'état final ne l'écrase pas.
+$pdo->prepare("UPDATE wsm_social_posts SET status = 'zaplanowany', termin = ? WHERE id = ?")->execute([date('Y-m-d H:i:s', time() - 60), $id7]);
+$appels = [];
+wsm_graph_transport(function ($m, $url, $p, $f) use (&$appels, $pdo, $id7) {
+    $appels[] = $url;
+    $pdo->prepare("UPDATE wsm_social_posts SET status = 'blad' WHERE id = ?")->execute([$id7]);   // wsm_social_stale() passe pendant l'envoi
+    return [200, '{"id":"777","post_id":"100200300_7"}'];
+});
+wsm_social_publish($pdo, $id7, $SHOPOK);
+ok('l\'état final ne réécrit pas un post que la console a déjà déclaré interrompu', wsm_social_get($pdo, $id7)['status'] === 'blad');
+
 // Dupliquer, supprimer.
 $dup = wsm_social_duplicate($pdo, $id1, 'test');
 $posts[] = $dup;
@@ -240,6 +258,7 @@ $o26 = wsm_social_okazje(2026);
 ok('Pâques 2026 : 5 avril', ($o26['2026-04-05'] ?? '') === 'Wielkanoc');
 ok('Tłusty czwartek 2026 : 12 février', ($o26['2026-02-12'] ?? '') === 'Tłusty czwartek');
 ok('Black Friday 2026 : 27 novembre', ($o26['2026-11-27'] ?? '') === 'Black Friday');
+ok('Black Friday 2030 (novembre commence un vendredi) : 29, pas 22', (wsm_social_okazje(2030)['2030-11-29'] ?? '') === 'Black Friday' && !isset(wsm_social_okazje(2030)['2030-11-22']));
 ok('Walentynki, Mikołajki, Dzień Matki', isset($o26['2026-02-14'], $o26['2026-12-06'], $o26['2026-05-26']));
 $mois = wsm_social_month($pdo, date('Y-m'));
 ok('vue du mois : les posts du mois rangés par jour', (bool) array_filter($mois, fn($l) => (bool) array_filter($l, fn($p) => (int) $p['id'] === $id6)));

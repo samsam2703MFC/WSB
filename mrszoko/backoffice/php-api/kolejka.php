@@ -45,6 +45,9 @@ try {
         $s = wsm_social_pump($pdo, rtrim($url, '/'), 5);
         if ($s['opublikowane'] || $s['bledy']) echo 'kolejka: posty ' . $s['opublikowane'] . ($s['bledy'] ? ' (błędy ' . $s['bledy'] . ')' : '') . "\n";
     }
+    // Les versions JPEG du flux produits, fabriquées ici plutôt qu'à la
+    // première lecture publique du flux (25 au plus par passage).
+    if ($url !== '' && !preg_match('/^x{2,}$/i', $url)) { require_once __DIR__ . '/mediateka.php'; wsm_feed_produkty($pdo, 'pl', rtrim($url, '/')); }
     $c = wsm_capi_pump($pdo, 20);
     if ($c['wyslane'] || $c['bledy']) echo 'kolejka: meta zakupy ' . $c['wyslane'] . ($c['bledy'] ? ' (błędy ' . $c['bledy'] . ')' : '') . "\n";
 } catch (Throwable $e) {

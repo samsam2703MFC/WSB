@@ -72,6 +72,9 @@ function wsm_mediateka_tagi(string $raw): string {
         if ($x !== '' && !in_array($x, $t, true)) $t[] = mb_substr($x, 0, 30);
         if (count($t) >= 10) break;
     }
+    // La colonne fait 250 signes : on retire les dernières étiquettes plutôt
+    // que de couper la dernière au milieu (ou de faire échouer l'écriture).
+    while ($t && mb_strlen(implode(', ', $t)) > 250) array_pop($t);
     return implode(', ', $t);
 }
 
@@ -102,10 +105,18 @@ function wsm_mediateka_meta_set(PDO $pdo, string $url, array $in, string $actor 
     $up = $pdo->prepare("UPDATE wsm_media_meta SET kategoria=?, okazja=?, product_id=?, alt=?, tagi=?, updated_at=?, updated_by=? WHERE url=?");
     $up->execute($vals);
     if ($up->rowCount() === 0) {
-        try {
-            $pdo->prepare("INSERT INTO wsm_media_meta (kategoria, okazja, product_id, alt, tagi, updated_at, updated_by, url) VALUES (?,?,?,?,?,?,?,?)")
-                ->execute($vals);
-        } catch (Throwable $e) { /* identique : MySQL compte 0 ligne modifiée */ }
+        // MySQL compte 0 ligne pour une mise à jour identique : la ligne peut
+        // exister. On n'insère que si elle manque — et un échec se DIT.
+        $ex = $pdo->prepare("SELECT 1 FROM wsm_media_meta WHERE url = ?");
+        $ex->execute([$url]);
+        $existe = $ex->fetchColumn() !== false;
+        $ex->closeCursor();
+        if (!$existe) {
+            try {
+                $pdo->prepare("INSERT INTO wsm_media_meta (kategoria, okazja, product_id, alt, tagi, updated_at, updated_by, url) VALUES (?,?,?,?,?,?,?,?)")
+                    ->execute($vals);
+            } catch (Throwable $e) { return 'zapis nie powiódł się'; }
+        }
     }
     return '';
 }

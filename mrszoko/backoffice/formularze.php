@@ -55,8 +55,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             header('Location: formularze.php?id=' . $nid . '&tryb=edycja&ok=' . rawurlencode('Zapisano.'), true, 303); exit;
         }
     } elseif (isset($_POST['status'])) {
+        // Un formulaire PAR LIGNE : Entrée dans la note d'une ligne enregistre
+        // cette ligne-là, pas la première du tableau.
         $eid = (int) $_POST['status'];
-        wsm_form_entry_status($pdo, $eid, (string) ($_POST['nowy_status'][$eid] ?? 'nowe'), (string) ($_POST['notatka'][$eid] ?? ''));
+        wsm_form_entry_status($pdo, $eid, (string) ($_POST['nowy_status'] ?? 'nowe'), (string) ($_POST['notatka'] ?? ''));
         $flash = 'Zapisano status.';
     } elseif (isset($_POST['usun_wpis'])) {
         $flash = wsm_form_entry_delete($pdo, (int) $_POST['usun_wpis']) ? 'Zgłoszenie usunięte (wiadomość w Poczcie zostaje).' : 'Nie ma takiego zgłoszenia.';
@@ -192,7 +194,7 @@ if (!$form && $tryb !== 'edycja'):
   <label>Status: <select name="status" onchange="this.form.submit()"><option value="">wszystkie (bez spamu)</option>
     <?php foreach (WSM_FORM_STATUSY as $k => $l): ?><option value="<?= h($k) ?>"<?= $filtr === $k ? ' selected' : '' ?>><?= h($l) ?></option><?php endforeach; ?></select></label>
   <noscript><button type="submit">Filtruj</button></noscript></form>
-<form method="post" class="panel"><?= console_csrf_field() ?>
+<div class="panel">
   <h2>Zgłoszenia (<?= count($wpisy) ?>)</h2>
   <div class="tablewrap"><table class="rwd">
     <thead><tr><th>Kiedy</th><th>Dane</th><th>Status i notatka</th><th></th></tr></thead>
@@ -203,14 +205,15 @@ if (!$form && $tryb !== 'edycja'):
         <td data-l="Dane"><dl><?php foreach ($form['pola_list'] as $p): $val = (string) ($e['dane_list'][$p['id']] ?? ''); if ($val === '') continue; ?>
           <dt><?= h((string) $p['etykieta']) ?></dt><dd><?= $p['typ'] === 'email' ? '<a href="mailto:' . h($val) . '">' . h($val) . '</a>' : ($p['typ'] === 'tel' ? '<a href="tel:' . h(preg_replace('/[^0-9+]/', '', $val)) . '">' . h($val) . '</a>' : h($val)) ?></dd>
         <?php endforeach; ?></dl></td>
-        <td data-l="Status"><select name="nowy_status[<?= $eid ?>]" aria-label="Status"<?= $isAdmin ? '' : ' disabled' ?>>
+        <td data-l="Status"><select name="nowy_status" form="w<?= $eid ?>" aria-label="Status"<?= $isAdmin ? '' : ' disabled' ?>>
           <?php foreach (WSM_FORM_STATUSY as $k => $l): ?><option value="<?= h($k) ?>"<?= $e['status'] === $k ? ' selected' : '' ?>><?= h($l) ?></option><?php endforeach; ?></select>
-          <input type="text" name="notatka[<?= $eid ?>]" value="<?= h((string) $e['notatka']) ?>" maxlength="500" placeholder="Notatka" aria-label="Notatka"<?= $isAdmin ? '' : ' disabled' ?>></td>
-        <td><?php if ($isAdmin): ?><button type="submit" name="status" value="<?= $eid ?>">Zapisz</button>
-          <button type="submit" name="usun_wpis" value="<?= $eid ?>" onclick="return confirm('Usunąć to zgłoszenie (RODO)?')">Usuń</button><?php endif; ?></td></tr>
+          <input type="text" name="notatka" form="w<?= $eid ?>" value="<?= h((string) $e['notatka']) ?>" maxlength="500" placeholder="Notatka" aria-label="Notatka"<?= $isAdmin ? '' : ' disabled' ?>></td>
+        <td><?php if ($isAdmin): ?><form method="post" id="w<?= $eid ?>" class="actions" style="margin:0"><?= console_csrf_field() ?>
+          <button type="submit" name="status" value="<?= $eid ?>">Zapisz</button>
+          <button type="submit" name="usun_wpis" value="<?= $eid ?>" onclick="return confirm('Usunąć to zgłoszenie (RODO)?')">Usuń</button></form><?php endif; ?></td></tr>
     <?php endforeach; ?>
     </tbody>
   </table></div>
-</form>
+</div>
 <?php endif; ?>
 <?php console_foot();
