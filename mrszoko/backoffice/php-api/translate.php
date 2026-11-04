@@ -36,8 +36,8 @@ const WSM_TR_MODEL = 'claude-sonnet-5';
 const WSM_TR_BATCH = 40;
 
 /**
- * La clé d'API, lue dans la configuration du serveur uniquement.
- * Ce dépôt est public : elle ne peut vivre que dans config.local.php.
+ * La clé d'API : dans config.local.php, ou collée par le superadmin (table
+ * wsm_settings, comme les autres secrets). Jamais dans ce dépôt, qui est public.
  */
 function wsm_tr_key(): string {
     $k = trim((string) (wsm_config()['anthropic_api_key'] ?? ''));

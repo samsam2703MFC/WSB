@@ -29,6 +29,8 @@ require_once $API . '/invoice.php';
 require_once $API . '/ksef.php';   // wsm_ksef_enabled() : la tuile « KSeF gotowy »
 require_once $API . '/fiskal.php'; // la caisse fiscale : état, test, adresse du webhook
 require_once $API . '/smsapi.php'; // SMS marketing : état, test, adresse des accusés
+require_once $API . '/translate.php'; // la clé Claude : état
+require_once $API . '/allegro.php';   // Allegro : état
 
 $flash = ''; $flashKind = 'ok';
 
@@ -109,6 +111,8 @@ $groups = [
     'inpost' => ['InPost ShipX — wysyłka', 'Token serwerowy służy do tworzenia etykiet. Token Geowidget trafia do strony sklepu — to token przeglądarkowy.'],
     'dpd'    => ['DPD Polska — wysyłka pod adres', 'Login, hasło i numer klienta (FID) z panelu DPD. Adres nadawcy jest drukowany na etykiecie: bez niego paczka odrzucona w doręczeniu nie ma dokąd wrócić. API DPD to SOAP — serwer musi mieć rozszerzenie php-soap.'],
     'sms'    => ['Marketing — newsletter i SMS (SMSAPI)', 'Jak w CRM: token OAuth z panelu SMSAPI i zatwierdzona nazwa nadawcy. SMS-y wychodzą tylko do osób ze zgodą SMS, między 8:00 a 21:00, z linkiem wypisania. Newsletter wychodzi przez Pocztę, domyślnie tylko do osób ze zgodą. Kampanie: Marketing → Newsletter, SMS.'],
+    'claude' => ['Claude (AI) — tłumaczenia, teksty, faktury PDF', 'Jeden klucz do trzech rzeczy: tłumaczenia sklepu, pisanie newsletterów i SMS-ów, odczyt faktur zakupu z PDF. Bez niego te przyciski się nie pokazują, a faktury wczytuje się tylko jako XML z KSeF.'],
+    'allegro' => ['Allegro — druga witryna', 'Dane aplikacji z apps.developer.allegro.pl i token konta sprzedawcy. Najpierw sandbox, potem produkcja.'],
     'mail'   => ['Poczta — wiadomości do klientów', 'Bez adresu nadawcy wiadomości czekają w kolejce w zakładce Poczta i nic nie ginie.'],
     'paragon' => ['E-paragon fiskalny — Fakturownia + Paragony.pl', 'Paragon sklepu staje się paragonem FISKALNYM: sklep tworzy go w Fakturowni, a drukarka fiskalna online firmy go rejestruje. Potrzebne: konto Fakturowni z modułem Paragony.pl, drukarka fiskalna online i włączony komputer z programem Paragony.pl. Klient, który zaznaczy zgodę w kasie, dostaje e-paragon mailem; pozostali — paragon papierowy do paczki. W Fakturowni NIE włączaj „automatycznej fiskalizacji po API”: zleca ją sklep, a dwa zlecenia to dwa paragony. W Superadminie ustaw wystawianie dokumentu przy „Opłacone”: kasa rejestruje przedpłatę w chwili wpłaty, a papierowy paragon zdążysz włożyć do paczki.'],
     'ksef'   => ['KSeF — krajowy rejestr faktur', 'NIP bierze się z sekcji Faktury — nie powtarzamy go tutaj. Paragony nie idą do rejestru i tak ma być: zgłoszenie paragonu wpisałoby do rejestru dokument, który dla urzędu nie istnieje.'],
@@ -125,6 +129,8 @@ $state = [
     'ksef'    => function_exists('wsm_ksef_enabled') && wsm_ksef_enabled(),
     'paragon' => wsm_fiskal_enabled(),
     'sms'     => wsm_sms_enabled(),
+    'claude'  => wsm_tr_enabled(),
+    'allegro' => wsm_allegro_enabled(),
 ];
 
 console_head('Integracje', $me, <<<CSS

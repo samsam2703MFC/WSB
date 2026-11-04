@@ -28,6 +28,18 @@ require_once $API . '/roles.php';
 require_once $API . '/invoice.php';       // wsm_status_triggers()
 require_once $API . '/mail.php';
 require_once $API . '/ksef.php';
+require_once $API . '/settings.php';
+// L'état de chaque intégration, pour la table des clés.
+foreach (['stripe', 'inpost', 'dpd', 'fiskal', 'smsapi', 'translate', 'allegro'] as $m) {
+    if (is_file($API . '/' . $m . '.php')) require_once $API . '/' . $m . '.php';
+}
+/** Chaque intégration marche-t-elle, avec les clés en place ? */
+$kluczeEtat = function (): array {
+    $f = fn(string $fn) => function_exists($fn) && (bool) $fn();
+    return ['claude' => $f('wsm_tr_enabled'), 'stripe' => $f('wsm_stripe_ready'), 'ksef' => $f('wsm_ksef_enabled'),
+            'paragon' => $f('wsm_fiskal_enabled'), 'inpost' => $f('wsm_inpost_enabled'), 'dpd' => $f('wsm_dpd_enabled'),
+            'mail' => $f('wsm_mail_enabled'), 'sms' => $f('wsm_sms_enabled'), 'allegro' => $f('wsm_allegro_enabled')];
+};
 
 // ============================================================================
 //  LA PORTE. Rien au-delà de cette ligne ne s'exécute pour quelqu'un d'autre.
@@ -265,6 +277,55 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                       'wsm_platform_periods ' . $ym, 'Platforma');
         } else { $flash = $err; $kind = 'err'; }
 
+    } elseif (isset($_POST['klucze_zapisz']) || isset($_POST['klucze_wklej'])) {
+        // ====================================================================
+        //  LES CLÉS DE TOUTES LES INTÉGRATIONS — la table, ou un bloc collé.
+        //
+        //  Seuls les groupes d'intégration s'écrivent (WSM_SETTINGS_KLUCZE) :
+        //  jamais la base, le jeton d'administration ni le code superadmin.
+        //  Une valeur posée sur le serveur (variable d'environnement) reste
+        //  maîtresse et n'est pas touchée. Le résultat s'affiche SANS
+        //  redirection : rien de ce qui a été collé ne passe dans une adresse,
+        //  donc dans un journal de serveur. Le journal d'audit ne garde que les
+        //  NOMS des clés changées.
+        // ====================================================================
+        $champsK = wsm_settings_klucze_fields();
+        $nieznane = []; $bledne = []; $naSerwerze = [];
+        if (isset($_POST['klucze_wklej'])) {
+            $lu = wsm_settings_parse_paste((string) ($_POST['wklej'] ?? ''));
+            $postK = $lu['wartosci']; $nieznane = $lu['nieznane']; $bledne = $lu['bledne'];
+        } else {
+            $postK = [];
+            foreach ($champsK as $k => $d) {
+                $fk = str_replace('.', '__', $k);
+                if (array_key_exists($fk, $_POST)) $postK[$fk] = (string) $_POST[$fk];
+            }
+        }
+        foreach (array_keys($postK) as $fk) {
+            $k = str_replace('__', '.', $fk);
+            if (isset($champsK[$k]) && getenv($champsK[$k][3]) !== false) { $naSerwerze[] = $champsK[$k][3]; unset($postK[$fk]); }
+        }
+        $refusK = [];
+        $zmienione = $postK ? wsm_settings_save($pdo, $postK, $actor, $refusK, array_keys(WSM_SETTINGS_KLUCZE)) : [];
+        $nom = fn(string $k) => ($champsK[$k][1] ?? $k) . ' (' . (WSM_SETTINGS_KLUCZE[$champsK[$k][0] ?? ''] ?? '') . ')';
+        $m = [$zmienione ? 'Zapisano ' . count($zmienione) . ': ' . implode(', ', array_map($nom, $zmienione)) . '.' : 'Nic nie zmieniono.'];
+        if ($refusK) $m[] = 'Odrzucone: ' . implode('; ', array_map(fn($k) => $nom($k) . ' — ' . $refusK[$k], array_keys($refusK))) . '.';
+        if ($bledne) $m[] = 'Błędna wartość: ' . implode('; ', array_map(fn($n) => $n . ' (' . $bledne[$n] . ')', array_keys($bledne))) . '.';
+        if ($naSerwerze) $m[] = 'Ustawione na serwerze, bez zmian: ' . implode(', ', $naSerwerze) . '.';
+        if ($nieznane) {
+            // Un nom inconnu ne se répète que s'il RESSEMBLE à un nom : une ligne
+            // de jeton mal collée ne doit pas s'afficher en clair.
+            $lisibles = array_values(array_filter($nieznane, fn($n) => (bool) preg_match('/^[A-Za-z][A-Za-z0-9]*([_.][A-Za-z0-9]+)+$/', $n) && strlen($n) <= 40));
+            $m[] = 'Pominięte, to nie są klucze integracji: ' . ($lisibles ? implode(', ', array_slice($lisibles, 0, 12)) : '')
+                 . (count($nieznane) > count($lisibles) ? ($lisibles ? ' i ' : '') . (count($nieznane) - count($lisibles)) . ' nierozpoznanych linii' : '') . '.';
+        }
+        if ($zmienione) wsm_audit($pdo, $actor, 'Klucze integracji', mb_substr(implode(', ', $zmienione), 0, 200), 'Platforma');
+        // La configuration de cette requête a été lue AVANT l'enregistrement :
+        // sans la relire, la table dirait « brak » à côté d'une clé tout juste posée.
+        wsm_settings_apply($pdo);
+        $flash = implode(' ', $m);
+        $kind = ($refusK || $bledne) ? 'err' : ($zmienione ? 'ok' : 'warn');
+        $kluczeWidok = true;
     } elseif (isset($_POST['warunki'])) {
         [$t, $errors] = wsm_platform_terms_save($pdo, $_POST, $actor);
         if ($t) {
@@ -272,6 +333,92 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             wsm_audit($pdo, $actor, 'Zmiana warunków', 'wsm_platform_terms', 'Platforma');
         } else { $flash = 'Popraw zaznaczone pola.'; $kind = 'err'; }
     }
+}
+
+// ============================================================================
+//  LA TABLE DES CLÉS — une vue à part, comme l'éditeur de profil.
+//
+//  Toutes les intégrations sur une page : ce qui est posé, d'où ça vient
+//  (base, serveur), si l'intégration marche, et un champ pour coller. Un
+//  secret ne se relit jamais : le champ est vide, il dit seulement « ustawione ».
+// ============================================================================
+if (isset($_GET['klucze']) || !empty($kluczeWidok)) {
+    $vue = wsm_settings_view($pdo);
+    $champsK = wsm_settings_klucze_fields();
+    $etat = $kluczeEtat();
+    $parGroupe = [];
+    foreach ($champsK as $k => $d) $parGroupe[$d[0]][$k] = $vue[$k];
+    $sourceLbl = ['baza' => 'zapisane w konsoli', 'serwer' => 'z serwera', 'domyślne' => 'domyślne', 'brak' => ''];
+    console_head('Klucze integracji', $me, <<<'CSS'
+      .why { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin: 0 0 14px; max-width: 90ch; }
+      .klucze td { vertical-align: top; padding: 10px 8px; }
+      .klucze tr.grp th { text-align: left; padding: 22px 8px 8px; font-size: 16px; color: var(--text-strong); border-bottom: 1px solid var(--border-subtle); }
+      .klucze td small { display: block; color: var(--text-muted); font-size: 12.5px; margin-top: 3px; line-height: 1.45; }
+      .klucze input, .klucze select, .klucze textarea { width: 100%; min-width: 220px; }
+      .klucze code { font-size: 12.5px; word-break: break-all; }
+      textarea.wklej { width: 100%; font-family: var(--font-mono); font-size: 13px; min-height: 170px; }
+    CSS);
+    console_flash($flash, $kind);
+    console_crumbs(['Pulpit' => 'pulpit.php', 'Superadmin' => 'superadmin.php', 'Klucze integracji' => null]);
+    ?>
+    <div class="panel">
+      <h2>Wklej wszystkie klucze naraz</h2>
+      <p class="why">Jedna linia na klucz: <code>NAZWA=wartość</code> (jak w pliku .env), <code>NAZWA: wartość</code>
+        albo dwie kolumny skopiowane z arkusza. Nazwy to zmienne z tabeli poniżej (z <code>WSM_</code> albo bez).
+        Puste linie i komentarze (#) są pomijane. Zapisują się tylko klucze integracji — nigdy baza danych ani dostęp
+        administratora. Wartości nie wracają na ekran i nie trafiają do dziennika: zapisuje się tylko, KTÓRE klucze zmieniono.</p>
+      <form method="post" autocomplete="off">
+        <input type="hidden" name="_t" value="<?= h($csrf) ?>">
+        <textarea class="wklej" name="wklej" spellcheck="false" autocomplete="off" aria-label="Klucze do wklejenia"
+                  placeholder="WSM_ANTHROPIC_API_KEY=…&#10;WSM_SMSAPI_TOKEN=…&#10;WSM_SMSAPI_NADAWCA=SzokoShop&#10;WSM_INPOST_TOKEN=…&#10;WSM_FAKTUROWNIA_DOMENA=firma&#10;WSM_FAKTUROWNIA_TOKEN=…"></textarea>
+        <div class="actions"><button class="btn btn--brand" type="submit" name="klucze_wklej" value="1">Zapisz wklejone klucze</button></div>
+      </form>
+    </div>
+
+    <form method="post" autocomplete="off" class="panel">
+      <input type="hidden" name="_t" value="<?= h($csrf) ?>">
+      <h2>Wszystkie integracje</h2>
+      <p class="why">Pole sekretu jest zawsze puste — „ustawione” znaczy, że klucz jest zapisany. Puste pole sekretu = bez zmian.
+        Wartość ustawiona na serwerze (plik konfiguracyjny, zmienna środowiska) ma pierwszeństwo i nie zmienia się stąd.</p>
+      <div class="tablewrap"><table class="klucze">
+        <thead><tr><th>Pole</th><th>Zmienna</th><th>Stan</th><th>Nowa wartość</th></tr></thead>
+        <tbody>
+        <?php foreach ($parGroupe as $g => $rows): ?>
+        <tr class="grp"><th colspan="4"><?= h(WSM_SETTINGS_KLUCZE[$g]) ?>
+          <span class="tag <?= !empty($etat[$g]) ? 'ok' : 'bad' ?>"><?= !empty($etat[$g]) ? 'działa' : 'wyłączone' ?></span></th></tr>
+        <?php foreach ($rows as $k => $v): $t = (string) $v['type']; ?>
+        <tr>
+          <td><?= h((string) $v['label']) ?><?php if ((string) $v['help'] !== ''): ?><small><?= h((string) $v['help']) ?></small><?php endif; ?></td>
+          <td><code><?= h((string) $v['env']) ?></code></td>
+          <td><span class="tag <?= $v['set'] ? 'ok' : 'wait' ?>"><?= $v['set'] ? 'ustawione' : 'brak' ?></span>
+            <?php if (($sourceLbl[$v['source']] ?? '') !== ''): ?><small><?= h($sourceLbl[$v['source']]) ?></small><?php endif; ?></td>
+          <td>
+          <?php if ($v['locked']): ?>
+            <span class="muted">ustawione na serwerze</span>
+          <?php elseif ($t === 'secret'): ?>
+            <input type="password" name="<?= h((string) $v['form']) ?>" autocomplete="new-password" spellcheck="false"
+                   placeholder="<?= $v['set'] ? 'ustawione — wklej, żeby zmienić' : 'wklej klucz' ?>" aria-label="<?= h((string) $v['label']) ?>">
+          <?php elseif ($t === 'pem'): ?>
+            <textarea name="<?= h((string) $v['form']) ?>" rows="2" spellcheck="false" placeholder="-----BEGIN PUBLIC KEY-----" aria-label="<?= h((string) $v['label']) ?>"></textarea>
+          <?php elseif (str_starts_with($t, 'select:')): ?>
+            <select name="<?= h((string) $v['form']) ?>" aria-label="<?= h((string) $v['label']) ?>">
+              <?php foreach (explode('|', substr($t, 7)) as $o): ?><option value="<?= h($o) ?>"<?= (string) $v['show'] === $o ? ' selected' : '' ?>><?= h($o) ?></option><?php endforeach; ?>
+            </select>
+          <?php else: ?>
+            <input type="text" name="<?= h((string) $v['form']) ?>" spellcheck="false" aria-label="<?= h((string) $v['label']) ?>"
+                   value="<?= $v['show'] !== WSM_SETTING_PLACEHOLDER ? h((string) $v['show']) : '' ?>">
+          <?php endif; ?>
+          </td>
+        </tr>
+        <?php endforeach; endforeach; ?>
+        </tbody>
+      </table></div>
+      <div class="actions"><button class="btn btn--brand" type="submit" name="klucze_zapisz" value="1">Zapisz klucze</button>
+        <a class="code" href="ustawienia.php">Sprawdź połączenia w Integracjach →</a></div>
+    </form>
+    <?php
+    console_foot();
+    exit;
 }
 
 // ============================================================================
@@ -958,6 +1105,16 @@ $uMax     = $uEcrans ? max(array_column($uEcrans, 'n')) : 0;
 $profs = wsm_profil_tableau($pdo, $dispo, 30);
 $mesure = $uDepuis !== '';
 ?>
+
+<?php $etatK = $kluczeEtat(); $okK = count(array_filter($etatK)); ?>
+<div class="panel" style="margin-top:20px">
+  <h2>Klucze integracji</h2>
+  <p class="why">Wszystkie klucze w jednej tabeli — albo wklejone naraz z listy. Działa <?= $okK ?> z <?= count($etatK) ?> integracji.</p>
+  <p style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px">
+    <?php foreach (WSM_SETTINGS_KLUCZE as $g => $lbl): ?><span class="tag <?= !empty($etatK[$g]) ? 'ok' : 'bad' ?>"><?= h($lbl) ?></span><?php endforeach; ?>
+  </p>
+  <a class="btn btn--brand" href="superadmin.php?klucze=1">Otwórz tabelę kluczy</a>
+</div>
 
 <div class="panel" style="margin-top:20px">
   <h2>Profile — kto co otwiera</h2>

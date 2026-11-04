@@ -851,3 +851,74 @@ a.btn--brand { background: var(--brand); border-color: var(--brand); color: #FFF
 .karta { border-color: var(--border-subtle); border-radius: 14px; }
 /* Les cases et boutons radio dans la couleur de la marque, pas le bleu du système. */
 input[type="checkbox"], input[type="radio"] { accent-color: var(--brand); }
+
+/* ===========================================================================
+   LISIBILITÉ — la console est un outil de travail, on y lit huit heures.
+
+   Mulish, la police de la marque, est belle en grand et fatigante en petit :
+   traits fins, petit œil, et à 12–14 px elle se lisait « gris clair ». La
+   console prend donc la police SYSTÈME de l'appareil — SF Pro sur Mac et
+   iPhone, Segoe UI sur Windows, Roboto sur Android : dessinées pour l'écran,
+   déjà installées (rien à télécharger), et celles que l'œil connaît. La
+   boutique garde la marque ; ce bloc ne touche que la console.
+
+   Et avec elle : texte de base à 15 px, intitulés en minuscules (les petites
+   capitales espacées se déchiffrent, elles ne se lisent pas), chiffres des
+   montants en sans tabulaire plutôt qu'en mono fin, texte secondaire plus
+   foncé, et le lissage du système plutôt que l'amincissement forcé sur Mac.
+   =========================================================================== */
+:root {
+  --bo-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: var(--bo-font);
+  --font-display: var(--bo-font);
+  --font-ui: var(--bo-font);
+  /* Les identifiants qu'on recopie (n° de commande, NIP) restent en chasse
+     fixe — celle du système, plus nette que DM Mono à cette taille. */
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
+  --text-body:  #2F231C;
+  --text-muted: #5F5045;     /* 7:1 sur blanc (était #7C6A5D, 5:1) */
+}
+body {
+  font-family: var(--bo-font);
+  font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: auto; -moz-osx-font-smoothing: auto;
+}
+/* Navigation */
+.menu a { font-size: 15px; font-weight: 500; }
+.menu a.on { font-weight: 650; }
+.menu .sep { font: 650 12.5px/1 var(--bo-font); letter-spacing: .04em; }
+/* Titres */
+header.bar h1, .panel h2 { font-weight: 700; letter-spacing: -.01em; }
+.panel h3 { font-weight: 650; }
+.main .panel > p, .main .why, .main p.why { font-size: 14.5px; line-height: 1.6; }
+.main .hint, .main .field .hint { font-size: 13.5px; }
+.main small, .main .small { font-size: 13px; }
+.main .muted { color: var(--text-muted); }
+/* Tableaux : le corps à 15 px, des en-têtes lisibles, des montants alignés */
+th, td { font-size: 15px; }
+th {
+  font-size: 13px; font-weight: 600; text-transform: none; letter-spacing: 0;
+  color: var(--text-muted);
+}
+td.num, th.num { font-family: var(--bo-font); font-variant-numeric: tabular-nums; }
+.main td small { font-size: 13px; }
+/* Indicateurs */
+.kpi b { font-family: var(--bo-font); font-weight: 700; }
+.kpi span, .kolejki a span, .inne-l {
+  font-size: 13px; text-transform: none; letter-spacing: 0; color: var(--text-muted);
+}
+/* Formulaires */
+.field > span { font-size: 14px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--text-body); }
+@media (min-width: 700px) {
+  input, select, textarea, button { font-size: 15px; }
+  a.btn { font-size: 15px; }
+}
+/* Étiquettes et messages */
+.tag { font-size: 12.5px; font-weight: 600; }
+.flash, .warnbox { font-size: 15px; }
+a.code { font-weight: 600; }
+/* La date sous le numéro de commande tient sur une ligne. */
+table.zam2 td.ident, table.zam2 .ident .dt, table.zam2 .kasa2 .dt { white-space: nowrap; }
+table.zam2 .ident .dt, table.zam2 .kasa2 .dt { font-size: 12.5px; }
+/* Un montant long (134 944,90 zł) ne déborde pas de sa tuile : il passe à la ligne. */
+.kpi b { font-size: 22px; line-height: 1.2; overflow-wrap: anywhere; }
