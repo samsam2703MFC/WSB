@@ -3171,7 +3171,7 @@ jobs:
           T=$(q "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='mrszoko'
                  AND table_name IN ('wsm_purchase_invoices','wsm_purchase_lines','wsm_purchase_map')")
           [ "${T:-0}" = "3" ] && echo "  3 tabele faktur zakupu: obecne" || { echo "  ^ ZLE : tabele ${T:-0}/3"; fail=1; }
-          N=$(q "SELECT CONCAT(SUM(status='szkic'), ' do sprawdzenia, ', SUM(status='przyjeta'), ' przyjetych') FROM wsm_purchase_invoices")
+          N=$(q "SELECT CONCAT(COALESCE(SUM(status='szkic'), 0), ' do sprawdzenia, ', COALESCE(SUM(status='przyjeta'), 0), ' przyjetych') FROM wsm_purchase_invoices")
           echo "  faktury zakupu: ${N:-0}"
           echo "== odczyt XML KSeF na sucho (nic nie zapisuje) =="
           R=$(php -r '
@@ -3185,7 +3185,9 @@ jobs:
           echo "  $R"
           case "$R" in "pozycji 1, netto 2100 gr, VAT 483 gr"*) ;; *) echo "  ^ ZLE : odczyt XML KSeF"; fail=1;; esac
           echo "== dostep z sieci =="
-          BOU="http://localhost/mrszoko/backoffice"
+          # HTTPS, sans suivre les redirections : en http le serveur répond
+          # 301/308 (vers https) avant toute règle — on veut voir LA réponse.
+          BOU="https://localhost/mrszoko/backoffice"
           c1=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/api/data/zakupy/2026/11/0000000000000000000000000000000000000000.pdf")
           c2=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/przyjecie.php?id=1&plik=1")
           c3=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/magazyn_produkt.php?id=x")
