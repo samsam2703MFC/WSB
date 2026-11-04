@@ -1453,3 +1453,77 @@ CREATE TABLE IF NOT EXISTS `wsm_sms` (
   KEY `idx_wsm_sms_smsid` (`sms_id`),
   KEY `idx_wsm_sms_campaign` (`campaign_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+--  Factures d'achat importées (zakupy.php) : le PDF ou le XML KSeF du
+--  fournisseur, lu ligne par ligne, rapproché des produits du site, puis
+--  transformé en bon d'entrée (PZ). Un brouillon (szkic) se relit et se
+--  corrige avant d'entrer en stock ; une facture reçue ne se reçoit pas deux fois.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wsm_purchase_invoices` (
+  `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `status`        VARCHAR(12)  NOT NULL DEFAULT 'szkic',     -- szkic · przyjeta · odrzucona
+  `source`        VARCHAR(8)   NOT NULL DEFAULT 'pdf',       -- pdf · ksef · reczna
+  `supplier_name` VARCHAR(160) NOT NULL DEFAULT '',
+  `supplier_nip`  VARCHAR(20)  NOT NULL DEFAULT '',
+  `buyer_nip`     VARCHAR(20)  NOT NULL DEFAULT '',
+  `number`        VARCHAR(60)  NOT NULL DEFAULT '',
+  `issued_at`     DATE NULL DEFAULT NULL,
+  `currency`      VARCHAR(3)   NOT NULL DEFAULT 'PLN',
+  `net`           INT NOT NULL DEFAULT 0,                    -- en grosze, tel qu'imprimé
+  `vat`           INT NOT NULL DEFAULT 0,
+  `gross`         INT NOT NULL DEFAULT 0,
+  `file`          VARCHAR(255) NOT NULL DEFAULT '',          -- relatif à api/data
+  `file_name`     VARCHAR(160) NOT NULL DEFAULT '',
+  `file_sha1`     CHAR(40)     NOT NULL DEFAULT '',
+  `uwagi`         TEXT,                                      -- contrôles, JSON
+  `doc_id`        INT UNSIGNED NULL DEFAULT NULL,            -- le PZ, une fois reçu
+  `actor`         VARCHAR(120) NOT NULL DEFAULT '',
+  `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `posted_at`     DATETIME NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_wsm_purchase_inv_status` (`status`, `id`),
+  KEY `idx_wsm_purchase_inv_number` (`supplier_nip`, `number`),
+  KEY `idx_wsm_purchase_inv_doc` (`doc_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `wsm_purchase_lines` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `invoice_id`  INT UNSIGNED NOT NULL,
+  `lp`          INT NOT NULL DEFAULT 0,
+  `name`        VARCHAR(250) NOT NULL DEFAULT '',
+  `code`        VARCHAR(60)  NOT NULL DEFAULT '',
+  `ean`         VARCHAR(14)  NOT NULL DEFAULT '',
+  `qty`         DECIMAL(12,3) NOT NULL DEFAULT 0,             -- quantité de la facture
+  `unit`        VARCHAR(16)  NOT NULL DEFAULT '',
+  `unit_net`    INT NOT NULL DEFAULT 0,                       -- grosze, par unité de la facture
+  `vat_rate`    VARCHAR(6)   NOT NULL DEFAULT '',             -- 23 · 8 · 5 · 0 · zw · np
+  `net`         INT NOT NULL DEFAULT 0,
+  `vat`         INT NOT NULL DEFAULT 0,
+  `gross`       INT NOT NULL DEFAULT 0,
+  `product_id`  VARCHAR(48)  NULL DEFAULT NULL,
+  `factor`      DECIMAL(10,4) NOT NULL DEFAULT 1,             -- 1 unité facture = factor sztuk
+  `stock_qty`   INT NOT NULL DEFAULT 0,
+  `dopasowanie` VARCHAR(10)  NOT NULL DEFAULT '',             -- pamiec · ean · sku · nazwa · reczne
+  `score`       INT NOT NULL DEFAULT 0,
+  `skip`        TINYINT(1)   NOT NULL DEFAULT 0,              -- transport, emballage… : pas un produit
+  `move_id`     INT UNSIGNED NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_wsm_purchase_lines_inv` (`invoice_id`, `lp`),
+  KEY `idx_wsm_purchase_lines_move` (`move_id`),
+  KEY `idx_wsm_purchase_lines_product` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ce que l'on a appris : chez CE fournisseur, CETTE ligne (EAN, code ou nom)
+-- est CE produit, à CE facteur. La deuxième facture se rapproche toute seule.
+CREATE TABLE IF NOT EXISTS `wsm_purchase_map` (
+  `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `supplier_key` VARCHAR(60)  NOT NULL,
+  `line_key`     VARCHAR(190) NOT NULL,
+  `product_id`   VARCHAR(48)  NOT NULL,
+  `factor`       DECIMAL(10,4) NOT NULL DEFAULT 1,
+  `uses`         INT NOT NULL DEFAULT 0,
+  `updated_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_wsm_purchase_map` (`supplier_key`, `line_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

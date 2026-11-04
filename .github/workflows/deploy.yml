@@ -3146,6 +3146,59 @@ jobs:
           REMOTE
 
 
+      # ── PRZYJĘCIE Z FAKTURY : PDF (Claude) ou XML KSeF → PZ ────────────────
+      # Vérification seule : le module, les tables, une lecture à vide d'un
+      # petit XML KSeF (rien n'est écrit en base), les fichiers de factures
+      # inaccessibles depuis le web, les écrans fermés sans session, et la
+      # clé Claude dont dépend la lecture des PDF.
+      - name: Verify purchase-invoice import (PZ)
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -p ${{ vars.SSH_PORT || '22' }} \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "DB_USER='${{ secrets.WSM_DB_USER }}' DB_PASS='${{ secrets.WSM_DB_PASS }}' DIR_API='${{ vars.DEPLOY_DIR || '/var/www/html/mrszoko' }}/backoffice/api' DIR_BO='${{ vars.DEPLOY_DIR || '/var/www/html/mrszoko' }}/backoffice' bash -s" << 'REMOTE'
+          fail=0
+          echo "== przyjecie z faktury: moduly i ekrany =="
+          for f in zakupy.php wykresy.php stock.php; do [ -f "$DIR_API/$f" ] || { echo "  ^ BRAK: api/$f"; fail=1; }; done
+          for f in przyjecie.php magazyn_produkt.php magazyn.php; do [ -f "$DIR_BO/$f" ] || { echo "  ^ BRAK: $f"; fail=1; }; done
+          [ "$fail" = "0" ] && echo "  moduly i ekrany: obecne"
+          for e in dom curl json; do
+            php -m 2>/dev/null | grep -qix "$e" || { echo "  ^ BRAK rozszerzenia PHP: $e (XML KSeF / PDF przez Claude)"; fail=1; }
+          done
+          q() { mysql -u"$DB_USER" -p"$DB_PASS" -N -B mrszoko -e "$1" 2>/dev/null; }
+          T=$(q "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='mrszoko'
+                 AND table_name IN ('wsm_purchase_invoices','wsm_purchase_lines','wsm_purchase_map')")
+          [ "${T:-0}" = "3" ] && echo "  3 tabele faktur zakupu: obecne" || { echo "  ^ ZLE : tabele ${T:-0}/3"; fail=1; }
+          N=$(q "SELECT CONCAT(SUM(status='szkic'), ' do sprawdzenia, ', SUM(status='przyjeta'), ' przyjetych') FROM wsm_purchase_invoices")
+          echo "  faktury zakupu: ${N:-0}"
+          echo "== odczyt XML KSeF na sucho (nic nie zapisuje) =="
+          R=$(php -r '
+            require_once "'"$DIR_API"'/zakupy.php";
+            [$r, $e] = wsm_zak_from_ksef("<?xml version=\"1.0\"?><Faktura xmlns=\"http://crd.gov.pl/wzor/2025/06/25/13775/\"><Fa><P_2>T/1</P_2><FaWiersz><P_7>Test</P_7><P_8B>2</P_8B><P_9A>10.50</P_9A><P_12>23</P_12></FaWiersz></Fa></Faktura>");
+            $n = $r ? wsm_zak_normalize($r) : null;
+            echo $n ? "pozycji " . count($n["lines"]) . ", netto " . $n["lines"][0]["net"] . " gr, VAT " . $n["lines"][0]["vat"] . " gr"
+                    : "BLAD " . $e;
+            echo " | odczyt PDF (klucz Claude): ", wsm_tr_enabled() ? "tak" : "nie, tylko XML z KSeF";
+          ' 2>&1 | head -c 300)
+          echo "  $R"
+          case "$R" in "pozycji 1, netto 2100 gr, VAT 483 gr"*) ;; *) echo "  ^ ZLE : odczyt XML KSeF"; fail=1;; esac
+          echo "== dostep z sieci =="
+          BOU="http://localhost/mrszoko/backoffice"
+          c1=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/api/data/zakupy/2026/11/0000000000000000000000000000000000000000.pdf")
+          c2=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/przyjecie.php?id=1&plik=1")
+          c3=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/magazyn_produkt.php?id=x")
+          c4=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/api/zakupy.php")
+          echo "  plik faktury z sieci -> $c1 (403/404), przyjecie.php bez logowania -> $c2 (302), magazyn_produkt.php -> $c3 (302), api/zakupy.php -> $c4 (403/404)"
+          case "$c1" in 403|404) ;; *) echo "  ^ NOT OK : pliki faktur dostepne z sieci"; fail=1;; esac
+          case "$c4" in 403|404) ;; *) echo "  ^ NOT OK : modul dostepny z sieci"; fail=1;; esac
+          [ "$c2" = "302" ] && [ "$c3" = "302" ] || { echo "  ^ NOT OK : ekrany otwarte bez logowania"; fail=1; }
+          echo "  limit przesylania (PHP CLI): $(php -r 'echo ini_get("upload_max_filesize"), " / post ", ini_get("post_max_size");')"
+          if [ "$fail" = "0" ]; then echo "ALL PURCHASE CHECKS OK"; else echo "PURCHASE CHECKS FAILED"; exit 1; fi
+          REMOTE
+
+
       # Nettoyage transitoire : avant cette version, le back-office était servi À
       # PLAT sous /mrszoko/ (index.html, support.js, api/…). rsync tourne sans
       # --delete, donc ces fichiers resteraient servis à côté du nouveau layout
