@@ -1748,6 +1748,14 @@ function wsm_order_mark_paid(PDO $pdo, int $orderId, string $actor = 'stripe'): 
             } catch (Throwable $e) { /* le paiement reste écrit ; le document se refait à la main */ }
         }
     }
+    // L'ACHAT ENVOYÉ À META PAR LE SERVEUR — seulement si la caisse a vu
+    // l'accord « marketingowe », et sans jamais faire échouer l'encaissement
+    // (reklama.php attrape tout).
+    $rek = __DIR__ . '/reklama.php';
+    if ($paid && is_file($rek)) {
+        require_once $rek;
+        wsm_capi_on_paid($pdo, $orderId);
+    }
     return true;
 }
 

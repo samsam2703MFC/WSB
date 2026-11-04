@@ -36,6 +36,8 @@ if (is_file($WSM_API_DIR . '/sections.php')) require_once $WSM_API_DIR . '/secti
 if (is_file($WSM_API_DIR . '/metody.php')) require_once $WSM_API_DIR . '/metody.php';
 if (is_file(__DIR__ . '/znaki.php')) require_once __DIR__ . '/znaki.php';
 require_once $WSM_API_DIR . '/stripe.php';
+// Google et Meta : réglages, accord du visiteur, événements de mesure.
+if (is_file($WSM_API_DIR . '/reklama.php')) require_once $WSM_API_DIR . '/reklama.php';
 
 /**
  * La caisse fiscale est-elle branchée ? Charge fiskal.php à la demande : la
@@ -950,4 +952,72 @@ function legal_sections(array $pl, string $prefixe, array $vals): array {
         $out[] = [$t, legal_corps($b, $vals)];
     }
     return $out;
+}
+
+// ============================================================================
+//  GOOGLE ET META — la vitrine ne charge leurs scripts qu'après le « oui »
+//  (reklama.php). Ici, la colle : réglages, événements de la page, bannière.
+// ============================================================================
+
+/** Les réglages Google/Meta vérifiés ; tout vide si le module manque. */
+function ads_cfg(): array {
+    static $c = null;
+    if ($c !== null) return $c;
+    global $WSM_API_DIR;
+    $f = $WSM_API_DIR . '/reklama.php';
+    try {
+        if (is_file($f)) { require_once $f; return $c = wsm_ads_cfg(); }
+    } catch (Throwable $e) {}
+    return $c = ['gsc' => '', 'bing' => '', 'fb_domain' => '', 'ga4' => '', 'ads' => '', 'ads_label' => '', 'pixel' => '', 'bledne' => []];
+}
+
+/** Un événement de mesure pour la page en cours (vue produit, achat…). */
+function ads_event(array $ev): void {
+    $GLOBALS['WSM_ZDARZENIA'][] = $ev;
+}
+
+/** La tête : vérifications (sans effet), puis la config de zgody.js s'il y a quoi charger. */
+function ads_head(): string {
+    $cfg = ads_cfg();
+    if (!function_exists('wsm_ads_meta_html')) return '';
+    $h = wsm_ads_meta_html($cfg);
+    if (!wsm_ads_kategorie($cfg)) return $h;
+    $json = json_encode(wsm_ads_js_config($cfg, (array) ($GLOBALS['WSM_ZDARZENIA'] ?? [])),
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
+    return $h . '<script type="application/json" id="wsm-tags">' . $json . "</script>\n"
+              . '<script src="' . e(asset('zgody.js')) . '" defer></script>' . "\n";
+}
+
+/**
+ * La bannière d'accord. Deux boutons de même poids — « Akceptuję » et
+ * « Tylko niezbędne » : un refus caché derrière « Ustawienia » n'est pas un
+ * choix libre, et l'UODO le dit. Masquée par défaut : zgody.js l'ouvre
+ * quand aucun choix n'est encore fait. Sans JavaScript, rien ne se charge
+ * de toute façon, donc rien à demander.
+ */
+function ads_banner(array $S): string {
+    $k = function_exists('wsm_ads_kategorie') ? wsm_ads_kategorie(ads_cfg()) : [];
+    if (!$k) return '';
+    $t = fn(string $c, string $d = '') => e((string) ($S[$c] ?? $d));
+    $h  = '<div class="zgody" id="zgody" role="dialog" aria-modal="false" aria-labelledby="zgody-t" hidden>';
+    $h .= '<div class="zgody-in"><h2 id="zgody-t">' . $t('cookies.title', 'Pliki cookies') . '</h2>';
+    $h .= '<p>' . $t('cookies.lead') . ' <a href="' . e(u('prywatnosc')) . '">' . $t('cookies.policy', 'Polityka prywatności') . '</a></p>';
+    $h .= '<div class="zgody-opcje" hidden>';
+    $h .= '<label class="zgody-opt"><input type="checkbox" checked disabled> <span><b>' . $t('cookies.necessary') . '</b> ' . $t('cookies.necessary_d') . '</span></label>';
+    if (!empty($k['analityczne'])) $h .= '<label class="zgody-opt"><input type="checkbox" name="a" value="1"> <span><b>' . $t('cookies.analytics') . '</b> ' . $t('cookies.analytics_d') . '</span></label>';
+    if (!empty($k['marketingowe'])) $h .= '<label class="zgody-opt"><input type="checkbox" name="m" value="1"> <span><b>' . $t('cookies.marketing') . '</b> ' . $t('cookies.marketing_d') . '</span></label>';
+    $h .= '</div><div class="zgody-btn">';
+    $h .= '<button type="button" class="btn btn--brand" data-zgody="all">' . $t('cookies.accept', 'Akceptuję') . '</button>';
+    $h .= '<button type="button" class="btn" data-zgody="none">' . $t('cookies.reject', 'Tylko niezbędne') . '</button>';
+    $h .= '<button type="button" class="btn btn--link" data-zgody="more">' . $t('cookies.settings', 'Ustawienia') . '</button>';
+    $h .= '<button type="button" class="btn" data-zgody="save" hidden>' . $t('cookies.save', 'Zapisz wybór') . '</button>';
+    $h .= '</div></div></div>';
+    return $h;
+}
+
+/** Le lien « Ustawienia cookies » du pied de page — seulement s'il y a une bannière. */
+function ads_footer_link(array $S): string {
+    $k = function_exists('wsm_ads_kategorie') ? wsm_ads_kategorie(ads_cfg()) : [];
+    if (!$k) return '';
+    return '<button type="button" class="foot-cookies" data-zgody="open">' . e((string) ($S['cookies.footer'] ?? 'Ustawienia cookies')) . '</button>';
 }

@@ -543,7 +543,9 @@ ok('aucun « — » dans ces textes (le déploiement le remplace en base)', !arr
 /** La section Marketing du menu, lue dans console.php (sans démarrer la console). */
 function console_sections_marketing(string $racine): bool {
     $c = (string) file_get_contents($racine . '/mrszoko/backoffice/console.php');
-    return (bool) preg_match("/'Marketing' => \[\s*'newsletter\.php'\s*=> 'Newsletter',\s*'sms\.php'\s*=> 'SMS',\s*'subskrybenci\.php' => 'Subskrybenci',\s*'kampanie\.php'\s*=> 'Kampanie',/", $c);
+    // Les quatre écrans d'envoi, dans cet ordre ; d'autres écrans marketing
+    // (posts, formulaires, Google, Meta) peuvent s'intercaler.
+    return (bool) preg_match("/'Marketing' => \[\s*'newsletter\.php'\s*=> 'Newsletter',\s*'sms\.php'\s*=> 'SMS',[^\]]*?'subskrybenci\.php' => 'Subskrybenci',\s*'kampanie\.php'\s*=> 'Kampanie',/", $c);
 }
 function WSM_PAGE_RESERVED_TEST(): array { require_once dirname(__DIR__) . '/pages.php'; return WSM_PAGE_RESERVED; }
 

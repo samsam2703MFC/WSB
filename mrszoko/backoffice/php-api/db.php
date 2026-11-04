@@ -419,7 +419,9 @@ function wsm_ensure_nouvelles_tables(PDO $pdo): void {
               'wsm_pages', 'wsm_page_i18n', 'wsm_sections', 'wsm_section_i18n', 'wsm_media',
               'wsm_slides', 'wsm_slide_i18n',
               'wsm_subscribers', 'wsm_mkt_events', 'wsm_newsletters', 'wsm_sms_campaigns', 'wsm_sms',
-              'wsm_purchase_invoices', 'wsm_purchase_lines', 'wsm_purchase_map'] as $t) {
+              'wsm_purchase_invoices', 'wsm_purchase_lines', 'wsm_purchase_map',
+              'wsm_ad_orders', 'wsm_capi_events', 'wsm_media_meta', 'wsm_social_posts',
+              'wsm_forms', 'wsm_form_entries'] as $t) {
         if (!wsm_table_exists($pdo, $t)) { wsm_apply_schema($pdo); break; }
     }
     $links = __DIR__ . '/links.php';

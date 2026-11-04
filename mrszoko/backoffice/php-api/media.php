@@ -131,7 +131,11 @@ function wsm_media_delete(string $url): bool {
     $path = wsm_media_dir() . '/' . $m[1];
     if (!is_file($path) || !@unlink($path)) return false;
     // Le nom part avec le fichier — sans jamais faire échouer la suppression.
-    if (function_exists('wsm_pdo')) { try { wsm_media_title_set(wsm_pdo(), $url, ''); } catch (Throwable $e) {} }
+    // La fiche de la médiathèque et les versions JPEG des réseaux aussi.
+    if (function_exists('wsm_pdo')) {
+        try { wsm_media_title_set(wsm_pdo(), $url, ''); } catch (Throwable $e) {}
+        try { require_once __DIR__ . '/mediateka.php'; wsm_mediateka_forget(wsm_pdo(), $url); } catch (Throwable $e) {}
+    }
     return true;
 }
 

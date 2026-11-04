@@ -103,6 +103,44 @@ function wsm_settings_fields(): array {
         'allegro.sandbox'       => ['allegro', 'Środowisko', ['allegro', 'sandbox'], 'WSM_ALLEGRO_SANDBOX', 'select:1|0',
                              '1 = sandbox (testy), 0 = produkcja.'],
 
+        // GOOGLE : être trouvé (Search Console), mesurer (GA4), payer les
+        // conversions (Ads) et apparaître dans l'onglet Zakupy (Merchant
+        // Center, qui lit le flux /feed/produkty.xml). Tout est public — un
+        // identifiant de balise se lit dans le code de n'importe quelle page —
+        // sauf qu'aucun ne se charge avant l'accord du visiteur (reklama.php).
+        'google.site_verification' => ['google', 'Kod weryfikacji Search Console', ['google', 'site_verification'], 'WSM_GOOGLE_SITE_VERIFICATION', 'text',
+                             'Search Console → Dodaj usługę → Prefiks URL → metoda „Tag HTML”: wklej tylko wartość content="…".'],
+        'google.ga4_id'     => ['google', 'Identyfikator GA4 (G-…)', ['google', 'ga4_id'], 'WSM_GOOGLE_GA4_ID', 'text',
+                             'Google Analytics → Administracja → Strumienie danych → Identyfikator pomiaru. Ładuje się dopiero po zgodzie „analityczne”.'],
+        'google.ads_id'     => ['google', 'Google Ads — identyfikator konwersji (AW-…)', ['google', 'ads_id'], 'WSM_GOOGLE_ADS_ID', 'text',
+                             'Google Ads → Cele → Konwersje → Zakup → Skonfiguruj tag samodzielnie. Ładuje się dopiero po zgodzie „marketingowe”.'],
+        'google.ads_label'  => ['google', 'Google Ads — etykieta konwersji „zakup”', ['google', 'ads_label'], 'WSM_GOOGLE_ADS_LABEL', 'text',
+                             'Druga część send_to: AW-123/<etykieta>. Bez niej zakup nie liczy się jako konwersja.'],
+        'google.merchant_id' => ['google', 'Merchant Center — ID konta', ['google', 'merchant_id'], 'WSM_GOOGLE_MERCHANT_ID', 'text',
+                             'Tylko do linku w konsoli. Plik produktów dla Merchant Center: /feed/produkty.xml.'],
+        'bing.site_verification' => ['google', 'Kod weryfikacji Bing Webmaster', ['bing', 'site_verification'], 'WSM_BING_SITE_VERIFICATION', 'text',
+                             'Opcjonalnie. Bing Webmaster Tools → metoda „Meta tag”: wartość content="…".'],
+
+        // META : Facebook et Instagram. Le pixel et le domaine sont publics ;
+        // les deux jetons (Conversions API, Page) ouvrent la publicité et la
+        // page de la marque — ils ne quittent jamais le serveur.
+        'meta.pixel_id'     => ['meta', 'Piksel Meta — ID zbioru danych', ['meta', 'pixel_id'], 'WSM_META_PIXEL_ID', 'text',
+                             'Menedżer zdarzeń → Źródła danych → ID (same cyfry). Ładuje się dopiero po zgodzie „marketingowe”.'],
+        'meta.capi_token'   => ['meta', 'Token Conversions API', ['meta', 'capi_token'], 'WSM_META_CAPI_TOKEN', 'secret',
+                             'Menedżer zdarzeń → zbiór danych → Ustawienia → Conversions API → Wygeneruj token. Zakup wysyłany z serwera, tylko gdy klient zgodził się na marketing.'],
+        'meta.test_event_code' => ['meta', 'Kod zdarzeń testowych', ['meta', 'test_event_code'], 'WSM_META_TEST_EVENT_CODE', 'text',
+                             'Opcjonalnie, na czas testów (TEST12345). Puste = zdarzenia produkcyjne.'],
+        'meta.domain_verification' => ['meta', 'Weryfikacja domeny (Facebook)', ['meta', 'domain_verification'], 'WSM_META_DOMAIN_VERIFICATION', 'text',
+                             'Business Manager → Bezpieczeństwo marki → Domeny → metoda „Meta-tag”: wartość content="…".'],
+        'meta.page_id'      => ['meta', 'Strona Facebook — ID', ['meta', 'page_id'], 'WSM_META_PAGE_ID', 'text',
+                             'Strona → Informacje → Przejrzystość strony → Identyfikator strony.'],
+        'meta.page_token'   => ['meta', 'Token strony (publikowanie)', ['meta', 'page_token'], 'WSM_META_PAGE_TOKEN', 'secret',
+                             'Bezterminowy token strony z uprawnieniami pages_manage_posts, pages_read_engagement, instagram_basic, instagram_content_publish. Nigdy nie opuszcza serwera.'],
+        'meta.ig_user_id'   => ['meta', 'Instagram — ID konta firmowego', ['meta', 'ig_user_id'], 'WSM_META_IG_USER_ID', 'text',
+                             'Konto firmowe połączone ze stroną. Przycisk „Sprawdź połączenie” w Marketing → Meta odczyta je sam.'],
+        'meta.graph_version' => ['meta', 'Wersja Graph API', ['meta', 'graph_version'], 'WSM_META_GRAPH_VERSION', 'text',
+                             'Puste = v23.0. Zmieniaj, gdy Meta ogłosi wycofanie wersji.'],
+
         // SMS marketing : SMSAPI (smsapi.php), comme le CRM.
         'smsapi.token'   => ['sms', 'Token OAuth SMSAPI', ['smsapi', 'token'], 'WSM_SMSAPI_TOKEN', 'secret',
                              'Panel SMSAPI → Ustawienia API → Tokeny OAuth, z uprawnieniem „sms”. Nigdy nie opuszcza serwera.'],
@@ -417,6 +455,8 @@ const WSM_SETTINGS_KLUCZE = [
     'mail'    => 'Poczta (SMTP)',
     'sms'     => 'SMSAPI',
     'allegro' => 'Allegro',
+    'google'  => 'Google (Search Console, GA4, Ads)',
+    'meta'    => 'Meta (Facebook, Instagram)',
 ];
 
 /** Les champs de ces groupes, dans l'ordre des groupes (les réglages de politique en moins). */

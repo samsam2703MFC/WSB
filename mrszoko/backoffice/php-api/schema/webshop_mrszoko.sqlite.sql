@@ -1212,3 +1212,99 @@ CREATE TABLE IF NOT EXISTS wsm_purchase_map (
   updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (supplier_key, line_key)
 );
+
+-- Marketing Google / Meta (reklama.php, mediateka.php, social.php, formularze.php)
+CREATE TABLE IF NOT EXISTS wsm_ad_orders (
+  order_id     INTEGER PRIMARY KEY,
+  analityczne  INTEGER NOT NULL DEFAULT 0,
+  marketingowe INTEGER NOT NULL DEFAULT 0,
+  fbp          TEXT NOT NULL DEFAULT '',
+  fbc          TEXT NOT NULL DEFAULT '',
+  ip           TEXT NOT NULL DEFAULT '',
+  ua           TEXT NOT NULL DEFAULT '',
+  page_url     TEXT NOT NULL DEFAULT '',
+  created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS ix_wsm_ad_orders_date ON wsm_ad_orders (created_at);
+
+CREATE TABLE IF NOT EXISTS wsm_capi_events (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id   INTEGER NOT NULL,
+  event_name TEXT NOT NULL,
+  status     TEXT NOT NULL DEFAULT 'nowe',
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  response   TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  tried_at   TEXT NULL,
+  sent_at    TEXT NULL,
+  UNIQUE (order_id, event_name)
+);
+CREATE INDEX IF NOT EXISTS ix_wsm_capi_events_status ON wsm_capi_events (status, id);
+
+CREATE TABLE IF NOT EXISTS wsm_media_meta (
+  url        TEXT PRIMARY KEY,
+  kategoria  TEXT NOT NULL DEFAULT '',
+  okazja     TEXT NOT NULL DEFAULT '',
+  product_id TEXT NOT NULL DEFAULT '',
+  alt        TEXT NOT NULL DEFAULT '',
+  tagi       TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_by TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS ix_wsm_media_meta_kat ON wsm_media_meta (kategoria, okazja);
+CREATE INDEX IF NOT EXISTS ix_wsm_media_meta_prod ON wsm_media_meta (product_id);
+
+CREATE TABLE IF NOT EXISTS wsm_social_posts (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  tekst        TEXT NOT NULL,
+  media        TEXT NOT NULL,
+  product_id   TEXT NOT NULL DEFAULT '',
+  link_code    TEXT NOT NULL DEFAULT '',
+  kanaly       TEXT NOT NULL DEFAULT 'fb,ig',
+  termin       TEXT NULL,
+  status       TEXT NOT NULL DEFAULT 'szkic',
+  fb_status    TEXT NOT NULL DEFAULT '',
+  fb_id        TEXT NOT NULL DEFAULT '',
+  fb_url       TEXT NOT NULL DEFAULT '',
+  fb_error     TEXT NOT NULL DEFAULT '',
+  ig_status    TEXT NOT NULL DEFAULT '',
+  ig_id        TEXT NOT NULL DEFAULT '',
+  ig_url       TEXT NOT NULL DEFAULT '',
+  ig_error     TEXT NOT NULL DEFAULT '',
+  created_by   TEXT NOT NULL DEFAULT '',
+  created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  claimed_at   TEXT NULL,
+  published_at TEXT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_wsm_social_posts_due ON wsm_social_posts (status, termin);
+
+CREATE TABLE IF NOT EXISTS wsm_forms (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug          TEXT NOT NULL UNIQUE,
+  nazwa         TEXT NOT NULL,
+  wstep         TEXT NOT NULL,
+  pola          TEXT NOT NULL,
+  podziekowanie TEXT NOT NULL DEFAULT '',
+  powiadom      TEXT NOT NULL DEFAULT '',
+  newsletter    INTEGER NOT NULL DEFAULT 1,
+  aktywny       INTEGER NOT NULL DEFAULT 1,
+  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS wsm_form_entries (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  form_id     INTEGER NOT NULL,
+  dane        TEXT NOT NULL,
+  email       TEXT NOT NULL DEFAULT '',
+  status      TEXT NOT NULL DEFAULT 'nowe',
+  zgoda_tekst TEXT NOT NULL DEFAULT '',
+  newsletter  INTEGER NOT NULL DEFAULT 0,
+  ip          TEXT NOT NULL DEFAULT '',
+  lang        TEXT NOT NULL DEFAULT 'pl',
+  notatka     TEXT NOT NULL DEFAULT '',
+  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS ix_wsm_form_entries_form ON wsm_form_entries (form_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_wsm_form_entries_ip ON wsm_form_entries (ip, created_at);

@@ -58,8 +58,10 @@ ok('Allegro aussi : client, secret, jeton, vendeur, environnement', isset($f['al
    $f['allegro.seller_id'], $f['allegro.sandbox']) && $f['allegro.client_secret'][4] === 'secret' && $f['allegro.refresh_token'][4] === 'secret');
 $kf = wsm_settings_klucze_fields();
 $envs = array_map(fn($d) => $d[3], $kf);
-ok('la table couvre les 9 intégrations', array_keys(WSM_SETTINGS_KLUCZE) === ['claude', 'stripe', 'ksef', 'paragon', 'inpost', 'dpd', 'mail', 'sms', 'allegro']
-   && count(array_unique(array_map(fn($d) => $d[0], $kf))) === 9);
+ok('la table couvre les 11 intégrations (Google et Meta compris)', array_keys(WSM_SETTINGS_KLUCZE) === ['claude', 'stripe', 'ksef', 'paragon', 'inpost', 'dpd', 'mail', 'sms', 'allegro', 'google', 'meta']
+   && count(array_unique(array_map(fn($d) => $d[0], $kf))) === 11);
+ok('… dont les deux jetons Meta, en secrets', ($f['meta.capi_token'][4] ?? '') === 'secret' && ($f['meta.page_token'][4] ?? '') === 'secret'
+   && in_array('WSM_META_CAPI_TOKEN', $envs, true) && in_array('WSM_META_PAGE_TOKEN', $envs, true));
 ok('… avec tous les secrets connus (Stripe, KSeF, SMSAPI, Fakturownia, InPost, DPD, SMTP, Claude, Allegro)',
    !array_diff(['WSM_STRIPE_SECRET_KEY', 'WSM_STRIPE_WEBHOOK_SECRET', 'WSM_KSEF_TOKEN', 'WSM_SMSAPI_TOKEN', 'WSM_FAKTUROWNIA_TOKEN',
                 'WSM_INPOST_TOKEN', 'WSM_DPD_PASSWORD', 'WSM_MAIL_SMTP_PASS', 'WSM_ANTHROPIC_API_KEY', 'WSM_ALLEGRO_CLIENT_SECRET'], $envs));

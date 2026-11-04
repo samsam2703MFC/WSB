@@ -159,7 +159,30 @@ if ($page === 'sitemap.xml') {
     if (function_exists('wsm_page_sitemap')) {
         foreach (wsm_page_sitemap($pdo) as $sl) $urls[] = ['path' => '/' . $sl, 'priority' => '0.6'];
     }
+    // Les formulaires actifs (hurt, próbki, warsztaty…) : ce sont des pages
+    // d'entrée pour les professionnels qui cherchent un fournisseur.
+    if (is_file($WSM_API_DIR . '/formularze.php')) {
+        require_once $WSM_API_DIR . '/formularze.php';
+        foreach (wsm_forms_sitemap($pdo) as $sl) $urls[] = ['path' => '/f/' . $sl, 'priority' => '0.6'];
+    }
     echo seo_sitemap($urls, $langs, WSM_SHOP_DEFAULT_LANG);
+    exit;
+}
+
+// LE FLUX PRODUITS — Google Merchant Center (onglet Zakupy) et catalogue Meta
+// (boutique Facebook et Instagram) le relisent chaque jour à cette adresse.
+// Même source que les pages : le prix du flux est le prix affiché.
+if ($page === 'feed' && ($seg[1] ?? '') === 'produkty.xml') {
+    require_once $WSM_API_DIR . '/mediateka.php';      // versions JPEG des photos
+    $base = seo_origin() !== '' ? seo_origin() . shop_base() : wsm_shop_base_url();
+    $fl = in_array((string) ($_GET['lang'] ?? ''), $langs, true) ? (string) $_GET['lang'] : WSM_SHOP_DEFAULT_LANG;
+    $feed = wsm_feed_produkty($pdo, $fl, $base);
+    header('Content-Type: application/xml; charset=utf-8');
+    header('Cache-Control: public, max-age=1800');
+    // Un fichier pour les robots des places de marché, pas une page à
+    // indexer : il dupliquerait chaque fiche produit dans les résultats.
+    header('X-Robots-Tag: noindex');
+    echo wsm_feed_xml($feed['items'], (string) ($S['brand'] ?? 'Szoko Shop'), $base . '/');
     exit;
 }
 
@@ -198,7 +221,7 @@ function upsell_block(PDO $pdo, array $ids, string $lang, array $S): void {
               // le moment où le client décide. Rien ne s'affiche quand le poids
               // manque — « 0,00 zł/kg » se lirait comme une gratuité.
               if (!empty($p['price_per_kg'])): ?><span class="za-kg mono"><?= e(zl($p['price_per_kg'])) ?><?= e($S['price.per_kg'] ?? '') ?></span><?php endif; ?>
-            <form method="post" action="<?= e(u('koszyk')) ?>" data-add>
+            <form method="post" action="<?= e(u('koszyk')) ?>" data-add data-cena="<?= (int) $p['price'] ?>">
               <?= csrf_field() ?>
               <input type="hidden" name="add" value="<?= e($p['id']) ?>">
               <input type="hidden" name="qty" value="1">
@@ -432,6 +455,16 @@ if ($method === 'POST') {
             // on retombe sur l'affichage de la caisse, plus bas
         } else {
             cart_write([]);
+            // L'ACCORD COOKIES TEL QU'IL ÉTAIT EN COMMANDANT. C'est lui, et lui
+            // seul, qui autorisera l'envoi de l'achat à Meta par le serveur
+            // une fois la commande payée (reklama.php).
+            if (function_exists('wsm_ads_order_capture')) {
+                try {
+                    require_once $WSM_API_DIR . '/contact.php';      // wsm_contact_ip()
+                    wsm_ads_order_capture($pdo, (int) ($order['id'] ?? 0), wsm_zgody_odczyt(), $_COOKIE, wsm_contact_ip(),
+                                          (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), seo_url('/kasa', $lang, WSM_SHOP_DEFAULT_LANG));
+                } catch (Throwable $e) { /* la commande d'abord */ }
+            }
             // Les cases marketing de la caisse : inscription avec la preuve
             // (texte exact affiché). Ne fait jamais échouer la commande.
             if (!empty($_POST['zgoda_nl']) || !empty($_POST['zgoda_sms'])) {
@@ -685,7 +718,7 @@ if ($page === '') {
             <?php // Rupture : on prend la commande quand même et on prévient.
                   // Refuser faute de stock, c'est perdre le client. ?>
             <?php if ($p['stock'] <= 0): ?><span class="mono ondemand"><?= e($S['product.on_demand'] ?? '') ?></span><?php endif; ?>
-            <form method="post" action="<?= e(u('koszyk')) ?>" data-add>
+            <form method="post" action="<?= e(u('koszyk')) ?>" data-add data-cena="<?= (int) $p['price'] ?>">
               <?= csrf_field() ?>
               <input type="hidden" name="add" value="<?= e($p['id']) ?>">
               <input type="hidden" name="qty" value="1">
@@ -789,12 +822,15 @@ if ($page === 'p') {
         ? (string) $p['image']
         : seo_origin() . shop_base() . '/' . ltrim((string) $p['image'], '/'))
     : '';
+    // La vue produit, pour GA4 et Meta — ne part qu'après l'accord (zgody.js).
+    if (function_exists('wsm_ads_item')) ads_event(['n' => 'view_item', 'value' => round($p['price'] / 100, 2), 'items' => [wsm_ads_item($p)]]);
 layout_head($S, $lang, $langs, $p['name'], $p['desc'], 'p', $ogImg);
     layout_header($S, $lang, $langs, $cartCount);
     // Le prix balisé sort du MÊME tableau que le prix affiché douze lignes
     // plus bas : un écart entre les deux fait retirer les résultats enrichis
     // du site entier, et ce serait mérité.
-    seo_product($p, $lang, WSM_SHOP_DEFAULT_LANG);
+    seo_product($p, $lang, WSM_SHOP_DEFAULT_LANG,
+                function_exists('wsm_ads_ship_min') ? ['ship' => wsm_ads_ship_min($pdo, (int) $p['weight_g']), 'handling' => wsm_ads_handling_days()] : []);
     ?>
 <main class="wrap block">
   <?php // Le fil d'Ariane passe par le RAYON du produit : « Sklep › Mąki ›
@@ -1155,6 +1191,105 @@ if ($page === 'newsletter' || $page === 's') {
   <?php nl_form($S, $v, $nlErr); ?>
   <?php endif; ?>
   <p><a class="btn btn--ghost" href="<?= e(u()) ?>"><?= e($S['cart.empty_cta'] ?? '') ?></a></p>
+</main>
+<?php
+    layout_footer($S);
+    exit;
+}
+
+// ---------------------------------------------------------- FORMULAIRES -----
+//  /f/<adresse> : les formulaires construits dans Marketing → Formularze.
+//  Même fabrique que Kontakt (piège, jeton horodaté, plafond par IP), et la
+//  preuve de l'accord recomposée ici, jamais renvoyée par le navigateur.
+if ($page === 'f' && is_file($WSM_API_DIR . '/formularze.php')) {
+    require_once $WSM_API_DIR . '/formularze.php';
+    $form = wsm_form_by_slug($pdo, (string) ($seg[1] ?? ''));
+    if (!$form) {
+        http_response_code(404);
+        layout_head($S, $lang, $langs, '404', '', 'koszyk');
+        layout_header($S, $lang, $langs, $cartCount);
+        echo '<main class="wrap block"><h1>404</h1><p class="muted">' . e($S['form.not_found'] ?? '') . '</p>'
+           . '<p><a class="btn btn--brand" href="' . e(u()) . '">' . e($S['cart.empty_cta'] ?? '') . '</a></p></main>';
+        layout_footer($S);
+        exit;
+    }
+    $sprzedawca = trim((string) ($S['seller.name'] ?? '')) !== '' ? (string) $S['seller.name'] : (string) ($S['brand'] ?? '');
+    $tZgoda = str_replace('{sprzedawca}', $sprzedawca, (string) ($S['form.consent'] ?? ''));
+    [$tNl] = nl_textes_zgody($S);
+    $fErr = []; $fv = [];
+    if ($method === 'POST') {
+        [$fid, $fErr] = wsm_form_submit($pdo, $form, $_POST, ['zgoda' => $tZgoda, 'nl' => $tNl], $lang);
+        // Un robot repéré reçoit la page de remerciement, comme tout le monde :
+        // lui dire pourquoi il est refusé lui apprendrait quoi corriger.
+        if ($fid || isset($fErr['_bot'])) redirect(u('f/' . $form['slug'], ['ok' => 1]));
+        $fv = $_POST;
+    }
+    $ok = isset($_GET['ok']);
+    // La case newsletter est déjà dans ce formulaire : pas un second
+    // formulaire d'inscription dans le pied de la même page.
+    if (!empty($form['newsletter'])) $GLOBALS['WSM_PAS_DE_NL'] = true;
+    layout_head($S, $lang, $langs, (string) $form['nazwa'], mb_substr(trim((string) $form['wstep']), 0, 160), 'f');
+    layout_header($S, $lang, $langs, $cartCount);
+    ?>
+<main class="wrap block formularz">
+  <?php layout_crumbs([($S['nav.shop'] ?? 'Sklep') => u(), (string) $form['nazwa'] => null]); ?>
+  <h1><?= e((string) $form['nazwa']) ?></h1>
+  <?php if (trim((string) $form['wstep']) !== ''): ?><p class="lead"><?= nl2br(e((string) $form['wstep'])) ?></p><?php endif; ?>
+  <?php if ($ok): ?>
+    <?php notice('ok', trim((string) $form['podziekowanie']) !== '' ? (string) $form['podziekowanie'] : (string) ($S['form.sent'] ?? '')); ?>
+    <p><a class="btn btn--brand" href="<?= e(u()) ?>"><?= e($S['cart.empty_cta'] ?? '') ?></a></p>
+  <?php else: ?>
+    <?php if (isset($fErr['_limit'])) notice('error', $fErr['_limit']); elseif ($fErr) notice('error', $S['contact.error'] ?? ''); ?>
+    <form method="post" class="checkout-form" novalidate>
+      <?= csrf_field() ?>
+      <input type="hidden" name="_ts" value="<?= e(wsm_contact_stamp()) ?>">
+      <div class="hp" aria-hidden="true">
+        <label for="f-firma_www">Nie wypełniaj tego pola</label>
+        <input type="text" id="f-firma_www" name="firma_www" tabindex="-1" autocomplete="off" value="">
+      </div>
+      <fieldset>
+        <p class="hint"><?= e($S['contact.required'] ?? '') ?></p>
+        <?php foreach ($form['pola_list'] as $pole):
+            $pid = (string) $pole['id']; $id = 'f-' . $pid; $err = $fErr[$pid] ?? '';
+            $val = (string) (($fv['p'] ?? [])[$pid] ?? ''); $req = !empty($pole['wymagane']);
+            $aria = $err ? ' aria-invalid="true" aria-describedby="' . e($id) . '-e"' : '';
+            $name = 'p[' . e($pid) . ']'; ?>
+        <p class="field<?= $err ? ' has-error' : '' ?><?= $pole['typ'] === 'textarea' ? ' wide' : '' ?>">
+          <?php if ($pole['typ'] === 'checkbox'): ?>
+          <label class="check" for="<?= e($id) ?>"><input type="checkbox" id="<?= e($id) ?>" name="<?= $name ?>" value="1"<?= $val !== '' ? ' checked' : '' ?><?= $aria ?>>
+            <span><?= e((string) $pole['etykieta']) ?><?= $req ? ' <span aria-hidden="true">*</span>' : '' ?></span></label>
+          <?php else: ?>
+          <label for="<?= e($id) ?>"><?= e((string) $pole['etykieta']) ?><?= $req ? ' <span aria-hidden="true">*</span>' : '' ?></label>
+          <?php if ($pole['typ'] === 'textarea'): ?>
+          <textarea id="<?= e($id) ?>" name="<?= $name ?>" rows="5" maxlength="5000"<?= $req ? ' required' : '' ?><?= $aria ?>><?= e($val) ?></textarea>
+          <?php elseif ($pole['typ'] === 'select'): ?>
+          <select id="<?= e($id) ?>" name="<?= $name ?>"<?= $req ? ' required' : '' ?><?= $aria ?>>
+            <option value=""><?= e($S['form.choose'] ?? '—') ?></option>
+            <?php foreach ((array) $pole['opcje'] as $o): ?><option<?= $val === (string) $o ? ' selected' : '' ?>><?= e((string) $o) ?></option><?php endforeach; ?>
+          </select>
+          <?php else:
+              $typ = ['email' => 'email', 'tel' => 'tel', 'number' => 'number', 'date' => 'date'][$pole['typ']] ?? 'text';
+              $ac = ['email' => 'email', 'tel' => 'tel'][$pole['typ']] ?? ($pid === 'imie' ? 'name' : ($pid === 'firma' ? 'organization' : '')); ?>
+          <input id="<?= e($id) ?>" name="<?= $name ?>" type="<?= $typ ?>" value="<?= e($val) ?>" maxlength="300"<?= $req ? ' required' : '' ?><?= $ac !== '' ? ' autocomplete="' . $ac . '"' : '' ?><?= $pole['typ'] === 'nip' ? ' inputmode="numeric"' : '' ?><?= $pole['typ'] === 'number' ? ' min="0" step="1"' : '' ?><?= $aria ?>>
+          <?php endif; endif; ?>
+          <?php if ($err): ?><small class="err" id="<?= e($id) ?>-e"><?= e($err) ?></small><?php endif; ?>
+        </p>
+        <?php endforeach; ?>
+        <p class="field wide<?= isset($fErr['zgoda']) ? ' has-error' : '' ?>">
+          <label class="check" for="f-zgoda"><input type="checkbox" id="f-zgoda" name="zgoda" value="1"<?= !empty($fv['zgoda']) ? ' checked' : '' ?>>
+            <span><?= e($tZgoda) ?> <a href="<?= e(u('prywatnosc')) ?>"><?= e($S['legal.privacy'] ?? '') ?></a> <span aria-hidden="true">*</span></span></label>
+          <?php if (isset($fErr['zgoda'])): ?><small class="err"><?= e($fErr['zgoda']) ?></small><?php endif; ?>
+        </p>
+        <?php if (!empty($form['newsletter'])): ?>
+        <p class="field wide">
+          <label class="check" for="f-zgoda_nl"><input type="checkbox" id="f-zgoda_nl" name="zgoda_nl" value="1"<?= !empty($fv['zgoda_nl']) ? ' checked' : '' ?>>
+            <span><?= e($tNl) ?></span></label>
+        </p>
+        <?php endif; ?>
+      </fieldset>
+      <p class="pay-info"><button class="btn btn--brand" type="submit"><?= e($S['form.submit'] ?? ($S['contact.submit'] ?? '')) ?></button></p>
+    </form>
+  <?php endif; ?>
 </main>
 <?php
     layout_footer($S);
@@ -1579,6 +1714,12 @@ if ($page === 'kasa') {
         echo '</p>';
     };
 
+    if ($q && function_exists('wsm_ads_item')) {
+        ads_event(['n' => 'begin_checkout', 'value' => round(((int) $q['total_gross']) / 100, 2),
+                   'items' => array_map(fn($l) => ['id' => (string) $l['id'], 'name' => (string) $l['name'],
+                                                   'price' => round(((int) $l['unit_gross']) / 100, 2), 'qty' => (int) $l['qty']],
+                                        (array) ($q['lines'] ?? []))]);
+    }
     layout_head($S, $lang, $langs, $S['checkout.title'] ?? '', '', 'kasa');
     layout_header($S, $lang, $langs, $cartCount);
     ?>
@@ -2125,6 +2266,9 @@ if ($page === 'zamowienie') {
         wsm_stripe_session_sync($pdo, $o, (string) $_GET['session_id']);
         $o = wsm_order_by_code($pdo, (string) $o['code'], (string) $o['access_token']);
     }
+    // L'ACHAT, mesuré une seule fois et seulement payé : même identifiant que
+    // celui que le serveur envoie à Meta (dédoublonnage).
+    if ($o && $o['payment_status'] === 'oplacone' && function_exists('wsm_ads_purchase_event')) ads_event(wsm_ads_purchase_event($o));
     layout_head($S, $lang, $langs, $S['order.title'] ?? '', '', 'zamowienie');
     layout_header($S, $lang, $langs, $cartCount);
     if (!$o) {

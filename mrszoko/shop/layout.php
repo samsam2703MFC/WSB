@@ -39,6 +39,10 @@ function layout_head(array $S, string $lang, array $langs, string $title = '',
 // émis ici auparavant étaient relatifs : Google les ignore en bloc, sans un
 // mot dans la Search Console. Ils n'ont donc jamais rien fait.
 seo_head($page, $lang, $langs, $title, $desc, WSM_SHOP_DEFAULT_LANG, $image);
+// Google et Meta : codes de vérification, puis — seulement s'il y a des
+// balises réglées — la config de zgody.js. Aucun script tiers ici : ils ne
+// se chargent qu'après l'accord du visiteur.
+echo ads_head();
 ?>
 </head>
 <!-- La confirmation d'ajout est traduite en base (product.added) ; sans cet
@@ -190,9 +194,11 @@ function layout_footer(array $S, string $lang = ''): void {
             foreach (liens_uklad(wsm_pdo(), $S, $lang, 'footer') as $l): ?>
       <a href="<?= e($l['href']) ?>"><?= e($l['label']) ?></a>
       <?php endforeach; ?>
+      <?= ads_footer_link($S) ?>
     </nav>
   </div>
 </footer>
+<?= ads_banner($S) ?>
 <script src="<?= e(asset('shop.js')) ?>" defer></script>
 </body>
 </html>

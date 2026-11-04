@@ -32,4 +32,25 @@ $pdo = wsm_bootstrap();
 $r = wsm_mkt_pump($pdo, max(0, (int) ($argv[1] ?? 30)), max(0, (int) ($argv[2] ?? 30)), 50.0);
 echo 'kolejka: e-mail ' . $r['mail'] . ($r['mail_bledy'] ? ' (błędy ' . $r['mail_bledy'] . ')' : '')
    . ', sms ' . $r['sms'] . ($r['uwagi'] ? ' — ' . implode('; ', $r['uwagi']) : '') . "\n";
+
+// LES POSTS PLANIFIÉS ET LES ACHATS POUR META. Chacun dans son try : une
+// panne de Meta ne doit pas empêcher la newsletter de partir, ni l'inverse.
+// L'adresse publique vient de shop_url (la tâche tourne hors requête : sans
+// elle, Instagram ne saurait pas où chercher les photos).
+try {
+    require_once __DIR__ . '/social.php';
+    require_once __DIR__ . '/shop.php';
+    $url = (string) (wsm_config()['shop_url'] ?? '');
+    if ($url !== '' && !preg_match('/^x{2,}$/i', $url)) {
+        $s = wsm_social_pump($pdo, rtrim($url, '/'), 5);
+        if ($s['opublikowane'] || $s['bledy']) echo 'kolejka: posty ' . $s['opublikowane'] . ($s['bledy'] ? ' (błędy ' . $s['bledy'] . ')' : '') . "\n";
+    }
+    // Les versions JPEG du flux produits, fabriquées ici plutôt qu'à la
+    // première lecture publique du flux (25 au plus par passage).
+    if ($url !== '' && !preg_match('/^x{2,}$/i', $url)) { require_once __DIR__ . '/mediateka.php'; wsm_feed_produkty($pdo, 'pl', rtrim($url, '/')); }
+    $c = wsm_capi_pump($pdo, 20);
+    if ($c['wyslane'] || $c['bledy']) echo 'kolejka: meta zakupy ' . $c['wyslane'] . ($c['bledy'] ? ' (błędy ' . $c['bledy'] . ')' : '') . "\n";
+} catch (Throwable $e) {
+    echo 'kolejka: posty/meta — ' . $e->getMessage() . "\n";
+}
 flock($verrou, LOCK_UN);

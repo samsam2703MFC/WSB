@@ -180,7 +180,7 @@ function seo_org(array $S, string $lang, string $defaut = 'pl'): void {
  *
  * @param array $p produit tel que wsm_shop_product() le rend
  */
-function seo_product(array $p, string $lang, string $defaut = 'pl'): void {
+function seo_product(array $p, string $lang, string $defaut = 'pl', array $extra = []): void {
     $url = seo_url('/p/' . (string) ($p['slug'] ?? ''), $lang, $defaut);
     if ($url === '') return;
 
@@ -218,6 +218,36 @@ function seo_product(array $p, string $lang, string $defaut = 'pl'): void {
             // Sans cette ligne, Google marque l'offre comme incomplète.
             'itemCondition' => 'https://schema.org/NewCondition',
         ];
+        // LA LIVRAISON ET LE RETOUR, que Google affiche sous le prix
+        // (« Dostawa 12,99 zł · Zwrot 14 dni »). Le tarif est celui du
+        // transporteur le moins cher de la caisse — le même que le flux
+        // Merchant (reklama.php) ; gratuit au-delà du seuil réglé.
+        $ship = $extra['ship'] ?? null;
+        if (is_array($ship)) {
+            $tarif = ((int) $ship['free_from'] > 0 && $gr >= (int) $ship['free_from']) ? 0 : (int) $ship['price'];
+            $d['offers']['shippingDetails'] = [
+                '@type' => 'OfferShippingDetails',
+                'shippingRate' => ['@type' => 'MonetaryAmount', 'value' => number_format($tarif / 100, 2, '.', ''), 'currency' => 'PLN'],
+                'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => 'PL'],
+                'deliveryTime' => [
+                    '@type' => 'ShippingDeliveryTime',
+                    'handlingTime' => ['@type' => 'QuantitativeValue', 'minValue' => 0, 'maxValue' => max(1, (int) ($extra['handling'] ?? 1)), 'unitCode' => 'DAY'],
+                    'transitTime'  => ['@type' => 'QuantitativeValue', 'minValue' => 1, 'maxValue' => 3, 'unitCode' => 'DAY'],
+                ],
+            ];
+        }
+        // Le droit de retrait du consommateur : 14 jours, par la poste, à ses
+        // frais — la règle légale par défaut, celle que décrit la page Zwroty.
+        $zwroty = seo_url('/zwroty', $lang, $defaut);
+        $d['offers']['hasMerchantReturnPolicy'] = array_filter([
+            '@type' => 'MerchantReturnPolicy',
+            'applicableCountry' => 'PL',
+            'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+            'merchantReturnDays' => 14,
+            'returnMethod' => 'https://schema.org/ReturnByMail',
+            'returnFees' => 'https://schema.org/ReturnFeesCustomerResponsibility',
+            'merchantReturnLink' => $zwroty,
+        ], fn($v) => $v !== '');
     }
     seo_jsonld($d);
 }
