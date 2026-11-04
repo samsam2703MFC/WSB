@@ -922,3 +922,6 @@ table.zam2 td.ident, table.zam2 .ident .dt, table.zam2 .kasa2 .dt { white-space:
 table.zam2 .ident .dt, table.zam2 .kasa2 .dt { font-size: 12.5px; }
 /* Un montant long (134 944,90 zł) ne déborde pas de sa tuile : il passe à la ligne. */
 .kpi b { font-size: 22px; line-height: 1.2; overflow-wrap: anywhere; }
+
+/* Texte pour lecteurs d'écran seulement (états « gotowe / do zrobienia »). */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

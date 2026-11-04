@@ -3200,6 +3200,68 @@ jobs:
           if [ "$fail" = "0" ]; then echo "ALL PURCHASE CHECKS OK"; else echo "PURCHASE CHECKS FAILED"; exit 1; fi
           REMOTE
 
+      # Marketing Google / Meta : bannière d'accord, flux produits, formulaires,
+      # posts FB/IG. VÉRIFICATION SEULE — rien n'est écrit, rien ne part chez
+      # Google ni chez Meta. Les réglages s'affichent par NOM (posé ou non),
+      # jamais par valeur.
+      - name: Verify Google / Meta marketing (feed, consent, forms, posts)
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -p ${{ vars.SSH_PORT || '22' }} \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "DB_USER='${{ secrets.WSM_DB_USER }}' DB_PASS='${{ secrets.WSM_DB_PASS }}' DIR_API='${{ vars.DEPLOY_DIR || '/var/www/html/mrszoko' }}/backoffice/api' DIR_BO='${{ vars.DEPLOY_DIR || '/var/www/html/mrszoko' }}/backoffice' DIR_SH='${{ vars.DEPLOY_DIR || '/var/www/html/mrszoko' }}/shop' bash -s" << 'REMOTE'
+          fail=0
+          echo "== marketing Google / Meta: moduly i ekrany =="
+          for f in reklama.php social.php formularze.php mediateka.php; do [ -f "$DIR_API/$f" ] || { echo "  ^ BRAK: api/$f"; fail=1; }; done
+          for f in posty.php formularze.php widocznosc.php meta.php media.php; do [ -f "$DIR_BO/$f" ] || { echo "  ^ BRAK: $f"; fail=1; }; done
+          [ -f "$DIR_SH/zgody.js" ] || { echo "  ^ BRAK: shop/zgody.js"; fail=1; }
+          [ "$fail" = "0" ] && echo "  moduly, ekrany i zgody.js: obecne"
+          for e in gd curl simplexml; do
+            php -m 2>/dev/null | grep -qix "$e" || { echo "  ^ BRAK rozszerzenia PHP: $e"; fail=1; }
+          done
+          q() { mysql -u"$DB_USER" -p"$DB_PASS" -N -B mrszoko -e "$1" 2>/dev/null; }
+          T=$(q "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='mrszoko' AND table_name IN
+                 ('wsm_ad_orders','wsm_capi_events','wsm_media_meta','wsm_social_posts','wsm_forms','wsm_form_entries')")
+          [ "${T:-0}" = "6" ] && echo "  6 tabel marketingu: obecne" || echo "  tabele ${T:-0}/6 (powstana przy pierwszym wejsciu na sklep)"
+          echo "  ustawione (nazwy, bez wartosci): $(q "SELECT GROUP_CONCAT(cle ORDER BY cle SEPARATOR ', ') FROM wsm_settings
+                 WHERE (cle LIKE 'google.%' OR cle LIKE 'meta.%' OR cle LIKE 'bing.%') AND val <> '' AND val NOT LIKE 'xx%'" || true)"
+          echo "  posty: $(q "SELECT CONCAT(COUNT(*), ' (opublikowane ', COALESCE(SUM(status='opublikowany'),0), ', bledy ', COALESCE(SUM(status='blad'),0), ')') FROM wsm_social_posts" || echo '-')" \
+               "· formularze: $(q "SELECT COUNT(*) FROM wsm_forms" || echo '-')" \
+               "· zakupy do Meta: $(q "SELECT COALESCE(SUM(status='wyslane'),0) FROM wsm_capi_events" || echo '-')"
+          echo "== sklep z sieci =="
+          SH="https://localhost/mrszoko/shop"
+          H=$(curl -sk "$SH/")
+          echo "$H" | grep -q 'googletagmanager.com/gtag\|connect.facebook.net' \
+            && { echo "  ^ ZLE : skrypt Google/Meta w stronie PRZED zgoda"; fail=1; } || echo "  strona glowna: zaden skrypt Google/Meta przed zgoda"
+          if echo "$H" | grep -q 'id="zgody"'; then echo "  baner cookies: jest (sa ustawione tagi)"; else echo "  baner cookies: brak (zaden tag nie jest ustawiony)"; fi
+          FH=$(curl -sk -D - -o /tmp/wsm-feed.xml "$SH/feed/produkty.xml" | tr -d '\r')
+          FC=$(echo "$FH" | awk 'NR==1{print $2}')
+          N=$(php -r '$x = @simplexml_load_file("/tmp/wsm-feed.xml"); echo $x ? count($x->channel->item) : "ZLE";' 2>/dev/null)
+          echo "  /feed/produkty.xml -> $FC, produktow w pliku: $N"
+          [ "$FC" = "200" ] && [ "$N" != "ZLE" ] || { echo "  ^ ZLE : plik produktow"; fail=1; }
+          echo "$FH" | grep -qi '^x-robots-tag: noindex' || { echo "  ^ ZLE : plik produktow bez noindex"; fail=1; }
+          rm -f /tmp/wsm-feed.xml
+          c1=$(curl -sk -o /dev/null -w '%{http_code}' "$SH/f/nie-ma-takiego-formularza")
+          c2=$(curl -sk -o /dev/null -w '%{http_code}' "$SH/sitemap.xml")
+          echo "  /f/nieznany -> $c1 (404), sitemap.xml -> $c2 (200)"
+          [ "$c1" = "404" ] && [ "$c2" = "200" ] || { echo "  ^ ZLE : formularze / sitemap"; fail=1; }
+          echo "== konsola i moduly z sieci =="
+          BOU="https://localhost/mrszoko/backoffice"
+          for s in posty.php formularze.php widocznosc.php meta.php; do
+            c=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/$s")
+            [ "$c" = "302" ] || { echo "  ^ NOT OK : $s bez logowania -> $c"; fail=1; }
+          done
+          echo "  ekrany bez logowania -> 302"
+          for m in social.php reklama.php formularze.php; do
+            c=$(curl -sk -o /dev/null -w '%{http_code}' "$BOU/api/$m")
+            case "$c" in 403|404) ;; *) echo "  ^ NOT OK : api/$m dostepny z sieci ($c)"; fail=1;; esac
+          done
+          echo "  moduly api z sieci -> 403/404"
+          if [ "$fail" = "0" ]; then echo "ALL SOCIAL CHECKS OK"; else echo "SOCIAL CHECKS FAILED"; exit 1; fi
+          REMOTE
+
 
       # Nettoyage transitoire : avant cette version, le back-office était servi À
       # PLAT sous /mrszoko/ (index.html, support.js, api/…). rsync tourne sans

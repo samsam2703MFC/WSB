@@ -356,8 +356,14 @@ function console_sections(?array $me = null): array {
         'Marketing' => [
             'newsletter.php'  => 'Newsletter',
             'sms.php'         => 'SMS',
+            'posty.php'       => 'Posty FB / IG',
+            'formularze.php'  => 'Formularze',
             'subskrybenci.php' => 'Subskrybenci',
             'kampanie.php'    => 'Kampanie',
+            // Être trouvé et mesuré : Google (Search Console, Merchant, GA4)
+            // et Meta (pixel, achats envoyés par le serveur, catalogue).
+            'widocznosc.php'  => 'Google i SEO',
+            'meta.php'        => 'Meta (FB / IG)',
         ],
 
         // CE QU'ON VEND, et comment ça se présente. Pas « Sklep » : le bas du
@@ -606,4 +612,30 @@ function console_asset(string $file): string {
 function console_flash(string $msg, string $kind = 'ok'): void {
     if ($msg === '') return;
     echo '<p class="flash ' . h($kind) . '">' . h($msg) . '</p>';
+}
+
+/**
+ * Les champs texte et secrets d'UN groupe de réglages, au format d'Integracje.
+ * Sert aux écrans Marketing (Google, Meta) : on règle les identifiants là où
+ * on s'en sert, sans aller chercher le bon panneau dans Integracje. Même
+ * enregistrement (wsm_settings_save, filtré au groupe), mêmes règles : un
+ * secret ne se réaffiche jamais, une valeur posée sur le serveur se lit
+ * seulement.
+ */
+function console_reglages(array $view, string $groupe, bool $edit): void {
+    echo '<div class="grid2">';
+    foreach ($view as $f) {
+        if ($f['group'] !== $groupe) continue;
+        $dis = ($f['locked'] || !$edit) ? ' disabled' : '';
+        echo '<label class="field"><span>' . h($f['label'])
+           . ($f['locked'] ? ' <em class="tag">serwer</em>' : ($f['source'] === 'baza' ? ' <em class="tag ok">zapisane</em>' : '')) . '</span>';
+        if ($f['type'] === 'secret') {
+            echo '<input type="password" name="' . h($f['form']) . '" autocomplete="new-password" placeholder="' . h((string) $f['show']) . '"' . $dis . '>';
+        } else {
+            $v = (string) $f['show'] === WSM_SETTING_PLACEHOLDER ? '' : (string) $f['show'];
+            echo '<input type="text" name="' . h($f['form']) . '" value="' . h($v) . '" autocomplete="off" spellcheck="false"' . $dis . '>';
+        }
+        echo '<span class="hint">' . h($f['help']) . '</span></label>';
+    }
+    echo '</div>';
 }

@@ -115,6 +115,13 @@
       }
       if (form._paint) form._paint();
       if (koszyk) koszyk.odswiez();
+      // Pour la mesure (zgody.js) : elle n'écoute que si le visiteur a dit oui.
+      try {
+        var idp = form.querySelector('input[name="add"]');
+        document.dispatchEvent(new CustomEvent('wsm:dodano', { detail: {
+          id: idp ? idp.value : '', qty: ileFormularza(form),
+          price: (parseInt(form.getAttribute('data-cena'), 10) || 0) / 100 } }));
+      } catch (e) { /* navigateur sans CustomEvent : rien à mesurer */ }
     }).catch(function () {
       // Réseau indisponible : on laisse le formulaire partir normalement.
       btns.forEach(function (b) { b.disabled = false; });

@@ -1527,3 +1527,116 @@ CREATE TABLE IF NOT EXISTS `wsm_purchase_map` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_wsm_purchase_map` (`supplier_key`, `line_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+--  Marketing Google / Meta (reklama.php, mediateka.php, social.php, formularze.php)
+-- ---------------------------------------------------------------------------
+-- L'accord du visiteur au moment de commander. Sans accord marketing : le
+-- « non » seul, ni IP ni navigateur.
+CREATE TABLE IF NOT EXISTS `wsm_ad_orders` (
+  `order_id`     INT UNSIGNED NOT NULL,
+  `analityczne`  TINYINT(1)   NOT NULL DEFAULT 0,
+  `marketingowe` TINYINT(1)   NOT NULL DEFAULT 0,
+  `fbp`          VARCHAR(80)  NOT NULL DEFAULT '',
+  `fbc`          VARCHAR(255) NOT NULL DEFAULT '',
+  `ip`           VARCHAR(45)  NOT NULL DEFAULT '',
+  `ua`           VARCHAR(255) NOT NULL DEFAULT '',
+  `page_url`     VARCHAR(255) NOT NULL DEFAULT '',
+  `created_at`   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`order_id`),
+  KEY `ix_wsm_ad_orders_date` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- La file de la Conversions API : un achat payé = un événement, une fois.
+CREATE TABLE IF NOT EXISTS `wsm_capi_events` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_id`   INT UNSIGNED NOT NULL,
+  `event_name` VARCHAR(30)  NOT NULL,
+  `status`     VARCHAR(12)  NOT NULL DEFAULT 'nowe',
+  `attempts`   INT NOT NULL DEFAULT 0,
+  `response`   VARCHAR(500) NOT NULL DEFAULT '',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `tried_at`   DATETIME NULL,
+  `sent_at`    DATETIME NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_wsm_capi_events` (`order_id`, `event_name`),
+  KEY `ix_wsm_capi_events_status` (`status`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- La médiathèque classée : ce que montre la photo, pour quelle occasion,
+-- quel produit, et son texte alternatif.
+CREATE TABLE IF NOT EXISTS `wsm_media_meta` (
+  `url`        VARCHAR(80)  NOT NULL,
+  `kategoria`  VARCHAR(30)  NOT NULL DEFAULT '',
+  `okazja`     VARCHAR(30)  NOT NULL DEFAULT '',
+  `product_id` VARCHAR(48)  NOT NULL DEFAULT '',
+  `alt`        VARCHAR(250) NOT NULL DEFAULT '',
+  `tagi`       VARCHAR(250) NOT NULL DEFAULT '',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` VARCHAR(120) NOT NULL DEFAULT '',
+  PRIMARY KEY (`url`),
+  KEY `ix_wsm_media_meta_kat` (`kategoria`, `okazja`),
+  KEY `ix_wsm_media_meta_prod` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Les posts Facebook et Instagram : un texte, des photos, deux canaux,
+-- chacun avec son propre résultat (l'un peut réussir sans l'autre).
+CREATE TABLE IF NOT EXISTS `wsm_social_posts` (
+  `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `tekst`        TEXT NOT NULL,
+  `media`        TEXT NOT NULL,
+  `product_id`   VARCHAR(48)  NOT NULL DEFAULT '',
+  `link_code`    VARCHAR(40)  NOT NULL DEFAULT '',
+  `kanaly`       VARCHAR(20)  NOT NULL DEFAULT 'fb,ig',
+  `termin`       DATETIME NULL,
+  `status`       VARCHAR(14)  NOT NULL DEFAULT 'szkic',
+  `fb_status`    VARCHAR(12)  NOT NULL DEFAULT '',
+  `fb_id`        VARCHAR(80)  NOT NULL DEFAULT '',
+  `fb_url`       VARCHAR(255) NOT NULL DEFAULT '',
+  `fb_error`     VARCHAR(500) NOT NULL DEFAULT '',
+  `ig_status`    VARCHAR(12)  NOT NULL DEFAULT '',
+  `ig_id`        VARCHAR(80)  NOT NULL DEFAULT '',
+  `ig_url`       VARCHAR(255) NOT NULL DEFAULT '',
+  `ig_error`     VARCHAR(500) NOT NULL DEFAULT '',
+  `created_by`   VARCHAR(120) NOT NULL DEFAULT '',
+  `created_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `claimed_at`   DATETIME NULL,
+  `published_at` DATETIME NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_wsm_social_posts_due` (`status`, `termin`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Les formulaires publics (/f/<slug>) et leurs réponses.
+CREATE TABLE IF NOT EXISTS `wsm_forms` (
+  `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `slug`          VARCHAR(60)  NOT NULL,
+  `nazwa`         VARCHAR(120) NOT NULL,
+  `wstep`         TEXT NOT NULL,
+  `pola`          TEXT NOT NULL,
+  `podziekowanie` VARCHAR(500) NOT NULL DEFAULT '',
+  `powiadom`      VARCHAR(200) NOT NULL DEFAULT '',
+  `newsletter`    TINYINT(1)   NOT NULL DEFAULT 1,
+  `aktywny`       TINYINT(1)   NOT NULL DEFAULT 1,
+  `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_wsm_forms_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `wsm_form_entries` (
+  `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `form_id`     INT UNSIGNED NOT NULL,
+  `dane`        TEXT NOT NULL,
+  `email`       VARCHAR(200) NOT NULL DEFAULT '',
+  `status`      VARCHAR(12)  NOT NULL DEFAULT 'nowe',
+  `zgoda_tekst` VARCHAR(600) NOT NULL DEFAULT '',
+  `newsletter`  TINYINT(1)   NOT NULL DEFAULT 0,
+  `ip`          VARCHAR(45)  NOT NULL DEFAULT '',
+  `lang`        VARCHAR(5)   NOT NULL DEFAULT 'pl',
+  `notatka`     VARCHAR(500) NOT NULL DEFAULT '',
+  `created_at`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ix_wsm_form_entries_form` (`form_id`, `created_at`),
+  KEY `ix_wsm_form_entries_ip` (`ip`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

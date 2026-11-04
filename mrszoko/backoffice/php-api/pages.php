@@ -60,6 +60,9 @@ const WSM_PAGE_RESERVED = [
     'fonts', 'img', 'api', 'backoffice', 'shop', 'landing', 'index.php', 'strona',
     'strony', 'blok', 'bloki', 'admin', 'login', 'logout', 'tpay', 'stripe', 'zaplac', 'inpost',
     'newsletter', 's',
+    // Les formulaires publics (/f/…), le flux produits (/feed/…) et le script
+    // de la bannière d'accord : une page Strony à ces adresses les masquerait.
+    'f', 'feed', 'zgody.js',
 ];
 
 function wsm_pages_ensure(PDO $pdo): void {

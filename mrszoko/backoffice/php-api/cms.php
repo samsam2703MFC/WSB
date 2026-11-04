@@ -102,6 +102,8 @@ const WSM_CMS_SECTIONS = [
     'claim' => 'Reklamacje i zwroty',
     'stop' => 'Wypisanie z wiadomości',
     'nl' => 'Newsletter i SMS: zapis, potwierdzenie, wypisanie, stopka wiadomości',
+    'cookies' => 'Baner cookies: zgody na Google Analytics, Google Ads i Meta',
+    'form' => 'Formularze (/f/…): zgoda, przycisk, podziękowanie',
     'seller' => 'Dane sprzedawcy w stopce',
     'footer' => 'Stopka',
     // Page d'accueil
