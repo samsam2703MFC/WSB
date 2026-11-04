@@ -88,6 +88,21 @@ function wsm_settings_fields(): array {
         'marketing.klienci_bez_zgody' => ['sms', 'Newsletter do klientów bez zgody', ['marketing', 'klienci_bez_zgody'], 'WSM_MKT_KLIENCI_BEZ_ZGODY', 'select:1|0',
                              '0 = tylko osoby, które zaznaczyły zgodę i potwierdziły ją mailem (domyślnie). 1 = także kupujący bez zgody: od 10.11.2024 '
                              . 'Prawo komunikacji elektronicznej (art. 398) wymaga uprzedniej zgody, a wyjątek dla dotychczasowych klientów jest w Polsce niepewny. Włącz tylko po opinii prawnika.'],
+        // Claude : traductions, rédaction des newsletters et SMS, lecture des factures PDF.
+        'anthropic_api_key' => ['claude', 'Klucz API Claude', ['anthropic_api_key'], 'WSM_ANTHROPIC_API_KEY', 'secret',
+                             'console.anthropic.com → API Keys. Tłumaczenia, pisanie newsletterów i SMS-ów, odczyt faktur zakupu z PDF.'],
+
+        // Allegro : la deuxième vitrine (allegro.php).
+        'allegro.client_id'     => ['allegro', 'Client ID', ['allegro', 'client_id'], 'WSM_ALLEGRO_CLIENT_ID', 'text',
+                             'Z aplikacji w apps.developer.allegro.pl.'],
+        'allegro.client_secret' => ['allegro', 'Client Secret', ['allegro', 'client_secret'], 'WSM_ALLEGRO_CLIENT_SECRET', 'secret',
+                             'Z tej samej aplikacji. Nigdy nie opuszcza serwera.'],
+        'allegro.refresh_token' => ['allegro', 'Refresh token', ['allegro', 'refresh_token'], 'WSM_ALLEGRO_REFRESH_TOKEN', 'secret',
+                             'Z autoryzacji konta sprzedawcy (device flow).'],
+        'allegro.seller_id'     => ['allegro', 'ID sprzedawcy', ['allegro', 'seller_id'], 'WSM_ALLEGRO_SELLER_ID', 'text', ''],
+        'allegro.sandbox'       => ['allegro', 'Środowisko', ['allegro', 'sandbox'], 'WSM_ALLEGRO_SANDBOX', 'select:1|0',
+                             '1 = sandbox (testy), 0 = produkcja.'],
+
         // SMS marketing : SMSAPI (smsapi.php), comme le CRM.
         'smsapi.token'   => ['sms', 'Token OAuth SMSAPI', ['smsapi', 'token'], 'WSM_SMSAPI_TOKEN', 'secret',
                              'Panel SMSAPI → Ustawienia API → Tokeny OAuth, z uprawnieniem „sms”. Nigdy nie opuszcza serwera.'],
@@ -380,6 +395,94 @@ function wsm_settings_save(PDO $pdo, array $post, string $actor = '', array &$re
         $changed[] = $key;
     }
     return $changed;
+}
+
+// ---------------------------------------------------------------------------
+//  Les clés de TOUTES les intégrations, d'un coup (Superadmin → Klucze)
+// ---------------------------------------------------------------------------
+
+/**
+ * Les groupes qui sont des intégrations — et rien d'autre. La base de données,
+ * le jeton d'administration, la liste et le code du superadmin ne se collent
+ * JAMAIS depuis un navigateur : ce sont les clés de la maison, pas des
+ * intégrations, et qui les aurait pourrait se donner le reste.
+ */
+const WSM_SETTINGS_KLUCZE = [
+    'claude'  => 'Claude (AI)',
+    'stripe'  => 'Stripe — płatności',
+    'ksef'    => 'KSeF',
+    'paragon' => 'Fakturownia + Paragony.pl',
+    'inpost'  => 'InPost',
+    'dpd'     => 'DPD',
+    'mail'    => 'Poczta (SMTP)',
+    'sms'     => 'SMSAPI',
+    'allegro' => 'Allegro',
+];
+
+/** Les champs de ces groupes, dans l'ordre des groupes (les réglages de politique en moins). */
+function wsm_settings_klucze_fields(): array {
+    $out = [];
+    $f = wsm_settings_fields();
+    foreach (array_keys(WSM_SETTINGS_KLUCZE) as $g) {
+        foreach ($f as $k => $d) {
+            if ($d[0] !== $g || $k === 'marketing.klienci_bez_zgody') continue;   // une décision, pas une clé
+            $out[$k] = $d;
+        }
+    }
+    return $out;
+}
+
+/**
+ * Lit un bloc collé : un fichier .env, une liste « NOM=valeur », deux
+ * colonnes copiées d'un tableur. Le nom peut être la variable du serveur
+ * (WSM_STRIPE_SECRET_KEY, ou sans « WSM_ ») ou la clé du réglage
+ * (stripe.secret_key). Une clé PEM peut tenir sur plusieurs lignes.
+ *
+ * Rien n'est écrit ici : on rend ce qui sera enregistré, au format du
+ * formulaire, et ce qui ne l'a pas été — par NOM seulement, jamais la valeur.
+ *
+ * @return array{wartosci: array<string,string>, nieznane: list<string>, bledne: array<string,string>}
+ */
+function wsm_settings_parse_paste(string $tekst): array {
+    $champs = wsm_settings_klucze_fields();
+    $parNom = [];
+    foreach ($champs as $k => $d) {
+        $parNom[strtoupper($d[3])] = $k;                              // WSM_STRIPE_SECRET_KEY
+        $parNom[strtoupper(preg_replace('/^WSM_/', '', $d[3]))] = $k;  // STRIPE_SECRET_KEY
+        $parNom[strtoupper($k)] = $k;                                  // STRIPE.SECRET_KEY
+        $parNom[strtoupper(str_replace('.', '__', $k))] = $k;          // STRIPE__SECRET_KEY
+    }
+    $out = ['wartosci' => [], 'nieznane' => [], 'bledne' => []];
+    $lignes = preg_split('/\r\n|\r|\n/', $tekst) ?: [];
+    for ($i = 0; $i < count($lignes); $i++) {
+        $l = trim($lignes[$i]);
+        if ($l === '' || str_starts_with($l, '#') || str_starts_with($l, '//')) continue;
+        $l = (string) preg_replace('/^export\s+/i', '', $l);
+        if (!preg_match('/^["\']?([A-Za-z][A-Za-z0-9_.]*)["\']?\s*(?:=|:|;|\t)\s*(.*)$/s', $l, $m)) continue;
+        $nom = strtoupper($m[1]);
+        $v = trim($m[2]);
+        if (strlen($v) >= 2 && ($v[0] === '"' || $v[0] === "'") && substr($v, -1) === $v[0]) $v = substr($v, 1, -1);
+        if (!isset($parNom[$nom])) { $out['nieznane'][] = $m[1]; continue; }
+        $k = $parNom[$nom];
+        $type = (string) $champs[$k][4];
+        // Une clé PEM continue jusqu'à sa ligne « -----END … -----».
+        if ($type === 'pem' && str_starts_with($v, '-----BEGIN') && !str_contains($v, '-----END')) {
+            while (++$i < count($lignes)) {
+                $v .= "\n" . trim($lignes[$i]);
+                if (str_contains($lignes[$i], '-----END')) break;
+            }
+        }
+        if ($v === '') continue;
+        if (str_starts_with($type, 'select:')) {
+            $opts = explode('|', substr($type, 7));
+            $vv = strtolower($v);
+            if ($opts === ['1', '0']) $vv = in_array($vv, ['1', 'true', 'tak', 'yes', 'on'], true) ? '1' : (in_array($vv, ['0', 'false', 'nie', 'no', 'off'], true) ? '0' : $vv);
+            if (!in_array($vv, $opts, true)) { $out['bledne'][$m[1]] = 'dozwolone: ' . implode(', ', $opts); continue; }
+            $v = $vv;
+        }
+        $out['wartosci'][str_replace('.', '__', $k)] = $v;
+    }
+    return $out;
 }
 
 /**
