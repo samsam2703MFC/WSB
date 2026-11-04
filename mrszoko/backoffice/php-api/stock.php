@@ -221,49 +221,72 @@ function wsm_stock_doc_number(PDO $pdo, string $kind, string $date): array {
  * @return array [document|null, erreur|null]
  */
 function wsm_stock_receive(PDO $pdo, array $head, array $lines): array {
-    $clean = [];
-    foreach ($lines as $l) {
-        $pid = trim((string) ($l['product_id'] ?? ''));
-        $qty = (int) ($l['qty'] ?? 0);
-        if ($pid === '' || $qty === 0) continue;                 // ligne laissée vide
-        if ($qty < 0) return [null, 'ilość nie może być ujemna'];
-        $clean[] = ['product_id' => $pid, 'qty' => $qty, 'unit_cost' => (int) ($l['unit_cost'] ?? 0)];
-    }
-    if (!$clean) return [null, 'dokument bez pozycji'];
-
-    $date = (string) ($head['issued_at'] ?? date('Y-m-d'));
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) $date = date('Y-m-d');
+    [$clean, $err] = wsm_stock_receive_lines($lines);
+    if ($err !== null) return [null, $err];
 
     $pdo->beginTransaction();
     try {
-        [$number, $series, $seq] = wsm_stock_doc_number($pdo, 'PZ', $date);
-        $units = array_sum(array_map(fn($l) => $l['qty'], $clean));
-        $value = array_sum(array_map(fn($l) => $l['qty'] * $l['unit_cost'], $clean));
-
-        $pdo->prepare("INSERT INTO wsm_stock_docs (kind, number, series, seq, partner, ref, issued_at, note, units, value, actor)
-                       VALUES ('PZ',?,?,?,?,?,?,?,?,?,?)")
-            ->execute([$number, $series, $seq,
-                mb_substr((string) ($head['partner'] ?? ''), 0, 160),
-                mb_substr((string) ($head['ref'] ?? ''), 0, 60),
-                $date, mb_substr((string) ($head['note'] ?? ''), 0, 250), $units, $value,
-                mb_substr((string) ($head['actor'] ?? ''), 0, 120)]);
-        $docId = (int) $pdo->lastInsertId();
-
-        foreach ($clean as $l) {
-            wsm_stock_apply($pdo, $l['product_id'], $l['qty'], 'przyjecie', [
-                'doc' => $number, 'doc_id' => $docId,
-                'supplier' => (string) ($head['partner'] ?? ''),
-                'unit_cost' => $l['unit_cost'],
-                'note' => (string) ($head['ref'] ?? ''),
-                'actor' => (string) ($head['actor'] ?? ''),
-            ]);
-        }
+        [, $number] = wsm_stock_receive_tx($pdo, $head, $clean);
         $pdo->commit();
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         return [null, 'nie udało się zapisać: ' . $e->getMessage()];
     }
     return [wsm_stock_doc_by_number($pdo, $number), null];
+}
+
+/**
+ * Les lignes d'un bon, nettoyées : vides écartées, négatives refusées.
+ * @return array{0:array, 1:?string} [lignes, erreur]
+ */
+function wsm_stock_receive_lines(array $lines): array {
+    $clean = [];
+    foreach ($lines as $l) {
+        $pid = trim((string) ($l['product_id'] ?? ''));
+        $qty = (int) ($l['qty'] ?? 0);
+        if ($pid === '' || $qty === 0) continue;                 // ligne laissée vide
+        if ($qty < 0) return [[], 'ilość nie może być ujemna'];
+        $clean[] = ['product_id' => $pid, 'qty' => $qty, 'unit_cost' => (int) ($l['unit_cost'] ?? 0)];
+    }
+    return $clean ? [$clean, null] : [[], 'dokument bez pozycji'];
+}
+
+/**
+ * Le cœur du bon d'entrée, SANS transaction : c'est l'appelant qui la tient.
+ * Une facture d'achat (zakupy.php) écrit son PZ, relie chaque ligne à son
+ * mouvement et se marque reçue dans la même transaction — tout ou rien.
+ *
+ * @return array{0:int, 1:string, 2:list<int>} [id du PZ, numéro, id des mouvements dans l'ordre des lignes]
+ */
+function wsm_stock_receive_tx(PDO $pdo, array $head, array $clean): array {
+    $date = (string) ($head['issued_at'] ?? date('Y-m-d'));
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) $date = date('Y-m-d');
+
+    [$number, $series, $seq] = wsm_stock_doc_number($pdo, 'PZ', $date);
+    $units = array_sum(array_map(fn($l) => $l['qty'], $clean));
+    $value = array_sum(array_map(fn($l) => $l['qty'] * $l['unit_cost'], $clean));
+
+    $pdo->prepare("INSERT INTO wsm_stock_docs (kind, number, series, seq, partner, ref, issued_at, note, units, value, actor)
+                   VALUES ('PZ',?,?,?,?,?,?,?,?,?,?)")
+        ->execute([$number, $series, $seq,
+            mb_substr((string) ($head['partner'] ?? ''), 0, 160),
+            mb_substr((string) ($head['ref'] ?? ''), 0, 60),
+            $date, mb_substr((string) ($head['note'] ?? ''), 0, 250), $units, $value,
+            mb_substr((string) ($head['actor'] ?? ''), 0, 120)]);
+    $docId = (int) $pdo->lastInsertId();
+
+    $moves = [];
+    foreach ($clean as $l) {
+        wsm_stock_apply($pdo, $l['product_id'], $l['qty'], 'przyjecie', [
+            'doc' => $number, 'doc_id' => $docId,
+            'supplier' => (string) ($head['partner'] ?? ''),
+            'unit_cost' => $l['unit_cost'],
+            'note' => (string) ($head['ref'] ?? ''),
+            'actor' => (string) ($head['actor'] ?? ''),
+        ]);
+        $moves[] = (int) $pdo->lastInsertId();              // le mouvement est la dernière insertion
+    }
+    return [$docId, $number, $moves];
 }
 
 /**
@@ -351,4 +374,153 @@ function wsm_stock_docs_list(PDO $pdo, array $f = []): array {
     $st = $pdo->prepare($sql);
     $st->execute($args);
     return $st->fetchAll() ?: [];
+}
+
+// ---------------------------------------------------------------------------
+//  Un article, de bout en bout : d'où il vient, où il est parti
+// ---------------------------------------------------------------------------
+
+/** Le lien de suivi d'un colis, chez le transporteur qui l'a pris. */
+function wsm_stock_tracking_url(string $carrier, string $number): string {
+    $n = preg_replace('/[^A-Za-z0-9]/', '', $number) ?? '';
+    if ($n === '') return '';
+    if (str_starts_with($carrier, 'dpd')) return 'https://tracktrace.dpd.com.pl/parcelDetails?p1=' . $n;
+    if (str_starts_with($carrier, 'inpost')) return 'https://inpost.pl/sledzenie-przesylek?number=' . $n;
+    return '';
+}
+
+/**
+ * Tout ce qu'il faut pour la page d'un article : les entrées avec leur
+ * fournisseur, leur facture et leur TVA ; les sorties avec le client, la
+ * commande, le bon de livraison (WZ) et le numéro du colis ; les corrections ;
+ * et les séries des trois graphiques, calculées ici pour que la page et les
+ * tableaux montrent exactement les mêmes chiffres.
+ */
+function wsm_stock_product_report(PDO $pdo, string $pid, int $months = 12): ?array {
+    $st = $pdo->prepare("SELECT id, nom, sku, ean, stock, prix, base_cost, vat_rate, weight_g, unit_label, shop_visible
+                           FROM wsm_products WHERE id = ?");
+    $st->execute([$pid]);
+    $p = $st->fetch();
+    if (!$p) return null;
+    $months = max(1, min(36, $months));
+    $debutMois = date('Y-m-01', strtotime('first day of -' . ($months - 1) . ' months'));
+    $since = $debutMois . ' 00:00:00';
+
+    // --- Entrées : le mouvement, son PZ, la ligne de facture qui l'a fait naître.
+    $achats = file_exists(__DIR__ . '/zakupy.php') && wsm_table_exists($pdo, 'wsm_purchase_lines');
+    $st = $pdo->prepare("SELECT m.id, m.created_at, m.delta, m.stock_after, m.unit_cost, m.supplier, m.doc, m.doc_id, m.note,
+                                d.issued_at AS pz_date, d.ref AS invoice_ref"
+        . ($achats ? ", l.unit_net, l.vat_rate, l.net AS line_net, l.vat AS line_vat, l.gross AS line_gross, l.qty AS inv_qty,
+                       l.unit AS inv_unit, l.name AS inv_name, i.id AS invoice_id, i.number AS invoice_number,
+                       i.supplier_nip, i.issued_at AS invoice_date, i.file AS invoice_file" : '') . "
+                           FROM wsm_stock_moves m
+                           LEFT JOIN wsm_stock_docs d ON d.id = m.doc_id"
+        . ($achats ? " LEFT JOIN wsm_purchase_lines l ON l.move_id = m.id
+                       LEFT JOIN wsm_purchase_invoices i ON i.id = l.invoice_id" : '') . "
+                          WHERE m.product_id = ? AND m.kind = 'przyjecie'
+                          ORDER BY m.id DESC LIMIT 300");
+    $st->execute([$pid]);
+    $entrees = $st->fetchAll() ?: [];
+
+    // --- Sorties : la commande, le client, le WZ, le colis.
+    $st = $pdo->prepare("SELECT m.id, m.created_at, m.delta, m.stock_after, m.doc,
+                                o.id AS order_id, o.code AS order_code, o.status AS order_status,
+                                o.first_name, o.last_name, o.company, o.email,
+                                (SELECT number FROM wsm_stock_docs w WHERE w.kind = 'WZ' AND w.order_id = o.id ORDER BY w.id LIMIT 1) AS wz,
+                                (SELECT w.id FROM wsm_stock_docs w WHERE w.kind = 'WZ' AND w.order_id = o.id ORDER BY w.id LIMIT 1) AS wz_id
+                           FROM wsm_stock_moves m
+                           LEFT JOIN wsm_orders o ON o.code = m.doc
+                          WHERE m.product_id = ? AND m.kind = 'sprzedaz'
+                          ORDER BY m.id DESC LIMIT 300");
+    $st->execute([$pid]);
+    $sorties = $st->fetchAll() ?: [];
+    // Le colis : le plus récent de la commande (une commande renvoyée en a deux).
+    $colis = [];
+    $ids = array_values(array_unique(array_filter(array_map(fn($r) => (int) $r['order_id'], $sorties))));
+    if ($ids && wsm_table_exists($pdo, 'wsm_shipments')) {
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $q = $pdo->prepare("SELECT order_id, carrier, service, tracking_number, status FROM wsm_shipments
+                             WHERE order_id IN ($ph) ORDER BY id ASC");
+        $q->execute($ids);
+        foreach ($q->fetchAll() as $s) $colis[(int) $s['order_id']] = $s;
+    }
+    foreach ($sorties as &$r) {
+        $s = $colis[(int) $r['order_id']] ?? null;
+        $r['carrier'] = (string) ($s['carrier'] ?? '');
+        $r['tracking'] = (string) ($s['tracking_number'] ?? '');
+        $r['shipment_status'] = (string) ($s['status'] ?? '');
+        $r['tracking_url'] = wsm_stock_tracking_url($r['carrier'], $r['tracking']);
+        $r['client'] = trim((string) $r['company']) !== '' ? (string) $r['company']
+                     : trim((string) $r['first_name'] . ' ' . (string) $r['last_name']);
+    }
+    unset($r);
+
+    $st = $pdo->prepare("SELECT id, created_at, delta, stock_after, kind, reason, note, actor, doc
+                           FROM wsm_stock_moves WHERE product_id = ? AND kind IN ('zwrot', 'korekta')
+                          ORDER BY id DESC LIMIT 100");
+    $st->execute([$pid]);
+    $korekty = $st->fetchAll() ?: [];
+
+    // --- Séries ----------------------------------------------------------------
+    // Le niveau : chaque mouvement de la période, précédé du niveau d'avant.
+    $st = $pdo->prepare("SELECT created_at, stock_after, delta, kind, doc FROM wsm_stock_moves WHERE product_id = ? AND created_at >= ? ORDER BY id");
+    $st->execute([$pid, $since]);
+    $niveau = array_map(fn($r) => ['t' => (string) $r['created_at'], 'v' => (int) $r['stock_after'], 'delta' => (int) $r['delta'],
+                                   'kind' => (string) $r['kind'], 'doc' => (string) $r['doc']], $st->fetchAll() ?: []);
+    $st = $pdo->prepare("SELECT stock_after FROM wsm_stock_moves WHERE product_id = ? AND created_at < ? ORDER BY id DESC LIMIT 1");
+    $st->execute([$pid, $since]);
+    $avant = $st->fetchColumn();
+    // Le niveau AVANT la période : le dernier connu, sinon celui d'avant le
+    // premier mouvement de la période (son résultat moins ce qu'il a bougé).
+    $depart = $avant !== false ? (int) $avant : ($niveau ? max(0, $niveau[0]['v'] - $niveau[0]['delta']) : (int) $p['stock']);
+    array_unshift($niveau, ['t' => $since, 'v' => $depart, 'delta' => 0, 'kind' => 'start', 'doc' => '']);
+    $niveau[] = ['t' => date('Y-m-d H:i:s'), 'v' => (int) $p['stock'], 'delta' => 0, 'kind' => 'teraz', 'doc' => ''];
+
+    // Les mois : entrées (fournisseurs) et sorties (clients), en unités.
+    $mois = [];
+    for ($i = 0; $i < $months; $i++) $mois[date('Y-m', strtotime($debutMois . ' +' . $i . ' months'))] = ['in' => 0, 'out' => 0];
+    $st = $pdo->prepare("SELECT created_at, delta, kind FROM wsm_stock_moves
+                          WHERE product_id = ? AND created_at >= ? AND kind IN ('przyjecie', 'sprzedaz')");
+    $st->execute([$pid, $since]);
+    foreach ($st->fetchAll() as $r) {
+        $k = substr((string) $r['created_at'], 0, 7);
+        if (!isset($mois[$k])) continue;
+        if ($r['kind'] === 'przyjecie') $mois[$k]['in'] += max(0, (int) $r['delta']);
+        else $mois[$k]['out'] += max(0, -(int) $r['delta']);
+    }
+
+    // Le prix d'achat net par sztuka, livraison par livraison (les plus anciennes d'abord).
+    $prix = [];
+    foreach (array_reverse($entrees) as $e) {
+        if ((int) $e['unit_cost'] <= 0) continue;
+        $prix[] = ['t' => (string) ($e['pz_date'] ?: substr((string) $e['created_at'], 0, 10)), 'v' => (int) $e['unit_cost'],
+                   'dostawca' => (string) $e['supplier'], 'doc' => (string) $e['doc']];
+    }
+
+    // Les chiffres des tuiles : des SOMMES sur la période (les listes, elles,
+    // s'arrêtent à 300 lignes). Le coût moyen ne compte que les entrées qui
+    // ont un prix : un PZ manuel sans prix ne tire pas la moyenne vers zéro.
+    $st = $pdo->prepare("SELECT COALESCE(SUM(CASE WHEN kind = 'przyjecie' THEN delta ELSE 0 END), 0) AS recu,
+                                COALESCE(SUM(CASE WHEN kind = 'sprzedaz' THEN -delta ELSE 0 END), 0) AS vendu,
+                                COALESCE(SUM(CASE WHEN kind = 'przyjecie' AND unit_cost > 0 THEN delta * unit_cost ELSE 0 END), 0) AS cout,
+                                COALESCE(SUM(CASE WHEN kind = 'przyjecie' AND unit_cost > 0 THEN delta ELSE 0 END), 0) AS n_cout
+                           FROM wsm_stock_moves WHERE product_id = ? AND created_at >= ?");
+    $st->execute([$pid, $since]);
+    $t = $st->fetch() ?: [];
+    $recu = (int) ($t['recu'] ?? 0); $vendu = (int) ($t['vendu'] ?? 0);
+    $coutTotal = (int) ($t['cout'] ?? 0); $nCout = (int) ($t['n_cout'] ?? 0);
+    $dernier = $entrees[0] ?? null;
+
+    return [
+        'product' => $p, 'months' => $months, 'since' => $since,
+        'entrees' => $entrees, 'sorties' => $sorties, 'korekty' => $korekty,
+        'serie_niveau' => $niveau, 'serie_mois' => $mois, 'serie_prix' => $prix,
+        'kpi' => [
+            'stock' => (int) $p['stock'], 'recu' => $recu, 'vendu' => $vendu,
+            'cout_moyen' => $nCout > 0 ? (int) round($coutTotal / $nCout) : 0,
+            'dernier_prix' => $dernier ? (int) $dernier['unit_cost'] : 0,
+            'dernier_dostawca' => $dernier ? (string) $dernier['supplier'] : '',
+            'derniere_date' => $dernier ? (string) ($dernier['pz_date'] ?: substr((string) $dernier['created_at'], 0, 10)) : '',
+        ],
+    ];
 }

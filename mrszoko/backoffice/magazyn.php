@@ -30,6 +30,8 @@ require_once __DIR__ . '/console.php';
 $API = console_api_dir();
 require_once $API . '/shop.php';
 require_once $API . '/stock.php';
+require_once $API . '/zakupy.php';
+wsm_zak_ensure($pdo);
 
 $flash = ''; $kind = 'ok';
 const WSM_PZ_ROWS = 8;                 // lignes offertes à la saisie d'un bon
@@ -83,8 +85,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     }
 }
 
+// Le message d'un écran voisin (przyjecie.php renvoie ici avec le PZ créé).
+if ($flash === '' && isset($_GET['ok'])) {
+    $flash = (string) $_GET['ok'];
+    $kind = in_array($_GET['k'] ?? '', ['ok', 'err', 'warn'], true) ? (string) $_GET['k'] : 'ok';
+}
 $doc = isset($_GET['dok']) ? wsm_stock_doc_by_id($pdo, (int) $_GET['dok']) : null;
 if ($doc && isset($_GET['druk'])) { include __DIR__ . '/magazyn_druk.php'; exit; }
+// Le PZ né d'une facture : ses lignes de facture, par mouvement (TVA, net, brut).
+$fz = $doc && $doc['kind'] === 'PZ' ? wsm_zak_by_doc($pdo, (int) $doc['id']) : null;
+$fzLignes = $fz ? array_column(array_filter($fz['lines'], fn($l) => $l['move_id'] !== null), null, 'move_id') : [];
+$szkice = wsm_zak_list($pdo, 'szkic', 20);
 
 $ov    = wsm_stock_overview($pdo);
 $kpis  = wsm_stock_kpis($pdo);
@@ -146,24 +157,33 @@ console_crumbs($doc
       <dd><?= $doc['order_id']
               ? '<a class="code" href="zamowienia.php?id=' . (int) $doc['order_id'] . '">' . h($doc['ref']) . '</a>'
               : h($doc['ref']) ?></dd><?php endif; ?>
-    <dt>Pozycje</dt><dd><?= (int) $doc['units'] ?> szt. · <?= h(pln((int) $doc['value'])) ?></dd>
+    <dt>Pozycje</dt><dd><?= (int) $doc['units'] ?> szt. · <?= h(pln((int) $doc['value'])) ?><?= $doc['kind'] === 'PZ' ? ' netto' : '' ?></dd>
+    <?php if ($fz): ?><dt>Faktura zakupu</dt><dd>netto <?= h(pln((int) $fz['net'])) ?> · VAT <?= h(pln((int) $fz['vat'])) ?> · brutto <b><?= h(pln((int) $fz['gross'])) ?></b>
+      · <a class="code" href="przyjecie.php?id=<?= (int) $fz['id'] ?>">pozycje faktury</a><?php if (wsm_zak_file($fz)): ?>
+      · <a class="code" href="przyjecie.php?id=<?= (int) $fz['id'] ?>&amp;plik=1" target="_blank" rel="noopener">plik ↗</a><?php endif; ?></dd><?php endif; ?>
     <?php if ($doc['note'] !== ''): ?><dt>Uwaga</dt><dd><?= h($doc['note']) ?></dd><?php endif; ?>
     <dt>Wystawił</dt><dd><?= h($doc['actor']) ?: '—' ?></dd>
   </dl>
 
   <div class="tablewrap" style="margin-top:16px">
     <table>
-      <tr><th>Produkt</th><th class="num">Ilość</th><th class="num"><?= $doc['kind'] === 'PZ' ? 'Cena zakupu' : 'Wartość' ?></th><th class="num">Stan po</th></tr>
-      <?php foreach ($doc['lines'] as $l): ?>
+      <tr><th>Produkt</th><th class="num">Ilość</th><th class="num"><?= $doc['kind'] === 'PZ' ? 'Cena zakupu netto' : 'Wartość' ?></th>
+        <?php if ($fz): ?><th class="num">VAT</th><th class="num">Wartość netto / brutto</th><?php endif; ?><th class="num">Stan po</th></tr>
+      <?php foreach ($doc['lines'] as $l): $fl = $fzLignes[(int) $l['id']] ?? null; ?>
       <tr>
-        <td><?= h((string) ($l['product_name'] ?: $l['product_id'])) ?>
-          <?= (string) ($l['sku'] ?? '') !== '' ? '<br><small class="muted">' . h((string) $l['sku']) . '</small>' : '' ?></td>
+        <td><a href="magazyn_produkt.php?id=<?= h(urlencode((string) $l['product_id'])) ?>"><?= h((string) ($l['product_name'] ?: $l['product_id'])) ?></a>
+          <?= (string) ($l['sku'] ?? '') !== '' ? '<br><small class="muted">' . h((string) $l['sku']) . '</small>' : '' ?>
+          <?= $fl ? '<br><small class="muted">z faktury: ' . h((string) $fl['name']) . '</small>' : '' ?></td>
         <td class="num"><?= sprintf('%+d', (int) $l['delta']) ?></td>
         <td class="num"><?= (int) $l['unit_cost'] > 0 ? h(pln((int) $l['unit_cost'])) . ' / szt.' : '—' ?></td>
+        <?php if ($fz): ?>
+        <td class="num"><?= $fl ? h(ctype_digit((string) $fl['vat_rate']) ? $fl['vat_rate'] . '%' : (string) $fl['vat_rate']) : '—' ?></td>
+        <td class="num"><?= $fl ? h(pln((int) $fl['net'])) . '<br><small class="muted">' . h(pln((int) $fl['gross'])) . '</small>' : '—' ?></td>
+        <?php endif; ?>
         <td class="num"><?= (int) $l['stock_after'] ?></td>
       </tr>
       <?php endforeach; ?>
-      <?php if (!$doc['lines']): ?><tr><td class="muted" colspan="4">Brak powiązanych ruchów.</td></tr><?php endif; ?>
+      <?php if (!$doc['lines']): ?><tr><td class="muted" colspan="6">Brak powiązanych ruchów.</td></tr><?php endif; ?>
     </table>
   </div>
 
@@ -213,6 +233,7 @@ console_crumbs($doc
     <summary>
       <span>
         <span class="nm"><?= h($r['name']) ?></span>
+        <a class="code" href="magazyn_produkt.php?id=<?= h(urlencode($r['id'])) ?>" style="margin-left:8px;font-size:12px">wykresy i historia →</a>
         <?php if (!$r['visible']): ?> <span class="tag off">ukryty</span><?php endif; ?>
         <span class="fig">
           <span>stan <b><?= (int) $r['stock'] ?></b></span>
@@ -251,16 +272,50 @@ console_crumbs($doc
           </tbody>
         </table>
       </div>
-      <p style="margin-top:10px"><a class="code" href="magazyn.php?product_id=<?= h(urlencode($r['id'])) ?>">Pełna historia tego produktu →</a></p>
+      <p style="margin-top:10px"><a class="code" href="magazyn_produkt.php?id=<?= h(urlencode($r['id'])) ?>">Wykresy, dostawy i wydania tego produktu →</a></p>
       <?php endif; ?>
     </div>
   </details>
   <?php endforeach; ?>
 </div>
 
+<?php // Le formulaire poste vers przyjecie.php : seulement pour qui peut y écrire
+      // (un profil personnalisé peut ouvrir le Magazyn sans les factures).
+      if (wsm_droit_ecran($me, 'przyjecie.php') === 'w'): ?>
+<div class="panel">
+  <h2>Przyjęcie z faktury zakupu</h2>
+  <p class="why">Najszybciej: wczytaj fakturę dostawcy — PDF albo XML z KSeF. Pozycje zostaną odczytane i dopasowane do
+    produktów sklepu (z ceną netto, VAT i ilością); sprawdzasz, poprawiasz i jednym kliknięciem przyjmujesz na stan.</p>
+  <form method="post" action="przyjecie.php" enctype="multipart/form-data" class="actions" style="align-items:center"
+        onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Czytam fakturę…';">
+    <?= console_csrf_field() ?>
+    <input type="hidden" name="wczytaj" value="1">
+    <input type="file" name="plik" accept="application/pdf,.pdf,.xml,application/xml,text/xml" required aria-label="Plik faktury zakupu">
+    <button class="btn btn--brand" type="submit">Wczytaj fakturę</button>
+    <a class="code" href="przyjecie.php">wszystkie faktury zakupu →</a>
+  </form>
+  <?php if ($szkice): ?>
+  <h3>Do sprawdzenia</h3>
+  <div class="tablewrap"><table class="rwd">
+    <thead><tr><th>Faktura</th><th>Dostawca</th><th class="num">Netto</th><th>Pozycje</th></tr></thead>
+    <tbody>
+    <?php foreach ($szkice as $z): ?>
+    <tr>
+      <td data-l="Faktura"><a class="code" href="przyjecie.php?id=<?= (int) $z['id'] ?>"><?= h($z['number'] ?: '#' . $z['id']) ?></a></td>
+      <td data-l="Dostawca"><?= h((string) $z['supplier_name']) ?: '—' ?></td>
+      <td data-l="Netto" class="num"><?= h(pln((int) $z['net'])) ?></td>
+      <td data-l="Pozycje"><?= (int) $z['pozycji'] ?><?= (int) $z['bez_produktu'] ? ' · <span class="tag wait">' . (int) $z['bez_produktu'] . ' bez produktu</span>' : '' ?></td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table></div>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
+
 <?php if ($isAdmin): ?>
 <div class="panel">
-  <h2>Nowe przyjęcie (PZ)</h2>
+  <h2>Nowe przyjęcie ręczne (PZ)</h2>
   <p class="why">Jedna dostawa = jeden dokument, nawet na kilka artykułów. Cena zakupu jest
     zapisywana przy każdej pozycji — to ona pozwala później policzyć marżę na tym, co
     faktycznie leży w magazynie. Puste wiersze są pomijane; jeśli któraś pozycja jest błędna,

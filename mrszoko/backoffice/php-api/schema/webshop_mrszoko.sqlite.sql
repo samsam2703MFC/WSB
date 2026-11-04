@@ -1149,3 +1149,66 @@ CREATE TABLE IF NOT EXISTS wsm_sms (
 CREATE INDEX IF NOT EXISTS idx_wsm_sms_status ON wsm_sms (status, id);
 CREATE INDEX IF NOT EXISTS idx_wsm_sms_smsid ON wsm_sms (sms_id);
 CREATE INDEX IF NOT EXISTS idx_wsm_sms_campaign ON wsm_sms (campaign_id);
+
+CREATE TABLE IF NOT EXISTS wsm_purchase_invoices (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  status        TEXT NOT NULL DEFAULT 'szkic',
+  source        TEXT NOT NULL DEFAULT 'pdf',
+  supplier_name TEXT NOT NULL DEFAULT '',
+  supplier_nip  TEXT NOT NULL DEFAULT '',
+  buyer_nip     TEXT NOT NULL DEFAULT '',
+  number        TEXT NOT NULL DEFAULT '',
+  issued_at     TEXT DEFAULT NULL,
+  currency      TEXT NOT NULL DEFAULT 'PLN',
+  net           INTEGER NOT NULL DEFAULT 0,
+  vat           INTEGER NOT NULL DEFAULT 0,
+  gross         INTEGER NOT NULL DEFAULT 0,
+  file          TEXT NOT NULL DEFAULT '',
+  file_name     TEXT NOT NULL DEFAULT '',
+  file_sha1     TEXT NOT NULL DEFAULT '',
+  uwagi         TEXT,
+  doc_id        INTEGER NULL,
+  actor         TEXT NOT NULL DEFAULT '',
+  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  posted_at     TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_wsm_purchase_inv_status ON wsm_purchase_invoices (status, id);
+CREATE INDEX IF NOT EXISTS idx_wsm_purchase_inv_number ON wsm_purchase_invoices (supplier_nip, number);
+CREATE INDEX IF NOT EXISTS idx_wsm_purchase_inv_doc ON wsm_purchase_invoices (doc_id);
+
+CREATE TABLE IF NOT EXISTS wsm_purchase_lines (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  invoice_id  INTEGER NOT NULL,
+  lp          INTEGER NOT NULL DEFAULT 0,
+  name        TEXT NOT NULL DEFAULT '',
+  code        TEXT NOT NULL DEFAULT '',
+  ean         TEXT NOT NULL DEFAULT '',
+  qty         REAL NOT NULL DEFAULT 0,
+  unit        TEXT NOT NULL DEFAULT '',
+  unit_net    INTEGER NOT NULL DEFAULT 0,
+  vat_rate    TEXT NOT NULL DEFAULT '',
+  net         INTEGER NOT NULL DEFAULT 0,
+  vat         INTEGER NOT NULL DEFAULT 0,
+  gross       INTEGER NOT NULL DEFAULT 0,
+  product_id  TEXT NULL,
+  factor      REAL NOT NULL DEFAULT 1,
+  stock_qty   INTEGER NOT NULL DEFAULT 0,
+  dopasowanie TEXT NOT NULL DEFAULT '',
+  score       INTEGER NOT NULL DEFAULT 0,
+  skip        INTEGER NOT NULL DEFAULT 0,
+  move_id     INTEGER NULL
+);
+CREATE INDEX IF NOT EXISTS idx_wsm_purchase_lines_inv ON wsm_purchase_lines (invoice_id, lp);
+CREATE INDEX IF NOT EXISTS idx_wsm_purchase_lines_move ON wsm_purchase_lines (move_id);
+CREATE INDEX IF NOT EXISTS idx_wsm_purchase_lines_product ON wsm_purchase_lines (product_id);
+
+CREATE TABLE IF NOT EXISTS wsm_purchase_map (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  supplier_key TEXT NOT NULL,
+  line_key     TEXT NOT NULL,
+  product_id   TEXT NOT NULL,
+  factor       REAL NOT NULL DEFAULT 1,
+  uses         INTEGER NOT NULL DEFAULT 0,
+  updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (supplier_key, line_key)
+);

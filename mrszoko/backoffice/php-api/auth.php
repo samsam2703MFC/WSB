@@ -92,11 +92,11 @@ function wsm_roles_base(): array {
     // satellites empêche de refaire.
     $stock  = ['wysylka.php' => 'w', 'magazyn.php' => 'w', 'magazyn_druk.php' => 'w',
                'etykieta_druk.php' => 'w', 'etykieta_inpost.php' => 'w', 'etykieta_dpd.php' => 'w',
-               'produkty.php' => 'w',
+               'produkty.php' => 'w', 'przyjecie.php' => 'w', 'magazyn_produkt.php' => 'w',
                'zamowienia.php' => 'r', 'zamowienie_druk.php' => 'r', 'pulpit.php' => 'r'];
     $compta = ['faktury.php' => 'w', 'faktura_druk.php' => 'w', 'ksef.php' => 'w', 'platnosci.php' => 'w',
                'kontrahenci.php' => 'w', 'zamowienia.php' => 'r', 'klienci.php' => 'r',
-               'zgloszenia.php' => 'r', 'pulpit.php' => 'r'];
+               'zgloszenia.php' => 'r', 'pulpit.php' => 'r', 'przyjecie.php' => 'r'];
 
     return [
         // Le propriétaire de la plateforme. Seul rôle qui ouvre l'écran de

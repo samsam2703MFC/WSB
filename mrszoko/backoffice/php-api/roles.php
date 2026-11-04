@@ -90,7 +90,8 @@ function wsm_profil_satellites(): array {
     return [
         'zamowienia.php' => ['zamowienie_druk.php'],
         'faktury.php'    => ['faktura_druk.php'],
-        'magazyn.php'    => ['magazyn_druk.php'],
+        // La page d'un article s'ouvre depuis le Magazyn, avec ses droits.
+        'magazyn.php'    => ['magazyn_druk.php', 'magazyn_produkt.php'],
         'wysylka.php'    => ['etykieta_druk.php', 'etykieta_inpost.php', 'etykieta_dpd.php'],
     ];
 }
