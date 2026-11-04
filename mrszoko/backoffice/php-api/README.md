@@ -260,6 +260,37 @@ from a brief, SMS variants under the length limit, and the uk/en versions.
 It never invents a discount, a code or a product: products come from the
 catalogue, the code from *Rabaty*, and every draft is edited by a person.
 
+## Stock receipts from supplier invoices
+
+*Magazyn → Przyjęcie z faktury zakupu* turns the supplier's invoice into a PZ
+instead of retyping it. Two ways in:
+
+- **XML from KSeF** (FA(2), FA(3)): since 2026 every Polish B2B invoice exists
+  in this form. Read exactly, offline, by local element names; external
+  entities are never resolved.
+- **PDF**: sent to Claude (the translation key) as a document, with the answer
+  forced into a fixed tool schema. Claude proposes; every figure is recounted
+  here (quantity × price, line sums against the totals, buyer NIP) and what
+  does not add up is flagged, not silently fixed. Without the key, PDF import
+  says so and points to the XML.
+
+Each line is matched to a shop product: what was learned for this supplier,
+then EAN, supplier code = SKU, then name similarity. The **factor** says how
+many shop units one invoice unit is (25 kg into 2.5 kg bags = 0.4 → 10 bags);
+for kg it is derived from the product's *net* content (`unit_label`, then the
+name), never from the shipping weight. Transport and deposits are marked
+"pomiń". Nothing enters stock until a person clicks *Przyjmij*: the posting
+is one transaction (invoice claimed, PZ written, each line linked to its stock
+movement, mapping learned, last net cost saved to the product for margins),
+and an invoice already received, by number and supplier, cannot be received
+again. Files are kept under `api/data/zakupy/` (denied by the web server,
+excluded from deploys) and opened from the console only.
+
+*Magazyn → product → "wykresy i historia"* shows one product end to end: stock
+over time, units in and out per month, the net purchase price of each delivery,
+then every delivery (supplier, invoice, VAT, net, gross) and every exit
+(customer, order, WZ, parcel number with the carrier's tracking link).
+
 ## Product photos
 
 Uploaded from the console (`/mrszoko/backoffice/produkty.php`, role `Centrala`),
@@ -365,7 +396,7 @@ list, written out.
 | **Allegro** | `WSM_ALLEGRO_CLIENT_ID`, `WSM_ALLEGRO_CLIENT_SECRET`, `WSM_ALLEGRO_REFRESH_TOKEN`, `WSM_ALLEGRO_SELLER_ID` | The second sales channel stays shut. The *Allegro* screen still shows which listings would go out and which are blocked. |
 | **Superadmin** | `WSM_SUPERADMIN_EMAILS` | The platform-owner module is invisible and its page answers 404. Deliberately not a database role: an account that could grant itself the role could rewrite its own invoice. |
 | **SMSAPI** | `WSM_SMSAPI_TOKEN`, `WSM_SMSAPI_NADAWCA`, `WSM_SMSAPI_REGION`, `WSM_SMSAPI_CENA` | SMS campaigns can be written and costed but not sent. Newsletters need **outgoing mail** above instead. |
-| **Claude** | `WSM_ANTHROPIC_API_KEY` | The "translate the missing strings" button and the AI drafting in *Newsletter* / *SMS* do not appear. |
+| **Claude** | `WSM_ANTHROPIC_API_KEY` | The "translate the missing strings" button and the AI drafting in *Newsletter* / *SMS* do not appear, and supplier invoices can be imported from KSeF XML only, not PDF. |
 
 Every one of these integrations is **fail-closed**, and `xxxx` counts as
 unconfigured — it is what a demo field holds, and taking it for a credential
