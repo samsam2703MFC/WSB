@@ -497,14 +497,18 @@ function wsm_stock_product_report(PDO $pdo, string $pid, int $months = 12): ?arr
                    'dostawca' => (string) $e['supplier'], 'doc' => (string) $e['doc']];
     }
 
-    $recu = 0; $coutTotal = 0;
-    foreach ($entrees as $e) {
-        if ((string) $e['created_at'] < $since) continue;
-        $recu += (int) $e['delta'];
-        $coutTotal += (int) $e['delta'] * (int) $e['unit_cost'];
-    }
-    $vendu = 0;
-    foreach ($sorties as $s) if ((string) $s['created_at'] >= $since) $vendu += -(int) $s['delta'];
+    // Les chiffres des tuiles : des SOMMES sur la période (les listes, elles,
+    // s'arrêtent à 300 lignes). Le coût moyen ne compte que les entrées qui
+    // ont un prix : un PZ manuel sans prix ne tire pas la moyenne vers zéro.
+    $st = $pdo->prepare("SELECT COALESCE(SUM(CASE WHEN kind = 'przyjecie' THEN delta ELSE 0 END), 0) AS recu,
+                                COALESCE(SUM(CASE WHEN kind = 'sprzedaz' THEN -delta ELSE 0 END), 0) AS vendu,
+                                COALESCE(SUM(CASE WHEN kind = 'przyjecie' AND unit_cost > 0 THEN delta * unit_cost ELSE 0 END), 0) AS cout,
+                                COALESCE(SUM(CASE WHEN kind = 'przyjecie' AND unit_cost > 0 THEN delta ELSE 0 END), 0) AS n_cout
+                           FROM wsm_stock_moves WHERE product_id = ? AND created_at >= ?");
+    $st->execute([$pid, $since]);
+    $t = $st->fetch() ?: [];
+    $recu = (int) ($t['recu'] ?? 0); $vendu = (int) ($t['vendu'] ?? 0);
+    $coutTotal = (int) ($t['cout'] ?? 0); $nCout = (int) ($t['n_cout'] ?? 0);
     $dernier = $entrees[0] ?? null;
 
     return [
@@ -513,7 +517,7 @@ function wsm_stock_product_report(PDO $pdo, string $pid, int $months = 12): ?arr
         'serie_niveau' => $niveau, 'serie_mois' => $mois, 'serie_prix' => $prix,
         'kpi' => [
             'stock' => (int) $p['stock'], 'recu' => $recu, 'vendu' => $vendu,
-            'cout_moyen' => $recu > 0 ? (int) round($coutTotal / $recu) : 0,
+            'cout_moyen' => $nCout > 0 ? (int) round($coutTotal / $nCout) : 0,
             'dernier_prix' => $dernier ? (int) $dernier['unit_cost'] : 0,
             'dernier_dostawca' => $dernier ? (string) $dernier['supplier'] : '',
             'derniere_date' => $dernier ? (string) ($dernier['pz_date'] ?: substr((string) $dernier['created_at'], 0, 10)) : '',

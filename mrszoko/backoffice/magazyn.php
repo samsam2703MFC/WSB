@@ -279,12 +279,15 @@ console_crumbs($doc
   <?php endforeach; ?>
 </div>
 
-<?php if ($isAdmin): ?>
+<?php // Le formulaire poste vers przyjecie.php : seulement pour qui peut y écrire
+      // (un profil personnalisé peut ouvrir le Magazyn sans les factures).
+      if (wsm_droit_ecran($me, 'przyjecie.php') === 'w'): ?>
 <div class="panel">
   <h2>Przyjęcie z faktury zakupu</h2>
   <p class="why">Najszybciej: wczytaj fakturę dostawcy — PDF albo XML z KSeF. Pozycje zostaną odczytane i dopasowane do
     produktów sklepu (z ceną netto, VAT i ilością); sprawdzasz, poprawiasz i jednym kliknięciem przyjmujesz na stan.</p>
-  <form method="post" action="przyjecie.php" enctype="multipart/form-data" class="actions" style="align-items:center">
+  <form method="post" action="przyjecie.php" enctype="multipart/form-data" class="actions" style="align-items:center"
+        onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Czytam fakturę…';">
     <?= console_csrf_field() ?>
     <input type="hidden" name="wczytaj" value="1">
     <input type="file" name="plik" accept="application/pdf,.pdf,.xml,application/xml,text/xml" required aria-label="Plik faktury zakupu">
@@ -308,7 +311,9 @@ console_crumbs($doc
   </table></div>
   <?php endif; ?>
 </div>
+<?php endif; ?>
 
+<?php if ($isAdmin): ?>
 <div class="panel">
   <h2>Nowe przyjęcie ręczne (PZ)</h2>
   <p class="why">Jedna dostawa = jeden dokument, nawet na kilka artykułów. Cena zakupu jest

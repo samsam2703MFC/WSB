@@ -30,10 +30,19 @@ if ($id > 0 && isset($_GET['plik'])) {
     $f = $inv ? wsm_zak_file($inv) : null;
     if (!$f) { http_response_code(404); exit('Brak pliku.'); }
     $pdf = str_ends_with($f, '.pdf');
-    header('Content-Type: ' . ($pdf ? 'application/pdf' : 'application/xml; charset=utf-8'));
-    header('Content-Disposition: inline; filename="faktura-' . (int) $inv['id'] . ($pdf ? '.pdf' : '.xml') . '"');
     header('X-Content-Type-Options: nosniff');
-    header("Content-Security-Policy: default-src 'none'; sandbox");
+    if ($pdf) {
+        // En ligne, SANS « sandbox » : Chrome et Edge refusent d'ouvrir leur
+        // lecteur PDF dans un document sandboxé (page blanche).
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="faktura-' . (int) $inv['id'] . '.pdf"');
+    } else {
+        // Un XML s'enregistre : affiché, une feuille de style XSL qu'il
+        // déclarerait s'exécuterait sur l'origine de la console.
+        header('Content-Type: application/xml; charset=utf-8');
+        header('Content-Disposition: attachment; filename="faktura-' . (int) $inv['id'] . '.xml"');
+        header("Content-Security-Policy: default-src 'none'; sandbox");
+    }
     header('Content-Length: ' . filesize($f));
     readfile($f);
     exit;
@@ -119,7 +128,7 @@ if (!$inv): ?>
   <p class="why">PDF od dostawcy albo plik XML z KSeF. Faktura zostanie odczytana pozycja po pozycji i dopasowana do produktów
     sklepu; nic nie wejdzie na stan, dopóki nie sprawdzisz i nie klikniesz „Przyjmij”. XML z KSeF czyta się dokładnie i bez
     internetu; PDF odczytuje Claude<?= wsm_tr_enabled() ? '' : ' — <b>potrzebny klucz Claude</b> (Integracje), bez niego wczytasz tylko XML' ?>.</p>
-  <form method="post" enctype="multipart/form-data" class="drop">
+  <form method="post" enctype="multipart/form-data" class="drop" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Czytam fakturę…';">
     <?= console_csrf_field() ?>
     <input type="hidden" name="wczytaj" value="1">
     <input type="file" name="plik" accept="application/pdf,.pdf,.xml,application/xml,text/xml" required>
@@ -216,7 +225,7 @@ $dis = $szkic ? '' : ' disabled';
             <?= (string) $l['product_id'] !== '' && isset($produits[(string) $l['product_id']]) ? ' · stan ' . (int) $produits[(string) $l['product_id']]['stock'] : '' ?></small>
         </td>
         <td class="num keep"><input class="f" type="text" inputmode="decimal" name="l[<?= $lid ?>][factor]"
-              value="<?= h(rtrim(rtrim(number_format((float) $l['factor'], 4, ',', ''), '0'), ',')) ?>" aria-label="Przelicznik dla pozycji <?= (int) $l['lp'] ?>"<?= $dis ?>></td>
+              value="<?= h(rtrim(rtrim(number_format((float) $l['factor'], 8, ',', ''), '0'), ',')) ?>" aria-label="Przelicznik dla pozycji <?= (int) $l['lp'] ?>"<?= $dis ?>></td>
         <td class="num"><span class="nst"><?= (int) $l['skip'] ? '—' : ((string) $l['product_id'] !== '' ? (int) $l['stock_qty'] . ' szt.' : '—') ?></span></td>
         <td class="keep"><input type="checkbox" name="l[<?= $lid ?>][skip]" value="1"<?= (int) $l['skip'] ? ' checked' : '' ?> aria-label="Pomiń pozycję <?= (int) $l['lp'] ?>"<?= $dis ?>></td>
       </tr>

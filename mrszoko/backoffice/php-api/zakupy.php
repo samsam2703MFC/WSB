@@ -164,14 +164,14 @@ function wsm_zak_checks(array $inv, string $notreNip = ''): array {
     if ($inv['number'] === '') $add('uwaga', 'Brak numeru faktury: wpisz go, żeby nie przyjąć tej samej faktury dwa razy.');
     if ($inv['issued_at'] === '') $add('uwaga', 'Brak daty wystawienia.');
     if ($inv['supplier_nip'] === '') $add('uwaga', 'Brak NIP sprzedawcy: dopasowania zapamiętają się po nazwie.');
-    if ($inv['currency'] !== 'PLN') $add('uwaga', 'Waluta ' . $inv['currency'] . ': ceny zakupu zapiszą się bez przeliczenia na złote.');
+    if ($inv['currency'] !== 'PLN') $add('blad', 'Faktura w walucie ' . $inv['currency'] . ': koszty magazynu są w złotych — przyjmij ją ręcznie po przeliczeniu.');
     $notreNip = wsm_zak_nip($notreNip);
     if ($notreNip !== '' && $inv['buyer_nip'] !== '' && $inv['buyer_nip'] !== $notreNip) {
         $add('uwaga', 'Nabywcą na fakturze jest NIP ' . $inv['buyer_nip'] . ', nie nasza firma.');
     }
     foreach ($inv['lines'] as $l) {
         $lp = (int) $l['lp'];
-        if ($l['qty'] <= 0) $add('blad', 'Ilość musi być większa od zera.', $lp);
+        if ($l['qty'] <= 0) $add('uwaga', 'Ilość 0 lub ujemna (zwrot, kaucja, rabat?): zaznacz „pomiń”.', $lp);
         if ($l['vat_rate'] === '') $add('uwaga', 'Nieczytelna stawka VAT.', $lp);
         $calc = (int) round($l['unit_net'] * $l['qty']);
         if ($l['qty'] > 0 && abs($calc - $l['net']) > max(2, (int) round(abs($l['net']) * 0.005))) {
@@ -221,6 +221,14 @@ function wsm_zak_from_ksef(string $xml): array {
     };
     $fa = $xp->query('/' . $chemin('Faktura/Fa'))->item(0);
     if (!$fa) return [null, 'W pliku KSeF brak części Fa (danych faktury).'];
+    // Une facture CORRECTIVE liste l'état « avant » ET « après », en quantités
+    // positives : la recevoir ajouterait les deux. Une facture d'ACOMPTE ne
+    // livre rien. Les deux se traitent à la main (korekta magazynu).
+    $rodzaj = strtoupper($txt('RodzajFaktury', $fa));
+    if (str_starts_with($rodzaj, 'KOR')) {
+        return [null, 'To faktura korygująca (' . $rodzaj . '): nie przyjmuje się jej jako dostawy. Zmianę ilości wpisz korektą w Magazynie.'];
+    }
+    if ($rodzaj === 'ZAL') return [null, 'To faktura zaliczkowa: nie dotyczy dostawy towaru.'];
 
     $raw = [
         'sprzedawca_nazwa' => $txt('Faktura/Podmiot1/DaneIdentyfikacyjne/Nazwa'),
@@ -237,6 +245,7 @@ function wsm_zak_from_ksef(string $xml): array {
     if ($vu) { $raw['razem_netto'] = $netto / 100; $raw['razem_vat'] = $vat / 100; }
 
     foreach ($xp->query($chemin('FaWiersz'), $fa) as $w) {
+        if ($txt('StanPrzed', $w) === '1') continue;                // l'état « avant » d'une correction
         $raw['pozycje'][] = [
             'lp' => $txt('NrWierszaFa', $w), 'nazwa' => $txt('P_7', $w),
             'kod' => $txt('Indeks', $w), 'ean' => $txt('GTIN', $w),
@@ -246,7 +255,7 @@ function wsm_zak_from_ksef(string $xml): array {
             'wartosc_vat' => $txt('P_11Vat', $w), 'stawka_vat' => $txt('P_12', $w),
         ];
     }
-    if (!$raw['pozycje']) return [null, 'Faktura KSeF bez pozycji (FaWiersz): to może być faktura zaliczkowa lub korekta.'];
+    if (!$raw['pozycje']) return [null, 'Faktura KSeF bez pozycji (FaWiersz).'];
     return [$raw, null];
 }
 
@@ -264,6 +273,8 @@ function wsm_zak_tool(): array {
             'type' => 'object',
             'properties' => [
                 'czy_faktura' => ['type' => 'boolean', 'description' => 'false, jeśli dokument nie jest fakturą, rachunkiem ani paragonem z NIP'],
+                'rodzaj' => ['type' => 'string', 'enum' => ['faktura', 'korekta', 'zaliczkowa', 'proforma', 'inny'],
+                             'description' => 'korekta = faktura korygująca; zaliczkowa = na zaliczkę; proforma = nie jest fakturą VAT'],
                 'sprzedawca_nazwa' => ['type' => 'string'],
                 'sprzedawca_nip' => ['type' => 'string'],
                 'nabywca_nip' => ['type' => 'string'],
@@ -285,7 +296,7 @@ function wsm_zak_tool(): array {
                 'razem_netto' => $nombre, 'razem_vat' => $nombre, 'razem_brutto' => $nombre,
                 'uwagi' => ['type' => 'string', 'description' => 'czego nie dało się odczytać pewnie'],
             ],
-            'required' => ['czy_faktura', 'sprzedawca_nazwa', 'numer', 'pozycje'],
+            'required' => ['czy_faktura', 'rodzaj', 'sprzedawca_nazwa', 'numer', 'pozycje'],
         ],
     ];
 }
@@ -354,6 +365,9 @@ function wsm_zak_from_pdf(string $pdf): array {
     catch (Throwable $e) { return [null, 'błąd odczytu: ' . $e->getMessage()]; }
     if ($in === null) return [null, 'Nie udało się odczytać PDF: ' . $err];
     if (empty($in['czy_faktura'])) return [null, 'Ten dokument nie wygląda na fakturę zakupu.'];
+    $rodzaj = (string) ($in['rodzaj'] ?? 'faktura');
+    if ($rodzaj === 'korekta') return [null, 'To faktura korygująca: nie przyjmuje się jej jako dostawy. Zmianę ilości wpisz korektą w Magazynie.'];
+    if ($rodzaj === 'zaliczkowa' || $rodzaj === 'proforma') return [null, 'To faktura ' . $rodzaj . ': nie dotyczy dostawy towaru.'];
     return [$in, null];
 }
 
@@ -374,12 +388,23 @@ function wsm_zak_supplier_key(string $nip, string $nom): string {
     return $nip !== '' ? 'nip:' . $nip : 'nazwa:' . mb_substr(wsm_zak_norm($nom), 0, 50);
 }
 
-/** La clé d'une ligne, de la plus sûre à la moins sûre : EAN, code, nom. */
-function wsm_zak_line_key(array $l): string {
-    if ((string) ($l['ean'] ?? '') !== '') return 'ean:' . $l['ean'];
-    if (trim((string) ($l['code'] ?? '')) !== '') return 'kod:' . mb_substr(wsm_zak_norm((string) $l['code']), 0, 60);
-    return 'nazwa:' . mb_substr(wsm_zak_norm((string) ($l['name'] ?? '')), 0, 180);
+/**
+ * Les clés d'une ligne, de la plus sûre à la moins sûre : EAN, code, nom —
+ * chacune avec l'UNITÉ de la facture : le facteur appris pour « 25 kg » ne
+ * vaut rien pour « 10 worków » du même article.
+ * @return list<string>
+ */
+function wsm_zak_line_keys(array $l): array {
+    $u = '|' . mb_substr(wsm_zak_norm((string) ($l['unit'] ?? '')), 0, 12);
+    return array_values(array_filter([
+        (string) ($l['ean'] ?? '') !== '' ? 'ean:' . $l['ean'] . $u : '',
+        trim((string) ($l['code'] ?? '')) !== '' ? 'kod:' . mb_substr(wsm_zak_norm((string) $l['code']), 0, 60) . $u : '',
+        'nazwa:' . mb_substr(wsm_zak_norm((string) ($l['name'] ?? '')), 0, 160) . $u,
+    ]));
 }
+
+/** La clé qu'on apprend : la plus sûre. */
+function wsm_zak_line_key(array $l): string { return wsm_zak_line_keys($l)[0]; }
 
 /** Ressemblance de deux noms, 0–100 : mots en commun, puis lettres. */
 function wsm_zak_ressemblance(string $a, string $b): int {
@@ -417,7 +442,7 @@ function wsm_zak_factor_guess(array $l, array $p): float {
     $jm = wsm_zak_norm((string) ($l['unit'] ?? ''));
     $g = wsm_zak_netto_g($p);
     if ($g > 0 && in_array($jm, ['kg', 'kilogram', 'kilogramy'], true)) return round(1000 / $g, 4);
-    if ($g > 0 && in_array($jm, ['g', 'gram', 'gramy'], true)) return round(1 / $g, 6);
+    if ($g > 0 && in_array($jm, ['g', 'gram', 'gramy'], true)) return round(1 / $g, 8);
     return 1.0;
 }
 
@@ -429,11 +454,7 @@ function wsm_zak_factor_guess(array $l, array $p): float {
 function wsm_zak_suggest(PDO $pdo, string $supplierKey, array $l, array $produits): array {
     $vide = ['product_id' => null, 'factor' => 1.0, 'dopasowanie' => '', 'score' => 0];
     // 1. Ce qu'on a appris chez ce fournisseur — EAN, code ou nom.
-    $cles = array_values(array_unique(array_filter([
-        (string) ($l['ean'] ?? '') !== '' ? 'ean:' . $l['ean'] : '',
-        trim((string) ($l['code'] ?? '')) !== '' ? 'kod:' . mb_substr(wsm_zak_norm((string) $l['code']), 0, 60) : '',
-        'nazwa:' . mb_substr(wsm_zak_norm((string) ($l['name'] ?? '')), 0, 180),
-    ])));
+    $cles = wsm_zak_line_keys($l);
     $q = $pdo->prepare("SELECT product_id, factor FROM wsm_purchase_map WHERE supplier_key = ? AND line_key = ?");
     foreach ($cles as $k) {
         $q->execute([$supplierKey, $k]);
@@ -536,6 +557,10 @@ function wsm_zak_import(PDO $pdo, string $bytes, string $fileName, string $actor
 
     $produits = wsm_zak_produits($pdo);
     $cle = wsm_zak_supplier_key($inv['supplier_nip'], $inv['supplier_name']);
+    // La lecture d'un PDF prend une minute : un second dépôt du même fichier
+    // pendant ce temps (double clic) retrouve le premier au lieu d'en créer un autre.
+    $q->execute([$sha]);
+    if ($deja = (int) $q->fetchColumn()) return [$deja, 'Ten plik był już wczytany: otwieram go.'];
     $pdo->beginTransaction();
     try {
         $pdo->prepare("INSERT INTO wsm_purchase_invoices (status, source, supplier_name, supplier_nip, buyer_nip, number, issued_at,
@@ -561,8 +586,15 @@ function wsm_zak_import(PDO $pdo, string $bytes, string $fileName, string $actor
         if ($pdo->inTransaction()) $pdo->rollBack();
         return [0, 'Nie udało się zapisać szkicu: ' . $e->getMessage()];
     }
-    if (function_exists('wsm_audit')) wsm_audit($pdo, $actor, 'Wczytanie faktury zakupu', ($inv['number'] ?: $fileName) . ' · ' . $inv['supplier_name'], 'Sieć');
+    wsm_zak_audit($pdo, $actor, 'Wczytanie faktury zakupu', ($inv['number'] ?: basename($fileName)) . ' · ' . $inv['supplier_name']);
     return [$id, null];
+}
+
+/** Le journal d'audit : tronqué à sa colonne (200), et jamais une raison de faire échouer l'écran. */
+function wsm_zak_audit(PDO $pdo, string $actor, string $verb, string $entity): void {
+    if (!function_exists('wsm_audit')) return;
+    try { wsm_audit($pdo, mb_substr($actor, 0, 120), $verb, mb_substr($entity, 0, 200), 'Sieć'); }
+    catch (Throwable $e) { /* l'action est faite ; seul le journal manque */ }
 }
 
 /** Le brouillon (ou la facture reçue) avec ses lignes et ses contrôles. */
@@ -584,10 +616,13 @@ function wsm_zak_get(PDO $pdo, int $id): ?array {
 /** Une AUTRE facture du même fournisseur, même numéro, déjà reçue ? */
 function wsm_zak_doublon(PDO $pdo, array $inv): ?array {
     if (trim((string) $inv['number']) === '') return null;
+    // Le fournisseur : par NIP quand on le connaît, sinon par nom — jamais
+    // « NIP vide = NIP vide », qui confondrait deux fournisseurs inconnus.
+    $nip = (string) $inv['supplier_nip'];
     $st = $pdo->prepare("SELECT i.id, i.doc_id, d.number AS pz FROM wsm_purchase_invoices i LEFT JOIN wsm_stock_docs d ON d.id = i.doc_id
-                          WHERE i.status = 'przyjeta' AND i.id <> ? AND i.number = ? AND (i.supplier_nip = ? OR (i.supplier_nip = '' AND i.supplier_name = ?))
-                          LIMIT 1");
-    $st->execute([(int) $inv['id'], (string) $inv['number'], (string) $inv['supplier_nip'], (string) $inv['supplier_name']]);
+                          WHERE i.status = 'przyjeta' AND i.id <> ? AND i.number = ? AND "
+                        . ($nip !== '' ? 'i.supplier_nip = ?' : "i.supplier_nip = '' AND i.supplier_name = ?") . " LIMIT 1");
+    $st->execute([(int) $inv['id'], (string) $inv['number'], $nip !== '' ? $nip : (string) $inv['supplier_name']]);
     return $st->fetch() ?: null;
 }
 
@@ -618,23 +653,35 @@ function wsm_zak_save(PDO $pdo, int $id, array $head, array $rows): array {
     if ($inv['status'] !== 'szkic') return [false, 'Ta faktura jest już ' . (WSM_ZAK_STATUTS[$inv['status']] ?? $inv['status']) . '.'];
     $produits = wsm_zak_produits($pdo);
     $date = wsm_zak_data((string) ($head['issued_at'] ?? ''));
-    $pdo->prepare("UPDATE wsm_purchase_invoices SET supplier_name = ?, supplier_nip = ?, number = ?, issued_at = ? WHERE id = ?")
-        ->execute([mb_substr(trim((string) ($head['supplier_name'] ?? $inv['supplier_name'])), 0, 160),
-                   wsm_zak_nip((string) ($head['supplier_nip'] ?? $inv['supplier_nip'])),
-                   mb_substr(trim((string) ($head['number'] ?? $inv['number'])), 0, 60),
-                   $date !== '' ? $date : ($inv['issued_at'] ?: null), $id]);
-    $up = $pdo->prepare("UPDATE wsm_purchase_lines SET product_id = ?, factor = ?, stock_qty = ?, skip = ?, dopasowanie = ? WHERE id = ? AND invoice_id = ?");
-    foreach ($inv['lines'] as $l) {
-        $r = $rows[(int) $l['id']] ?? null;
-        if (!is_array($r)) continue;
-        $pid = trim((string) ($r['product_id'] ?? ''));
-        if ($pid !== '' && !isset($produits[$pid])) $pid = '';
-        $f = (float) str_replace(',', '.', (string) ($r['factor'] ?? $l['factor']));
-        if ($f <= 0 || $f > 100000) $f = 1.0;
-        [$n] = wsm_zak_stock_qty((float) $l['qty'], $f);
-        $skip = !empty($r['skip']) ? 1 : 0;
-        $dop = $pid === '' ? '' : ($pid === (string) $l['product_id'] ? (string) $l['dopasowanie'] : 'reczne');
-        $up->execute([$pid !== '' ? $pid : null, round($f, 4), $pid !== '' ? $n : 0, $skip, $dop, (int) $l['id'], $id]);
+    $pdo->beginTransaction();
+    try {
+        // Sous verrou : une réception lancée dans un autre onglet passe d'abord,
+        // et ce qu'elle a relié aux mouvements n'est plus réécrit ensuite.
+        $verrou = $pdo->prepare("SELECT status FROM wsm_purchase_invoices WHERE id = ?" . (wsm_config()['engine'] === 'mysql' ? ' FOR UPDATE' : ''));
+        $verrou->execute([$id]);
+        if ((string) $verrou->fetchColumn() !== 'szkic') { $pdo->rollBack(); return [false, 'Ta faktura została właśnie przyjęta albo odrzucona.']; }
+        $pdo->prepare("UPDATE wsm_purchase_invoices SET supplier_name = ?, supplier_nip = ?, number = ?, issued_at = ? WHERE id = ?")
+            ->execute([mb_substr(trim((string) ($head['supplier_name'] ?? $inv['supplier_name'])), 0, 160),
+                       wsm_zak_nip((string) ($head['supplier_nip'] ?? $inv['supplier_nip'])),
+                       mb_substr(trim((string) ($head['number'] ?? $inv['number'])), 0, 60),
+                       $date !== '' ? $date : ($inv['issued_at'] ?: null), $id]);
+        $up = $pdo->prepare("UPDATE wsm_purchase_lines SET product_id = ?, factor = ?, stock_qty = ?, skip = ?, dopasowanie = ? WHERE id = ? AND invoice_id = ?");
+        foreach ($inv['lines'] as $l) {
+            $r = $rows[(int) $l['id']] ?? null;
+            if (!is_array($r)) continue;
+            $pid = trim((string) ($r['product_id'] ?? ''));
+            if ($pid !== '' && !isset($produits[$pid])) $pid = '';
+            $f = (float) str_replace(',', '.', (string) ($r['factor'] ?? $l['factor']));
+            if ($f <= 0 || $f > 100000) $f = 1.0;
+            [$n] = wsm_zak_stock_qty((float) $l['qty'], $f);
+            $skip = !empty($r['skip']) ? 1 : 0;
+            $dop = $pid === '' ? '' : ($pid === (string) $l['product_id'] ? (string) $l['dopasowanie'] : 'reczne');
+            $up->execute([$pid !== '' ? $pid : null, round($f, 8), $pid !== '' ? $n : 0, $skip, $dop, (int) $l['id'], $id]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        return [false, 'Nie zapisano: ' . $e->getMessage()];
     }
     return [true, 'Zapisano.'];
 }
@@ -643,14 +690,18 @@ function wsm_zak_reject(PDO $pdo, int $id, string $actor): array {
     $st = $pdo->prepare("UPDATE wsm_purchase_invoices SET status = 'odrzucona' WHERE id = ? AND status = 'szkic'");
     $st->execute([$id]);
     if ($st->rowCount() !== 1) return [false, 'Tylko szkic można odrzucić.'];
-    if (function_exists('wsm_audit')) wsm_audit($pdo, $actor, 'Odrzucenie faktury zakupu', '#' . $id, 'Sieć');
+    wsm_zak_audit($pdo, $actor, 'Odrzucenie faktury zakupu', '#' . $id);
     return [true, 'Odrzucono. Plik zostaje w archiwum, ale nie wejdzie na stan.'];
 }
 
 /** Ce qui empêche de recevoir, ligne par ligne — affiché avant le bouton, vérifié au clic. */
 function wsm_zak_blocages(array $inv): array {
     $out = [];
-    foreach ($inv['uwagi'] as $u) if (($u['poziom'] ?? '') === 'blad') $out[] = $u['tekst'];
+    foreach ($inv['uwagi'] as $u) {
+        if (($u['poziom'] ?? '') === 'blad') $out[] = (!empty($u['lp']) ? 'Pozycja ' . (int) $u['lp'] . ': ' : '') . $u['tekst'];
+    }
+    // Sans numéro, rien ne reconnaîtrait la même facture scannée deux fois.
+    if (trim((string) $inv['number']) === '') $out[] = 'Wpisz numer faktury: bez niego ta sama faktura mogłaby wejść na stan dwa razy.';
     if ($inv['doublon']) $out[] = 'Ta faktura jest już przyjęta' . ($inv['doublon']['pz'] ? ' (' . $inv['doublon']['pz'] . ')' : '') . '.';
     $doPrzyjecia = 0;
     foreach ($inv['lines'] as $l) {
@@ -716,6 +767,14 @@ function wsm_zak_post(PDO $pdo, int $id, string $actor, string $dataPrzyjecia = 
         $insMap = $pdo->prepare("INSERT INTO wsm_purchase_map (supplier_key, line_key, product_id, factor, uses, updated_at) VALUES (?,?,?,?,1,?)");
         $cout = $pdo->prepare("UPDATE wsm_products SET base_cost = ? WHERE id = ?");
         $now = date('Y-m-d H:i:s');
+        // Le coût par produit : moyenne pondérée de ses lignes payantes. Une
+        // ligne gratuite (échantillon, gratis) ne ramène pas le coût à zéro.
+        $parProduit = [];
+        foreach ($clean as $c) {
+            if ($c['unit_cost'] <= 0) continue;
+            $parProduit[$c['product_id']]['v'] = ($parProduit[$c['product_id']]['v'] ?? 0) + $c['unit_cost'] * $c['qty'];
+            $parProduit[$c['product_id']]['n'] = ($parProduit[$c['product_id']]['n'] ?? 0) + $c['qty'];
+        }
         foreach ($lignes as $i => $l) {
             $mid = (int) ($moves[$i] ?? 0);
             $verif->execute([$mid, $docId, (string) $l['product_id']]);
@@ -725,7 +784,9 @@ function wsm_zak_post(PDO $pdo, int $id, string $actor, string $dataPrzyjecia = 
             $k = wsm_zak_line_key($l);
             $majMap->execute([(string) $l['product_id'], (float) $l['factor'], $now, $cle, $k]);
             if ($majMap->rowCount() === 0) $insMap->execute([$cle, $k, (string) $l['product_id'], (float) $l['factor'], $now]);
-            if ($majCout && $inv['currency'] === 'PLN') $cout->execute([round($clean[$i]['unit_cost'] / 100, 2), (string) $l['product_id']]);
+        }
+        if ($majCout && $inv['currency'] === 'PLN') {
+            foreach ($parProduit as $pid => $c) $cout->execute([round($c['v'] / $c['n'] / 100, 2), (string) $pid]);
         }
         $pdo->prepare("UPDATE wsm_purchase_invoices SET doc_id = ?, posted_at = ? WHERE id = ?")->execute([$docId, $now, $id]);
         $pdo->commit();
@@ -733,7 +794,7 @@ function wsm_zak_post(PDO $pdo, int $id, string $actor, string $dataPrzyjecia = 
         if ($pdo->inTransaction()) $pdo->rollBack();
         return [null, 'Nie przyjęto: ' . $e->getMessage()];
     }
-    if (function_exists('wsm_audit')) wsm_audit($pdo, $actor, 'Przyjęcie z faktury zakupu', $number . ' · ' . $inv['number'], 'Sieć');
+    wsm_zak_audit($pdo, $actor, 'Przyjęcie z faktury zakupu', $number . ' · ' . $inv['number']);
     return [wsm_stock_doc_by_number($pdo, $number), null];
 }
 

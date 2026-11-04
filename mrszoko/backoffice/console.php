@@ -326,6 +326,7 @@ function console_sections(?array $me = null): array {
         'Paczki' => [
             'wysylka.php' => 'Wysyłka',
             'magazyn.php' => 'Magazyn',
+            'przyjecie.php' => 'Faktury zakupu',
         ],
 
         // CE QUI RENTRE, et de quoi le prouver. Audyt est ici et pas dans les

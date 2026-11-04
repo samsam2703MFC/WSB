@@ -246,6 +246,77 @@ ok('ni PDF ni XML : refusé', wsm_zak_import($pdo, 'GIF89a…', 'zdjecie.gif', '
 ok('un chemin de fichier fabriqué n\'est jamais servi', wsm_zak_file(['file' => '../../config.local.php']) === null
    && wsm_zak_file(['file' => 'zakupy/2026/11/../../x.pdf']) === null);
 
+// ---- 5b. Ce qui ne doit jamais entrer en stock ---------------------------------------------------
+echo "\n-- czego nie przyjmować --\n";
+$kor = str_replace('<Fa><KodWaluty>', '<Fa><RodzajFaktury>KOR</RodzajFaktury><KodWaluty>', $ksef('KOR/' . $sfx, [$lignesXml[1]], '8971902620'));
+ok('facture corrective KSeF (KOR) : refusée, elle listerait l\'avant ET l\'après', wsm_zak_from_ksef($kor)[0] === null
+   && str_contains((string) wsm_zak_from_ksef($kor)[1], 'korygująca'));
+$zal = str_replace('<Fa><KodWaluty>', '<Fa><RodzajFaktury>ZAL</RodzajFaktury><KodWaluty>', $ksef('ZAL/' . $sfx, [$lignesXml[1]], '8971902620'));
+ok('facture d\'acompte (ZAL) : refusée, rien n\'est livré', wsm_zak_from_ksef($zal)[0] === null);
+$avantApres = str_replace('<FaWiersz><NrWierszaFa>1</NrWierszaFa>', '<FaWiersz><NrWierszaFa>1</NrWierszaFa><StanPrzed>1</StanPrzed>',
+                          $ksef('SP/' . $sfx, [$lignesXml[0], $lignesXml[2]], '8971902620'));
+ok('une ligne « StanPrzed » (état avant) n\'est jamais comptée', count(wsm_zak_from_ksef($avantApres)[0]['pozycje'] ?? []) === 1);
+wsm_zak_pdf_transport(fn() => [['czy_faktura' => true, 'rodzaj' => 'korekta', 'sprzedawca_nazwa' => 'X', 'numer' => 'K/1', 'pozycje' => []], null]);
+ok('PDF d\'une facture corrective : refusé aussi', wsm_zak_import($pdo, $pdf . 'kor', 'korekta.pdf', 'test')[0] === 0);
+
+// Une ligne à quantité nulle (kaucja) ne bloque pas une fois « pomiń » ; sans numéro, pas de réception.
+$xk = $ksef('', [$lignesXml[0], ['Kaucja za paletę', '', 'szt', '0', '0', '0', '23']], '8971902620');
+[$ik] = wsm_zak_import($pdo, $xk, 'kaucja.xml', 'test');
+$dk = $suivre($ik);
+$lk = array_column($dk['lines'], null, 'lp');
+ok('sans numéro de facture : réception bloquée (sinon la même facture scannée deux fois passerait)',
+   (bool) array_filter(wsm_zak_blocages($dk), fn($t) => str_contains($t, 'numer faktury')));
+wsm_zak_save($pdo, $ik, ['number' => 'KAU/' . $sfx], [(int) $lk[2]['id'] => ['product_id' => '', 'skip' => 1]]);
+$dk = wsm_zak_get($pdo, $ik);
+ok('quantité 0 marquée « pomiń » : plus rien ne bloque', wsm_zak_blocages($dk) === [], wsm_zak_blocages($dk));
+[$pzk] = wsm_zak_post($pdo, $ik, 'test');
+ok('… et la facture se reçoit', $pzk !== null);
+ok('un onglet resté ouvert ne réécrit pas une facture déjà reçue', wsm_zak_save($pdo, $ik, [], [(int) $lk[1]['id'] => ['product_id' => $pC]])[0] === false
+   && (string) array_column(wsm_zak_get($pdo, $ik)['lines'], null, 'lp')[1]['product_id'] === $pA);
+
+// Doublon : deux fournisseurs SANS NIP, même numéro, ne se confondent pas.
+$sansNip = fn(string $nom) => str_replace(['<NIP>' . $NIP_DOST . '</NIP>', 'Hurtownia Słodka ' . $sfx], ['', $nom . ' ' . $sfx],
+                                          $ksef('1/2026', [$lignesXml[0]], '8971902620'));
+[$iA] = wsm_zak_import($pdo, $sansNip('Piekarnia A'), 'a.xml', 'test'); $suivre($iA);
+wsm_zak_post($pdo, $iA, 'test');
+[$iB] = wsm_zak_import($pdo, $sansNip('Młyn B'), 'b.xml', 'test'); $dB = $suivre($iB);
+ok('facture « 1/2026 » d\'un autre fournisseur sans NIP : pas prise pour un doublon', $dB && !$dB['doublon'], $dB['doublon'] ?? null);
+wsm_zak_reject($pdo, $iB, 'test');
+
+// Une facture en devise : bloquée (les coûts du magasin sont en złote).
+$eur = str_replace('<KodWaluty>PLN</KodWaluty>', '<KodWaluty>EUR</KodWaluty>', $ksef('EUR/' . $sfx, [$lignesXml[0]], '8971902620'));
+[$ie] = wsm_zak_import($pdo, $eur, 'eur.xml', 'test'); $de2 = $suivre($ie);
+ok('facture en EUR : réception bloquée', (bool) array_filter(wsm_zak_blocages($de2), fn($t) => str_contains($t, 'EUR')));
+wsm_zak_reject($pdo, $ie, 'test');
+
+// Le facteur appris dépend de l'unité : « 25 kg » ≠ « 10 worek ».
+$worek = $ksef('W/' . $sfx, [['Callebaut 811 czekolada gorzka 54,5% worek', '', 'worek', '10', '211.00', '2110.00', '23']], '8971902620');
+[$iw] = wsm_zak_import($pdo, $worek, 'worek.xml', 'test'); $dw = $suivre($iw);
+ok('même article facturé « 10 worek » : le facteur 0,4 appris pour « kg » n\'est PAS repris',
+   ($dw['lines'][0]['dopasowanie'] ?? '') !== 'pamiec' && abs((float) ($dw['lines'][0]['factor'] ?? 0) - 1.0) < 0.0001, $dw['lines'][0] ?? null);
+wsm_zak_reject($pdo, $iw, 'test');
+
+// Le coût d'achat : une ligne gratuite (échantillon) ne ramène pas la fiche à 0.
+$gratis = $ksef('G/' . $sfx, [['Kakao alkalizowane 22-24% ' . $sfx, '', 'szt', '4', '30.00', '120.00', '8'],
+                              ['Kakao alkalizowane 22-24% ' . $sfx . ' próbka', '', 'szt', '1', '0', '0', '8']], '8971902620');
+[$ig] = wsm_zak_import($pdo, $gratis, 'gratis.xml', 'test'); $dg = $suivre($ig);
+$lg = array_column($dg['lines'], null, 'lp');
+wsm_zak_save($pdo, $ig, [], [(int) $lg[1]['id'] => ['product_id' => $pC, 'factor' => '1'], (int) $lg[2]['id'] => ['product_id' => $pC, 'factor' => '1']]);
+wsm_zak_post($pdo, $ig, 'test');
+ok('coût d\'achat : 30,00 zł gardés, l\'échantillon gratuit ne le met pas à 0',
+   abs((float) $pdo->query("SELECT base_cost FROM wsm_products WHERE id = " . $pdo->quote($pC))->fetchColumn() - 30.0) < 0.001);
+
+// Prix au gramme pour un produit de 300 g : le facteur 1/300 tient (8 décimales).
+$pD = $mk('Orzechy laskowe 300 g ' . $sfx, '', 'ORZ-' . $sfx, 320, '300 g');
+$gram = $ksef('GR/' . $sfx, [['Orzechy laskowe prażone', '', 'g', '3000', '0.05', '150.00', '5']], '8971902620');
+[$igr] = wsm_zak_import($pdo, $gram, 'gram.xml', 'test'); $dgr = $suivre($igr);
+$lgr = $dgr['lines'][0];
+wsm_zak_save($pdo, $igr, [], [(int) $lgr['id'] => ['product_id' => $pD, 'factor' => rtrim(number_format(1 / 300, 8, ',', ''), '0')]]);
+$dgr = wsm_zak_get($pdo, $igr);
+ok('3 000 g d\'un produit de 300 g : 10 sachets, le facteur 1/300 survit à l\'enregistrement',
+   (int) $dgr['lines'][0]['stock_qty'] === 10 && wsm_zak_blocages($dgr) === [], [$dgr['lines'][0]['factor'], wsm_zak_blocages($dgr)]);
+wsm_zak_reject($pdo, $igr, 'test');
+
 // ---- 6. L'article de bout en bout ---------------------------------------------------------------
 echo "\n-- produkt: skąd przyszedł, dokąd poszedł --\n";
 $code = 'PZT-' . $sfx . '-1';
@@ -282,9 +353,14 @@ ok('un produit inconnu : pas de rapport', wsm_stock_product_report($pdo, 'n-exis
 // ---- 7. Écrans et droits -------------------------------------------------------------------------
 echo "\n-- ekrany i uprawnienia --\n";
 $auth = $lire('mrszoko/backoffice/php-api/auth.php');
-ok('Magazyn reçoit et voit l\'article ; Księgowość lit les factures ; Sprzedaż voit l\'article',
-   str_contains($auth, "'przyjecie.php' => 'w', 'magazyn_produkt.php' => 'w'") && str_contains($auth, "'przyjecie.php' => 'r', 'magazyn_produkt.php' => 'r'")
-   && str_contains($auth, "'magazyn_produkt.php' => 'r'];"));
+ok('Magazyn reçoit et voit l\'article ; Księgowość lit les factures',
+   str_contains($auth, "'przyjecie.php' => 'w', 'magazyn_produkt.php' => 'w'") && str_contains($auth, "'pulpit.php' => 'r', 'przyjecie.php' => 'r'];"));
+require_once dirname(__DIR__) . '/roles.php';
+ok('« Faktury zakupu » au menu (accordable dans les profils), la page d\'article suit le Magazyn',
+   str_contains($lire('mrszoko/backoffice/console.php'), "'przyjecie.php' => 'Faktury zakupu'")
+   && in_array('magazyn_produkt.php', wsm_profil_satellites()['magazyn.php'] ?? [], true));
+ok('le formulaire de dépôt n\'apparaît qu\'à qui peut écrire sur les factures',
+   str_contains($lire('mrszoko/backoffice/magazyn.php'), 'wsm_droit_ecran($me, \'przyjecie.php\') === \'w\''));
 ok('schéma : trois tables, MySQL et SQLite', substr_count($lire('mrszoko/backoffice/php-api/schema/webshop_mrszoko.mysql.sql'), 'wsm_purchase_') >= 3
    && substr_count($lire('mrszoko/backoffice/php-api/schema/webshop_mrszoko.sqlite.sql'), 'CREATE TABLE IF NOT EXISTS wsm_purchase_') === 3);
 

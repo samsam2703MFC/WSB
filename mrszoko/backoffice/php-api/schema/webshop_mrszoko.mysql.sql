@@ -1502,7 +1502,7 @@ CREATE TABLE IF NOT EXISTS `wsm_purchase_lines` (
   `vat`         INT NOT NULL DEFAULT 0,
   `gross`       INT NOT NULL DEFAULT 0,
   `product_id`  VARCHAR(48)  NULL DEFAULT NULL,
-  `factor`      DECIMAL(10,4) NOT NULL DEFAULT 1,             -- 1 unité facture = factor sztuk
+  `factor`      DECIMAL(14,8) NOT NULL DEFAULT 1,             -- 1 unité facture = factor sztuk (1/300 g tient)
   `stock_qty`   INT NOT NULL DEFAULT 0,
   `dopasowanie` VARCHAR(10)  NOT NULL DEFAULT '',             -- pamiec · ean · sku · nazwa · reczne
   `score`       INT NOT NULL DEFAULT 0,
@@ -1521,7 +1521,7 @@ CREATE TABLE IF NOT EXISTS `wsm_purchase_map` (
   `supplier_key` VARCHAR(60)  NOT NULL,
   `line_key`     VARCHAR(190) NOT NULL,
   `product_id`   VARCHAR(48)  NOT NULL,
-  `factor`       DECIMAL(10,4) NOT NULL DEFAULT 1,
+  `factor`       DECIMAL(14,8) NOT NULL DEFAULT 1,
   `uses`         INT NOT NULL DEFAULT 0,
   `updated_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
