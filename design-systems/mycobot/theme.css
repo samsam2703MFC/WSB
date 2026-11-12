@@ -54,11 +54,19 @@ h1, h2, h3, .tytul-2, .section-head h2, .card h3, .promise h2,
 .kontakt-karta, .summary, .checkout-form fieldset { border-radius: var(--radius-lg); }
 .pro { border-radius: var(--radius-2xl); }
 
-/* ---- Pastilles des rayons : pilules -------------------------------------- */
-.rayons a { border-radius: var(--radius-pill); }
+/* ---- PAS DE PILULES : des rectangles aux coins arrondis ------------------
+   (décision du 12/11/2026). --radius-pill vaut 8 px ; ici, les formes que
+   shop.css arrondit en dur. Restent ronds : le compteur du panier, les
+   boutons ronds du carrousel et les barres de progression. */
+.rayons a { border-radius: var(--radius-sm); }
+.ile-cena em { border-radius: var(--radius-sm); }
+.stepper { border-radius: var(--radius-md); }
+.stepper-btn { border-radius: var(--radius-sm); }
+.nl-row input { border-radius: var(--radius-md); }
+.cart-count { border-radius: 999px; }
 
-/* ---- Badges : pilule, fond teinté ---------------------------------------- */
-.badge { border-radius: var(--radius-pill); background: var(--emerald-50); color: var(--emerald-800); }
+/* ---- Badges : rectangle aux coins arrondis, fond teinté ------------------- */
+.badge { border-radius: var(--radius-sm); background: var(--emerald-50); color: var(--emerald-800); }
 
 /* ---- Progression : piste neutre, remplissage au dégradé signature -------- */
 .prog-pasek i, .prog-pasek--dostawa i { background: var(--gradient-brand); }

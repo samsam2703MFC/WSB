@@ -7,5 +7,8 @@
   --radius-lg:   16px;
   --radius-xl:   16px;
   --radius-2xl:  20px;
-  --radius-pill: 999px;
+  /* PAS DE PILULES chez MyCobotBuddy (décision du 12/11/2026) : badges,
+     pastilles et étiquettes sont des rectangles aux coins arrondis. Le jeton
+     garde son nom (le code l'emploie partout), il change de forme. */
+  --radius-pill: 8px;
 }

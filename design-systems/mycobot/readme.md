@@ -26,7 +26,7 @@ une boutique de cobots et n'est pas repris.
 | `--text-strong` / `--text-muted` | `#0A1C33` / `#5C6B7A` | text-primary / text-secondary |
 | `--shadow-tint` | `10, 28, 51` | « teintées navy, jamais noir » |
 | `--font-display` / `--font-sans` / `--font-mono` | Archivo / Inter / JetBrains Mono | §4 |
-| `--radius-sm/md/lg/pill` | 6 / 10 / 16 / 999 px | §5 |
+| `--radius-sm/md/lg/pill` | 6 / 10 / 16 / **8** px | §5 — sauf « pill » : pas de pilules, des rectangles aux coins arrondis (décision du 12/11/2026) |
 | `--container` | 1120 px | §5 |
 
 Les retouches de composants (`theme.css`) appliquent §6 : boutons à rayon
