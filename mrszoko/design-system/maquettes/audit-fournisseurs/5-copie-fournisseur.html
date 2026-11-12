@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Résultats fournisseurs</title>
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/global.css">
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/brand.css">
+<link rel="stylesheet" href="../../../backoffice/console.css">
+<link rel="stylesheet" href="mock.css">
+</head><body>
+<input type="checkbox" id="wsm-menu" class="menu-toggle">
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#"><span>Siège<br><b>Suivi franchisé</b></span></a>
+    <nav class="menu"><a href="#">Tableau de bord</a><span class="sep">Suivi franchisé</span><a href="#">Franchisés<span class="n">12</span></a><a href="#">Visites</a><a href="#">Audits fournisseurs</a><a href="#" class="on">Résultats fournisseurs</a><a href="#">Plans d'action<span class="n">7</span></a><a href="#">Boîte à idées</a><span class="sep">Réseau</span><a href="#">Boutiques</a><a href="#">Fournisseurs & prestataires<span class="n">4</span></a><a href="#">Collectif marketing</a></nav>
+    <div class="side-foot"><span class="who"><b>Animateur réseau</b><br>Centrale</span></div>
+  </aside>
+  <div class="main">
+    <header class="bar"><h1>Résultats fournisseurs <span class="badge">Copies fournisseurs</span></h1></header>
+    <main class="wrap">
+      <nav class="crumbs"><a href="#">Suivi franchisé</a><span class="sepc">›</span><a href="#">Résultats fournisseurs</a><span class="sepc">›</span><a href="#">S2 2026</a><span class="sepc">›</span><span aria-current="page">Copie pour Glace Rawette</span></nav>
+      <style>
+.sups { display: grid; grid-template-columns: repeat(5, 1fr) 210px; gap: 10px; margin-bottom: 18px; }
+.sups .s { background: #fff; border: 1px solid var(--border-subtle); border-radius: 13px; padding: 11px 14px; box-shadow: var(--shadow-xs); }
+.sups .s.on { border: 1.5px solid var(--brand); }
+.sups .s b { display: block; color: var(--text-strong); font-size: 14.5px; margin-bottom: 6px; }
+.sups .s .chip { font-size: 11.5px; padding: 2px 8px; }
+.sups .go { display: grid; place-items: center; }
+.gf { display: grid; grid-template-columns: 520px minmax(0, 1fr); gap: 20px; align-items: start; }
+.box { padding: 18px 20px; }
+.box h5 { margin: 0 0 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+.fld { margin-bottom: 16px; }
+.ta { border: 1px solid var(--border-default); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.55; color: var(--text-strong); background: #fff; min-height: 170px; }
+.ta .cur { display: inline-block; width: 1.5px; height: 16px; background: var(--brand); vertical-align: -3px; }
+.hint { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; display: flex; justify-content: space-between; }
+.inc { display: grid; gap: 8px; }
+.cb { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-strong); }
+.cb i { width: 19px; height: 19px; border-radius: 5px; border: 1.5px solid var(--border-strong); flex: none; display: grid; place-items: center; font-style: normal; font-size: 12px; font-family: 'DejaVu Sans'; margin-top: 1px; }
+.cb i.on { background: var(--brand); border-color: var(--brand); color: var(--cream-50); }
+.cb small { display: block; color: var(--text-muted); font-size: 12.5px; }
+.quotes { margin: 4px 0 0 29px; display: grid; gap: 7px; }
+.quotes .cb { font-size: 13.5px; color: var(--text-body); }
+.sw { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+.acts { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+
+.pvw { background: var(--cream-200); border-radius: 16px; padding: 20px; }
+.pvw .cap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--text-muted); }
+.pvw .cap b { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; }
+.doc { background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(46,22,12,.12); max-width: 720px; margin: 0 auto; overflow: hidden; }
+.doc .dh { background: var(--choco-800); color: var(--cream-50); padding: 18px 26px; }
+.doc .dh small { color: var(--choco-200); font-size: 11.5px; text-transform: uppercase; letter-spacing: .1em; }
+.doc .dh h3 { margin: 4px 0 2px; font-size: 21px; }
+.doc .dh p { margin: 0; color: var(--choco-200); font-size: 13.5px; }
+.doc .db { padding: 22px 26px 24px; }
+.memo { border-left: 4px solid var(--accent); background: #FBF3E6; border-radius: 0 12px 12px 0; padding: 14px 18px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; color: var(--text-body); }
+.memo .t { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--caramel-600); font-weight: 800; margin-bottom: 6px; }
+.memo .sig { margin-top: 8px; font-weight: 700; color: var(--text-strong); }
+.t3 { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border-subtle); border-radius: 12px; margin-bottom: 20px; }
+.t3 div { padding: 12px 16px; border-right: 1px solid var(--border-subtle); }
+.t3 div:last-child { border-right: 0; }
+.t3 small { display: block; font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); font-weight: 700; }
+.t3 b { font-size: 24px; font-weight: 800; color: var(--text-strong); letter-spacing: -.02em; }
+.t3 b em { font-style: normal; font-size: 13px; color: var(--text-muted); font-weight: 600; margin-left: 3px; }
+.t3 .sub { font-size: 12.5px; color: var(--text-muted); }
+.h6 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); font-weight: 700; margin: 0 0 8px; }
+.ml { display: grid; grid-template-columns: 1fr 180px 40px; gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-strong); }
+.ml:last-of-type { border-bottom: 0; }
+.ml .meter { display: block; height: 9px; background: var(--cream-200); border-radius: 99px; overflow: hidden; }
+.ml .meter i { display: block; height: 100%; background: var(--caramel-600); border-radius: 99px; }
+.ml b { font-family: var(--font-mono); font-weight: 500; text-align: right; }
+.qs { margin-top: 18px; display: grid; gap: 8px; }
+.qs q { quotes: "« " " »"; display: block; font-size: 14px; color: var(--text-body); padding: 9px 12px; background: var(--cream-50); border-radius: 10px; line-height: 1.45; }
+.doc .df { border-top: 1px solid var(--border-subtle); padding: 12px 26px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; }
+.dl.down { color: var(--danger); font-family: var(--font-mono); font-size: 12.5px; }
+</style>
+
+<div class="sups">
+  <div class="s on"><b>Glace Rawette</b><span class="chip gold">Brouillon</span></div>
+  <div class="s"><b>TFBuddy</b><span class="chip ok">✓ Envoyé 24/11</span></div>
+  <div class="s"><b>Bruyerre</b><span class="chip ok">✓ Envoyé 24/11</span></div>
+  <div class="s"><b>SLFood</b><span class="chip plain">Note à écrire</span></div>
+  <div class="s"><b>Collectif marketing</b><span class="chip plain">Note à écrire</span></div>
+  <div class="go"><span class="btn">Envoyer les 3 restants</span></div>
+</div>
+
+<div class="gf">
+  <div class="card box">
+    <h5>Copie pour Glace Rawette</h5>
+    <div class="fld"><span class="lbl">Envoyé à</span><span class="inp sel">Contact qualité · Glace Rawette</span></div>
+    <div class="fld"><span class="lbl">Note du franchiseur</span>
+      <div class="ta">Bonjour,<br>Merci pour ce semestre. Vos glaces restent très appréciées : 4,1/5 pour la vitrine et 4,5/5 pour le goût.<br>En revanche, la hausse de prix de septembre passe mal : 7 boutiques sur 11 notent vos prix 2 ou moins. Nous souhaitons vous rencontrer avant le 15/12 pour revoir les tarifs et la livraison du vendredi.<span class="cur"></span></div>
+      <div class="hint"><span>Apparaît en tête de la copie, signée « Direction réseau ».</span><span>412 / 1 200</span></div></div>
+    <div class="fld"><span class="lbl">Ce que reçoit le fournisseur</span>
+      <div class="inc">
+        <div class="cb"><i class="on">✓</i><div>Score global et évolution</div></div>
+        <div class="cb"><i class="on">✓</i><div>Moyenne par question</div></div>
+        <div class="cb"><i class="on">✓</i><div>Réponses à « Continuer ? » (6 oui · 4 réserves · 1 non)</div></div>
+        <div class="cb"><i class="on">✓</i><div>Commentaires choisis <small>3 sur 6 · le nom des boutiques est retiré</small></div></div>
+        <div class="quotes">
+          <div class="cb"><i class="on">✓</i><div>« Prix en hausse de 8 % depuis septembre, sans prévenir. »</div></div>
+          <div class="cb"><i class="on">✓</i><div>« La livraison du vendredi arrive souvent après 11 h. »</div></div>
+          <div class="cb"><i class="on">✓</i><div>« Vitrine superbe, les clients adorent les nouveaux parfums. »</div></div>
+          <div class="cb"><i></i><div>« On teste un glacier local, environ 15 % moins cher. »</div></div>
+        </div>
+        <div class="cb" style="margin-top:4px"><i></i><div>Détail boutique par boutique <small>noms remplacés par Boutique A, B, C…</small></div></div>
+      </div></div>
+    <div class="sw">
+      <span class="switch on"><s></s>Masquer le nom des boutiques</span>
+      <span class="switch on"><s></s>Joindre le PDF</span>
+      <span class="switch"><s></s>Demander une réponse écrite du fournisseur</span>
+    </div>
+    <div class="acts"><span class="btn">M'envoyer un test</span><span class="btn brand">Envoyer à Glace Rawette</span></div>
+  </div>
+
+  <div class="pvw">
+    <div class="cap"><b>Aperçu de la copie (e-mail + PDF)</b><span>ce que lit Glace Rawette</span></div>
+    <div class="doc">
+      <div class="dh"><small>Réseau franchisé · Audit fournisseurs</small><h3>Votre évaluation par nos franchisés · S2 2026</h3><p>Glace Rawette · 11 boutiques sur 12 ont répondu</p></div>
+      <div class="db">
+        <div class="memo"><div class="t">Note du franchiseur</div>
+          Merci pour ce semestre. Vos glaces restent très appréciées : 4,1/5 pour la vitrine et 4,5/5 pour le goût.
+          En revanche, la hausse de prix de septembre passe mal : 7 boutiques sur 11 notent vos prix 2 ou moins. Nous souhaitons vous rencontrer avant le 15/12 pour revoir les tarifs et la livraison du vendredi.
+          <div class="sig">Direction réseau</div></div>
+        <div class="t3">
+          <div><small>Score</small><b>71 %</b><div class="sub"><span class="dl down">▼ −8</span> vs S1 2026</div></div>
+          <div><small>Continuer avec vous ?</small><b>6<em>oui</em> 4<em>rés.</em> 1<em>non</em></b><div class="sub">sur 11 boutiques</div></div>
+          <div><small>Votre point fort</small><b style="font-size:18px">Goût 4,5 / 5</b><div class="sub">qualité visuelle 4,1</div></div>
+        </div>
+        <div class="h6">Moyenne par question (sur 5)</div>
+        <div class="ml"><span>Continuer ? (pts)</span><span class="meter"><i style="width:69%"></i></span><b>3,5</b></div>
+        <div class="ml"><span>Prix</span><span class="meter"><i style="width:45%"></i></span><b>2,3</b></div>
+        <div class="ml"><span>Délais &amp; réactivité</span><span class="meter"><i style="width:71%"></i></span><b>3,5</b></div>
+        <div class="ml"><span>Qualité visuelle</span><span class="meter"><i style="width:82%"></i></span><b>4,1</b></div>
+        <div class="ml"><span>Goût &amp; constance</span><span class="meter"><i style="width:89%"></i></span><b>4,5</b></div>
+        <div class="qs"><div class="h6" style="margin:0">Ce que disent les franchisés</div>
+          <q>Prix en hausse de 8 % depuis septembre, sans prévenir.</q>
+          <q>La livraison du vendredi arrive souvent après 11 h.</q>
+          <q>Vitrine superbe, les clients adorent les nouveaux parfums.</q></div>
+      </div>
+      <div class="df"><span>Confidentiel, réservé à Glace Rawette.</span><span>Prochain audit : mai 2027</span></div>
+    </div>
+  </div>
+</div>
+
+    </main>
+  </div>
+</div>
+</body></html>

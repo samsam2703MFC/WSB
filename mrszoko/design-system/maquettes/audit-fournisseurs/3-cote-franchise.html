@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Côté franchisé</title>
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/global.css">
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/brand.css">
+<link rel="stylesheet" href="../../../backoffice/console.css">
+<link rel="stylesheet" href="mock.css">
+</head><body><style>
+body { background: var(--cream-100); }
+.pg { padding: 34px 48px 46px; }
+.pg h1 { margin: 0 0 4px; font-size: 26px; color: var(--text-strong); }
+.pg > p { margin: 0 0 28px; color: var(--text-muted); font-size: 15px; }
+.row3 { display: grid; grid-template-columns: repeat(3, 360px); gap: 56px; justify-content: center; }
+.stp { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--caramel-600); margin: 0 0 4px 6px; }
+.stt { font-size: 16px; font-weight: 800; color: var(--text-strong); margin: 0 0 14px 6px; }
+.phone .scr { height: 740px; }
+.top { background: var(--choco-800); color: var(--cream-50); padding: 0 18px 16px; }
+.top small { color: var(--choco-200); font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; }
+.top h4 { margin: 3px 0 0; font-size: 18px; line-height: 1.25; }
+.top .meta { font-size: 12.5px; color: var(--choco-200); margin-top: 6px; }
+.in { padding: 14px; }
+.sup { display: flex; align-items: center; gap: 11px; background: #fff; border: 1px solid var(--border-subtle); border-radius: 13px; padding: 11px 13px; margin-bottom: 8px; }
+.sup .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-family: 'DejaVu Sans'; font-size: 13px; flex: none; }
+.sup .ic.done { background: var(--success); color: #fff; }
+.sup .ic.now { background: var(--accent); color: var(--choco-900); font-weight: 800; font-family: var(--font-mono); }
+.sup .ic.todo { background: var(--cream-200); color: var(--text-muted); font-family: var(--font-mono); }
+.sup b { display: block; font-size: 14.5px; color: var(--text-strong); }
+.sup small { color: var(--text-muted); font-size: 12px; }
+.sup.now { border: 1.5px solid var(--accent); }
+.note { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin: 12px 4px 0; }
+.big { display: block; text-align: center; background: var(--brand); color: var(--cream-50); font-weight: 800; border-radius: 13px; padding: 14px; font-size: 15px; }
+.foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 16px; background: #fff; border-top: 1px solid var(--border-subtle); }
+.foot.split { display: flex; gap: 10px; }
+.foot.split .big { flex: 1; }
+.foot.split .back { padding: 14px 16px; border-radius: 13px; border: 1px solid var(--border-default); font-weight: 700; color: var(--text-strong); }
+.q { background: #fff; border: 1px solid var(--border-subtle); border-radius: 14px; padding: 13px 14px; margin-bottom: 10px; }
+.q p { margin: 0 0 10px; font-weight: 700; color: var(--text-strong); font-size: 14.5px; line-height: 1.35; }
+.o3 { display: grid; gap: 7px; }
+.o3 span { padding: 10px 12px; border-radius: 11px; border: 1.5px solid var(--border-default); font-weight: 700; color: var(--text-strong); font-size: 14px; }
+.o3 span.on { background: var(--brand); border-color: var(--brand); color: var(--cream-50); }
+.ta { margin-top: 9px; border: 1.5px solid var(--caramel-400); border-radius: 11px; padding: 9px 11px; font-size: 13.5px; color: var(--text-strong); background: #FFFBF4; line-height: 1.4; }
+.ta small { display: block; color: var(--caramel-600); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper span { width: 46px; height: 44px; border-radius: 11px; border: 1.5px solid var(--border-default); display: grid; place-items: center; font-size: 22px; font-weight: 700; color: var(--text-strong); }
+.stepper b { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 26px; font-weight: 500; color: var(--text-strong); }
+.dots { display: flex; gap: 5px; margin-top: 12px; }
+.dots i { flex: 1; height: 4px; border-radius: 9px; background: var(--choco-600); }
+.dots i.d { background: var(--cream-300); } .dots i.n { background: var(--accent); }
+.ok { text-align: center; padding: 34px 20px 10px; }
+.ok .c { width: 74px; height: 74px; border-radius: 50%; background: var(--success); color: #fff; display: grid; place-items: center; font-size: 36px; margin: 0 auto 16px; font-family: 'DejaVu Sans'; }
+.ok h3 { margin: 0 0 6px; font-size: 21px; color: var(--text-strong); }
+.ok p { margin: 0; color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+.next { margin: 18px 14px 0; background: #fff; border: 1px solid var(--border-subtle); border-radius: 14px; padding: 14px; }
+.next h5 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+.next div { display: grid; grid-template-columns: 24px 1fr; gap: 8px; font-size: 13.5px; color: var(--text-body); line-height: 1.45; margin-bottom: 9px; }
+.next div:last-child { margin-bottom: 0; }
+.next div span { width: 22px; height: 22px; border-radius: 50%; background: var(--cream-200); display: grid; place-items: center; font-family: var(--font-mono); font-size: 12px; color: var(--choco-700); }
+</style>
+
+<div class="pg">
+  <h1>Côté franchisé : du lien à l'envoi</h1>
+  <p>Pas de compte ni de mot de passe : le lien de l'e-mail ou de la notification ouvre directement l'audit de sa boutique. Les points ne sont pas montrés au franchisé.</p>
+  <div class="row3">
+
+    <div>
+      <div class="stp">1 · Ouverture du lien</div><div class="stt">L'audit de sa boutique, prêt à remplir</div>
+      <div class="phone"><div class="scr">
+        <div class="top"><div class="notch" style="margin-bottom:10px"></div>
+          <small>Boutique Ixelles</small><h4>Audit fournisseurs S2 2026</h4>
+          <div class="meta">5 fournisseurs · environ 8 min · jusqu'au 20/11</div></div>
+        <div class="in">
+          <div class="sup"><span class="ic done">✓</span><div><b>Glace Rawette</b><small>Glaces · terminé</small></div></div>
+          <div class="sup"><span class="ic done">✓</span><div><b>TFBuddy</b><small>IT &amp; numérique · terminé</small></div></div>
+          <div class="sup now"><span class="ic now">3</span><div><b>SLFood</b><small>Marchandise · 2 questions sur 5</small></div></div>
+          <div class="sup"><span class="ic todo">4</span><div><b>Bruyerre</b><small>Matières premières</small></div></div>
+          <div class="sup"><span class="ic todo">5</span><div><b>Collectif marketing</b><small>Marketing réseau</small></div></div>
+          <div class="note">Vos réponses sont enregistrées au fur et à mesure : vous pouvez fermer et reprendre plus tard avec le même lien.</div>
+        </div>
+        <div class="foot"><span class="big">Reprendre : SLFood →</span></div>
+      </div></div>
+    </div>
+
+    <div>
+      <div class="stp">2 · Les questions</div><div class="stt">Un écran par fournisseur</div>
+      <div class="phone"><div class="scr">
+        <div class="top"><div class="notch" style="margin-bottom:10px"></div>
+          <small>3 / 5 · Marchandise</small><h4>SLFood</h4>
+          <div class="dots"><i></i><i></i><i class="n"></i><i class="d"></i><i class="d"></i></div></div>
+        <div class="in">
+          <div class="q"><p>Souhaitez-vous continuer avec SLFood&nbsp;?</p>
+            <div class="o3"><span>Oui</span><span class="on">Oui, avec réserves</span><span>Non</span></div>
+            <div class="ta"><small>Pourquoi ?</small>Trop de ruptures sur les boissons cet été, livraisons incomplètes.</div></div>
+          <div class="q"><p>Nombre de ruptures ce semestre</p>
+            <div class="stepper"><span>−</span><b>4</b><span>+</span></div></div>
+          <div class="q"><p>Les prix de SLFood sont-ils corrects&nbsp;?</p>
+            <div class="ph-scale"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+            <div class="ph-ends"><span>Trop chers</span><span>Très corrects</span></div></div>
+        </div>
+        <div class="foot split"><span class="back">←</span><span class="big">Suivant</span></div>
+      </div></div>
+    </div>
+
+    <div>
+      <div class="stp">3 · Envoyé</div><div class="stt">Confirmation et suite</div>
+      <div class="phone"><div class="scr">
+        <div class="top"><div class="notch" style="margin-bottom:10px"></div>
+          <small>Boutique Ixelles</small><h4>Audit fournisseurs S2 2026</h4></div>
+        <div class="ok"><div class="c">✓</div><h3>Merci, c'est envoyé</h3><p>Vous pouvez encore modifier vos réponses jusqu'au 20/11 avec le même lien.</p></div>
+        <div class="next"><h5>Et ensuite ?</h5>
+          <div><span>1</span>Le siège regroupe les réponses des 12 boutiques.</div>
+          <div><span>2</span>Chaque fournisseur reçoit une synthèse et la note du franchiseur, sans le nom de votre boutique.</div>
+          <div><span>3</span>Vous recevez les résultats du réseau début décembre.</div>
+        </div>
+        <div class="foot"><span class="big" style="background:#fff;color:var(--text-strong);border:1px solid var(--border-default)">Revoir mes réponses</span></div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+</body></html>

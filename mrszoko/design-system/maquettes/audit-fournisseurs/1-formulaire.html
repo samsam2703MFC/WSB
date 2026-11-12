@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audits fournisseurs</title>
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/global.css">
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/brand.css">
+<link rel="stylesheet" href="../../../backoffice/console.css">
+<link rel="stylesheet" href="mock.css">
+</head><body>
+<input type="checkbox" id="wsm-menu" class="menu-toggle">
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#"><span>Siège<br><b>Suivi franchisé</b></span></a>
+    <nav class="menu"><a href="#">Tableau de bord</a><span class="sep">Suivi franchisé</span><a href="#">Franchisés<span class="n">12</span></a><a href="#">Visites</a><a href="#" class="on">Audits fournisseurs</a><a href="#">Résultats fournisseurs</a><a href="#">Plans d'action<span class="n">7</span></a><a href="#">Boîte à idées</a><span class="sep">Réseau</span><a href="#">Boutiques</a><a href="#">Fournisseurs & prestataires<span class="n">4</span></a><a href="#">Collectif marketing</a></nav>
+    <div class="side-foot"><span class="who"><b>Animateur réseau</b><br>Centrale</span></div>
+  </aside>
+  <div class="main">
+    <header class="bar"><h1>Audits fournisseurs <span class="badge">Brouillon</span></h1></header>
+    <main class="wrap">
+      <nav class="crumbs"><a href="#">Suivi franchisé</a><span class="sepc">›</span><a href="#">Audits fournisseurs</a><span class="sepc">›</span><span aria-current="page">Audit fournisseurs & prestataires</span></nav>
+      <style>
+.ga { display: grid; grid-template-columns: 238px minmax(0, 1fr) 384px; gap: 22px; align-items: start; }
+.fh { padding: 18px 22px; border-top: 5px solid var(--accent); margin-bottom: 18px; display: flex; gap: 20px; align-items: flex-start; }
+.fh .t { flex: 1; }
+.fh h2 { margin: 0 0 4px; font-size: 23px; color: var(--text-strong); }
+.fh p { margin: 0 0 12px; color: var(--text-muted); font-size: 14px; max-width: 860px; line-height: 1.5; }
+.fh .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.fh .acts { display: flex; gap: 8px; }
+
+.secnav { padding: 8px; }
+.secnav h5 { margin: 6px 8px 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
+.secnav a { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px; text-decoration: none; color: var(--text-strong); font-weight: 700; font-size: 14px; line-height: 1.25; }
+.secnav a small { display: block; font-weight: 500; color: var(--text-muted); font-size: 12px; }
+.secnav a .num { width: 24px; height: 24px; flex: none; border-radius: 7px; background: var(--cream-200); display: grid; place-items: center; font-size: 12px; font-family: var(--font-mono); font-weight: 500; }
+.secnav a .p { margin-left: auto; font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); font-weight: 400; }
+.secnav a.on { background: var(--cream-100); box-shadow: inset 3px 0 0 var(--accent); }
+.secnav a.on .num { background: var(--brand); color: var(--cream-50); }
+.secnav a.common .num { background: var(--accent); color: var(--choco-900); font-family: 'DejaVu Sans'; }
+.secnav .add { color: var(--caramel-600); font-weight: 700; }
+.secnav hr { border: 0; border-top: 1px solid var(--border-subtle); margin: 6px 6px; }
+.secnav .tot { border-top: 1px solid var(--border-subtle); margin: 8px 4px 0; padding: 12px 6px 4px; display: flex; justify-content: space-between; font-weight: 800; color: var(--text-strong); }
+.secnav .tot span { font-family: var(--font-mono); font-weight: 500; }
+.secnav .stack { margin: 4px 6px 14px; }
+.stack i.one { background: var(--caramel-600); }
+.seuils { padding: 0 6px 6px; font-size: 13px; display: grid; gap: 7px; }
+.seuils div { display: flex; align-items: center; gap: 8px; }
+.seuils b { font-family: var(--font-mono); font-weight: 500; width: 62px; color: var(--text-strong); }
+
+.sech { display: flex; align-items: baseline; gap: 12px; margin: 4px 2px 12px; }
+.sech h3 { margin: 0; font-size: 18px; color: var(--text-strong); }
+.sech .cat { font-size: 13px; color: var(--text-muted); }
+.sech .pts { margin-left: auto; font-size: 14px; }
+.common-box { background: #FBF3E6; border: 1px solid #EBD3A5; border-radius: 16px; padding: 14px 14px 4px; margin-bottom: 24px; }
+.common-box .expl { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--choco-700); margin: 0 4px 12px; }
+.common-box .expl .sup { display: inline-flex; gap: 5px; flex-wrap: wrap; }
+
+.q { margin-bottom: 12px; }
+.q.edit { border: 1.5px solid var(--accent); box-shadow: 0 6px 20px rgba(198,138,60,.18); }
+.q .hd { display: flex; align-items: center; gap: 12px; padding: 13px 16px; }
+.q .hd .qn { font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); width: 24px; }
+.q .hd .qt { flex: 1; font-weight: 700; color: var(--text-strong); font-size: 14.5px; }
+.q .hd .qx { flex: 1; min-width: 0; }
+.q .hd .qx .qt { margin-bottom: 7px; }
+.q .hd .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.q .hd .meta .rule { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-muted); }
+.q .hd > .pts { font-size: 15px; align-self: center; }
+.var { font-family: var(--font-mono); font-size: .9em; background: var(--cream-200); color: var(--choco-700); padding: 1px 6px; border-radius: 6px; font-weight: 500; }
+.q .body { padding: 2px 18px 16px 52px; }
+.q .r1 { display: grid; grid-template-columns: 1fr 210px; gap: 12px; margin-bottom: 14px; }
+.bareme { background: var(--cream-50); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.bareme .lines { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.bareme .ln { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.bareme .ln .opt { font-weight: 700; color: var(--text-strong); padding: 6px 12px; border-radius: 9px; background: #fff; border: 1px solid var(--border-default); }
+.bareme .ln .arr { color: var(--text-muted); font-family: 'DejaVu Sans'; }
+.bareme .max { margin-left: auto; font-size: 13px; color: var(--text-muted); }
+.bareme .max b { font-family: var(--font-mono); color: var(--text-strong); font-size: 15px; font-weight: 500; }
+.cond { border-left: 3px solid var(--caramel-400); padding: 4px 0 4px 14px; margin: 0 0 14px; display: grid; gap: 8px; font-size: 14px; }
+.cond .if { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--caramel-600); font-weight: 800; }
+.cond .then { display: flex; align-items: center; gap: 10px; }
+.cond .then .sym { color: var(--text-muted); }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border-subtle); align-items: center; }
+.opts .tools { margin-left: auto; display: flex; gap: 6px; }
+
+.addq { border: 1.5px dashed var(--border-default); border-radius: 14px; padding: 14px 16px; margin: 4px 0 26px; background: rgba(255,255,255,.5); }
+.addq .t { font-weight: 800; color: var(--caramel-600); margin-bottom: 10px; font-size: 14px; }
+.addq .types { display: flex; gap: 8px; flex-wrap: wrap; }
+.addq .types .ty { background: #fff; }
+
+.prev .cap { display: flex; justify-content: space-between; align-items: center; margin: 0 4px 10px; }
+.prev .cap b { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+.seg { display: inline-flex; background: var(--cream-200); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg span { font-size: 12.5px; padding: 5px 10px; border-radius: 7px; color: var(--text-muted); font-weight: 600; }
+.seg span.on { background: #fff; color: var(--text-strong); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.ph-3 { display: grid; gap: 7px; }
+.ph-3 span { padding: 10px 12px; border-radius: 11px; border: 1.5px solid var(--border-default); font-weight: 700; color: var(--text-strong); font-size: 14px; }
+.ph-3 span.on { background: var(--brand); border-color: var(--brand); color: var(--cream-50); }
+.ph-ta { margin-top: 9px; border: 1.5px solid var(--caramel-400); border-radius: 11px; padding: 9px 11px; font-size: 13.5px; color: var(--text-strong); background: #FFFBF4; }
+.ph-ta small { display: block; color: var(--caramel-600); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.ph-sup { display: flex; gap: 5px; margin-top: 10px; }
+.ph-sup span { flex: 1; height: 4px; border-radius: 9px; background: var(--choco-600); }
+.ph-sup span.on { background: var(--accent); }
+</style>
+
+<!-- En-tête du formulaire -->
+<div class="card fh">
+  <div class="t">
+    <h2>Audit fournisseurs &amp; prestataires</h2>
+    <p>Envoyé aux franchisés par e-mail et notification ; chacun répond seul via son lien personnel. Les réponses sont regroupées par fournisseur, puis chaque fournisseur reçoit sa copie avec la note du franchiseur.</p>
+    <div class="row">
+      <span class="chip plain">Répondu par : le franchisé seul</span><span class="chip plain">Envoi : e-mail + notification</span>
+      <span class="chip plain">Fréquence : tous les 6 mois</span>
+      <span class="chip plain">12 franchisés</span>
+      <span class="chip plain">Tous les fournisseurs référencés (5)</span>
+      <span class="chip gold">25 pts par fournisseur</span>
+    </div>
+  </div>
+  <div class="acts">
+    <span class="btn">Tester</span>
+    <span class="btn brand">Envoyer aux franchisés</span>
+  </div>
+</div>
+
+<div class="ga">
+
+  <!-- Colonne gauche : tronc commun + fournisseurs -->
+  <div class="card secnav">
+    <h5>Pour tous</h5>
+    <a class="on common" href="#"><span class="num">★</span><span>Tronc commun<small>3 questions · 15 pts</small></span></a>
+    <hr>
+    <h5>Fournisseurs référencés · auto</h5>
+    <a href="#"><span class="num">1</span><span>Glace Rawette<small>Glaces</small></span><span class="p">25</span></a>
+    <a href="#"><span class="num">2</span><span>TFBuddy<small>IT &amp; développement numérique</small></span><span class="p">25</span></a>
+    <a href="#"><span class="num">3</span><span>SLFood<small>Marchandise</small></span><span class="p">25</span></a>
+    <a href="#"><span class="num">4</span><span>Bruyerre<small>Matières premières</small></span><span class="p">25</span></a>
+    <a href="#"><span class="num">5</span><span>Collectif marketing<small>Marketing réseau</small></span><span class="p">25</span></a>
+    <a href="#" class="add" style="font-weight:600;font-size:12.5px;line-height:1.35">Tout fournisseur référencé est ajouté ici avec le tronc commun</a>
+    <div class="tot">Chaque fournisseur <span>/ 25</span></div>
+    <div class="stack"><i class="one" style="width:60%"></i><i class="one" style="width:40%;opacity:.55"></i></div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin:-8px 6px 14px"><span>15 tronc commun</span><span>10 spécifiques</span></div>
+    <h5>Seuils par fournisseur</h5>
+    <div class="seuils">
+      <div><span class="dot g"></span><b>≥ 20</b> Bon</div>
+      <div><span class="dot o"></span><b>15–19</b> À surveiller</div>
+      <div><span class="dot r"></span><b>&lt; 15</b> Revoir le contrat</div>
+    </div>
+  </div>
+
+  <!-- Colonne centrale -->
+  <div>
+    <div class="common-box">
+      <div class="sech" style="margin:0 4px 6px"><h3>Tronc commun</h3><span class="cat">posé pour chaque fournisseur</span><span class="pts"><b>15</b> pts</span></div>
+      <div class="expl">Mêmes questions, donc comparables, pour les 5 :
+        <span class="sup"><span class="chip plain">Glace Rawette</span><span class="chip plain">TFBuddy</span><span class="chip plain">SLFood</span><span class="chip plain">Bruyerre</span><span class="chip plain">Collectif marketing</span></span></div>
+
+      <!-- Question en édition -->
+      <div class="card q edit">
+        <div class="hd"><span class="handle">⋮⋮</span><span class="qn">T1</span><span class="qt">Question en cours de modification</span><span class="chip gold">5 pts max</span></div>
+        <div class="body">
+          <div class="r1">
+            <div><span class="lbl">Question</span><span class="inp lg">Souhaitez-vous continuer avec <span class="var">{fournisseur}</span> ?</span></div>
+            <div><span class="lbl">Type de réponse</span><span class="inp sel"><span class="ty t-one" style="border:0;background:none;padding:0"><i>◉</i> Choix unique</span></span></div>
+          </div>
+          <span class="lbl">Points par réponse</span>
+          <div class="bareme">
+            <div class="lines">
+              <div class="ln"><span class="opt">Oui</span><span class="arr">→</span><span class="inp num">5</span></div>
+              <div class="ln"><span class="opt">Oui, avec réserves</span><span class="arr">→</span><span class="inp num">2</span></div>
+              <div class="ln"><span class="opt">Non</span><span class="arr">→</span><span class="inp num">0</span></div>
+              <div class="max">Maximum <b>5 pts</b></div>
+            </div>
+          </div>
+          <div class="cond">
+            <span class="if">Si « Oui, avec réserves » ou « Non »</span>
+            <div class="then"><span class="sym">↳</span>Poser aussi : <span class="inp" style="flex:1;min-height:36px;padding:7px 11px">Pourquoi ? Avez-vous une autre piste ?</span><span class="ty t-txt"><i>¶</i>Texte</span></div>
+            <div class="then"><span class="sym">↳</span>Si « Non » : <span class="chip warn"><span class="sym">⚠</span> Alerte « Fournisseur remis en question »</span> à la centrale</div>
+          </div>
+          <div class="opts">
+            <span class="switch on"><s></s>Obligatoire</span>
+            <span class="switch on"><s></s>Montrer la réponse précédente</span>
+            <span class="switch"><s></s>Photo</span>
+            <span class="tools"><span class="btn sm ghost">Dupliquer</span><span class="btn sm ghost" style="color:var(--danger)">Supprimer</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">T2</span><div class="qx"><div class="qt">Les prix de <span class="var">{fournisseur}</span> sont-ils corrects ?</div><div class="meta"><span class="ty t-note"><i>★</i>Note 1–5</span><span class="rule">1 pt par point de note</span><span class="chip warn"><span class="sym">⚠</span> si ≤ 2</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+      <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">T3</span><div class="qx"><div class="qt">Respect des délais et réactivité</div><div class="meta"><span class="ty t-note"><i>★</i>Note 1–5</span><span class="rule">1 pt par point de note</span><span class="chip warn"><span class="sym">⚠</span> si ≤ 2</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+    </div>
+
+    <div class="sech"><h3>1 · Glace Rawette</h3><span class="cat">Glaces · fournisseur</span><span class="pts">+ <b>10</b> pts</span></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">R1</span><div class="qx"><div class="qt">Qualité visuelle des glaces en vitrine</div><div class="meta"><span class="ty t-note"><i>★</i>Note 1–5</span><span class="chip plain">+ photo</span><span class="rule">1 pt par point de note</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">R2</span><div class="qx"><div class="qt">Goût et constance du produit</div><div class="meta"><span class="ty t-note"><i>★</i>Note 1–5</span><span class="rule">1 pt par point de note</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+
+    <div class="sech" style="margin-top:22px"><h3>2 · TFBuddy</h3><span class="cat">IT &amp; développement numérique · prestataire</span><span class="pts">+ <b>10</b> pts</span></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">D1</span><div class="qx"><div class="qt">Fiabilité des outils (caisse, webshop, application)</div><div class="meta"><span class="ty t-note"><i>★</i>Note 1–5</span><span class="rule">1 pt par point de note</span><span class="chip warn"><span class="sym">⚠</span> si ≤ 2</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">D2</span><div class="qx"><div class="qt">Les développements demandés sont-ils livrés à temps ?</div><div class="meta"><span class="ty t-one"><i>◉</i>Choix unique</span><span class="rule">À temps 5 · En retard 2 · Pas livrés 0</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">D3</span><div class="qx"><div class="qt">Un besoin numérique non couvert ?</div><div class="meta"><span class="ty t-txt"><i>¶</i>Texte libre</span><span class="rule">non noté</span><span class="chip gold">→ Boîte à idées</span></div></div><span class="pts" style="color:var(--text-muted)">—</span></div></div>
+
+    <div class="addq">
+      <div class="t">+ Ajouter une question à TFBuddy — choisir le type de réponse</div>
+      <div class="types">
+        <span class="ty t-note"><i>★</i>Note 1 à 5</span>
+        <span class="ty t-yn"><i>✓</i>Oui / Non</span>
+        <span class="ty t-one"><i>◉</i>Choix unique</span>
+        <span class="ty t-multi"><i>☑</i>Choix multiple</span>
+        <span class="ty t-num"><i>#</i>Nombre</span>
+        <span class="ty t-txt"><i>¶</i>Texte libre</span>
+        <span class="ty t-photo"><i>▣</i>Photo</span>
+        <span class="ty t-date"><i>▦</i>Date</span>
+      </div>
+    </div>
+
+    <div class="sech"><h3>3 · SLFood</h3><span class="cat">Marchandise · fournisseur</span><span class="pts">+ <b>10</b> pts</span></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">S1</span><div class="qx"><div class="qt">Nombre de ruptures ce semestre</div><div class="meta"><span class="ty t-num"><i>#</i>Nombre</span><span class="rule">0 → 5 · 1–2 → 3 · 3+ → 0</span><span class="chip warn"><span class="sym">⚠</span> si ≥ 3</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">S2</span><div class="qx"><div class="qt">État de la marchandise à la réception</div><div class="meta"><span class="ty t-note"><i>★</i>Note 1–5</span><span class="rule">1 pt par point de note</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+
+    <div class="sech" style="margin-top:22px"><h3>4 · Bruyerre</h3><span class="cat">Matières premières · fournisseur</span><span class="pts">+ <b>10</b> pts</span></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">B1</span><div class="qx"><div class="qt">Qualité constante des matières premières</div><div class="meta"><span class="ty t-note"><i>★</i>Note 1–5</span><span class="rule">1 pt par point de note</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+    <div class="card q"><div class="hd"><span class="handle">⋮⋮</span><span class="qn">B2</span><div class="qx"><div class="qt">Traçabilité et dates (DLC) conformes ?</div><div class="meta"><span class="ty t-yn"><i>✓</i>Oui / Non</span><span class="rule">Oui 5 · Non 0</span><span class="chip warn"><span class="sym">⚠</span> si Non</span></div></div><span class="pts"><b>5</b> pts</span></div></div>
+  </div>
+
+  <!-- Colonne droite : aperçu côté franchisé -->
+  <div class="prev">
+    <div class="cap"><b>Aperçu — lien du franchisé</b><span class="seg"><span class="on">Téléphone</span><span>Tablette</span></span></div>
+    <div class="phone"><div class="scr">
+      <div class="ph-top" style="padding-top:0"><div class="notch"></div>
+        <small>Boutique Ixelles · audit S2 2026</small>
+        <h4>Glace Rawette <span style="float:right;font-weight:400;color:var(--choco-200);font-size:13px">1 / 5</span></h4>
+        <div class="ph-sup"><span class="on"></span><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="ph-q">
+        <p>Souhaitez-vous continuer avec Glace Rawette ?</p>
+        <div class="ph-3"><span>Oui</span><span class="on">Oui, avec réserves</span><span>Non</span></div>
+        <div class="ph-ta"><small>Pourquoi ?</small>Prix en hausse de 8 % depuis septembre.</div>
+        <div class="ph-gain">+2 pts</div>
+      </div>
+      <div class="ph-q">
+        <p>Les prix de Glace Rawette sont-ils corrects ?</p>
+        <div class="ph-scale"><span>1</span><span class="on">2</span><span>3</span><span>4</span><span>5</span></div>
+        <div class="ph-ends"><span>Trop chers</span><span>Très corrects</span></div>
+        <div class="ph-gain">+2 pts · commentaire demandé</div>
+      </div>
+      <div class="ph-q">
+        <p>Respect des délais et réactivité</p>
+        <div class="ph-scale"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      </div>
+      <div class="ph-bot"><div class="sc">Glace Rawette<b>4 / 25</b></div><span class="btn brand">Suivant</span></div>
+    </div></div>
+    <div class="note-cap">Un écran par fournisseur. Les questions du tronc commun reprennent son nom.</div>
+  </div>
+</div>
+
+    </main>
+  </div>
+</div>
+</body></html>

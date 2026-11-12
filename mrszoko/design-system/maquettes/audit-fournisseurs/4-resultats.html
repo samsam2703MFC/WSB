@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Résultats fournisseurs</title>
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/global.css">
+<link rel="stylesheet" href="../../../backoffice/_ds/mister-szoko/brand.css">
+<link rel="stylesheet" href="../../../backoffice/console.css">
+<link rel="stylesheet" href="mock.css">
+</head><body>
+<input type="checkbox" id="wsm-menu" class="menu-toggle">
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#"><span>Siège<br><b>Suivi franchisé</b></span></a>
+    <nav class="menu"><a href="#">Tableau de bord</a><span class="sep">Suivi franchisé</span><a href="#">Franchisés<span class="n">12</span></a><a href="#">Visites</a><a href="#">Audits fournisseurs</a><a href="#" class="on">Résultats fournisseurs</a><a href="#">Plans d'action<span class="n">7</span></a><a href="#">Boîte à idées</a><span class="sep">Réseau</span><a href="#">Boutiques</a><a href="#">Fournisseurs & prestataires<span class="n">4</span></a><a href="#">Collectif marketing</a></nav>
+    <div class="side-foot"><span class="who"><b>Animateur réseau</b><br>Centrale</span></div>
+  </aside>
+  <div class="main">
+    <header class="bar"><h1>Résultats fournisseurs <span class="badge">S2 2026</span></h1></header>
+    <main class="wrap">
+      <nav class="crumbs"><a href="#">Suivi franchisé</a><span class="sepc">›</span><a href="#">Résultats fournisseurs</a><span class="sepc">›</span><span aria-current="page">Glace Rawette</span></nav>
+      <style>
+.filt { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+.filt .inp.sel { min-width: 170px; font-weight: 600; }
+.filt .resp { margin-left: auto; font-size: 13.5px; color: var(--text-muted); }
+.filt .resp b { font-family: var(--font-mono); font-weight: 500; color: var(--text-strong); }
+.box { padding: 18px 20px; }
+.box h5, .h5 { margin: 0 0 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); font-weight: 700; }
+.meter { display: inline-block; height: 10px; background: var(--cream-200); border-radius: 99px; overflow: hidden; vertical-align: middle; }
+.meter i { display: block; height: 100%; background: var(--caramel-600); border-radius: 99px; }
+.dl { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+.dl.up { color: var(--success); } .dl.down { color: var(--danger); } .dl.eq { color: var(--text-muted); }
+.chip.sm { font-size: 11.5px; padding: 2px 8px; margin-left: 6px; }
+
+table.rank { width: 100%; border-collapse: collapse; }
+table.rank th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); font-weight: 700; padding: 0 10px 8px; text-align: left; border-bottom: 1px solid var(--border-subtle); }
+table.rank td { padding: 11px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; font-size: 14px; }
+table.rank tr:last-child td { border-bottom: 0; }
+table.rank tr.sel td { background: #FBF3E6; }
+table.rank tr.sel td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
+table.rank .nm b { display: block; color: var(--text-strong); font-size: 15px; }
+table.rank .nm small { color: var(--text-muted); font-size: 12.5px; }
+table.rank .sc { white-space: nowrap; }
+table.rank .sc .meter { width: 160px; margin-right: 10px; }
+table.rank .sc b { font-family: var(--font-mono); font-weight: 500; color: var(--text-strong); font-size: 15px; }
+table.rank .cnt { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+.div { position: relative; display: block; width: 240px; height: 22px; }
+.div i { position: absolute; top: 0; height: 22px; border-radius: 4px; font-style: normal; font-size: 11.5px; font-family: var(--font-mono); display: grid; place-items: center; }
+.div s { position: absolute; left: 119px; top: -4px; bottom: -4px; width: 1px; background: var(--ink-300); }
+.divleg { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-muted); }
+.divleg span, .hleg span { display: inline-flex; align-items: center; gap: 5px; }
+.divleg s, .hleg s { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.det { margin-top: 18px; }
+.det .dh { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); }
+.det .dh h2 { margin: 0; font-size: 21px; color: var(--text-strong); }
+.det .dh .cat { color: var(--text-muted); font-size: 14px; }
+.det .dh .acts { margin-left: auto; display: flex; gap: 8px; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-bottom: 1px solid var(--border-subtle); }
+.tile { padding: 14px 20px; border-right: 1px solid var(--border-subtle); }
+.tile:last-child { border-right: 0; }
+.tile small { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; }
+.tile .big { font-family: var(--font-sans); font-size: 30px; font-weight: 800; color: var(--text-strong); letter-spacing: -.02em; }
+.tile .big em { font-style: normal; font-size: 15px; color: var(--text-muted); font-weight: 600; margin-left: 4px; }
+.tile .sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.dgrid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+.dgrid > div { padding: 18px 20px; }
+.dgrid > div:first-child { border-right: 1px solid var(--border-subtle); }
+
+table.heat { border-collapse: separate; border-spacing: 2px; width: 100%; table-layout: fixed; }
+table.heat th:first-child { width: 104px; }
+table.heat th { font-size: 11.5px; color: var(--text-muted); font-weight: 700; text-align: center; padding: 0 2px 6px; line-height: 1.25; }
+table.heat th:first-child { text-align: left; }
+table.heat td { padding: 0; text-align: center; }
+table.heat td.b { text-align: left; font-size: 13.5px; font-weight: 600; color: var(--text-strong); padding-right: 8px; white-space: nowrap; }
+.hc { display: block; height: 28px; line-height: 28px; border-radius: 4px; font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+table.heat tr.avg td { font-family: var(--font-mono); font-size: 13.5px; color: var(--text-strong); padding-top: 8px; border-top: 1px solid var(--border-default); }
+table.heat tr.avg td.b { font-family: var(--font-sans); font-weight: 800; }
+.hleg { display: flex; gap: 12px; align-items: center; font-size: 12.5px; color: var(--text-muted); margin-top: 12px; }
+.hleg b { color: var(--text-body); font-weight: 600; }
+
+.ml { display: grid; grid-template-columns: 1fr 130px 38px 58px; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border-subtle); font-size: 14px; }
+.ml:last-of-type { border-bottom: 0; }
+.ml .q { color: var(--text-strong); font-weight: 600; }
+.ml .meter { width: 130px; }
+.ml b { font-family: var(--font-mono); font-weight: 500; color: var(--text-strong); text-align: right; }
+.ml .dl { text-align: right; font-size: 12.5px; }
+
+.bot { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+.vb { padding: 11px 0; border-bottom: 1px solid var(--border-subtle); display: grid; grid-template-columns: 110px 1fr; gap: 12px; font-size: 14px; }
+.vb:last-child { border-bottom: 0; padding-bottom: 0; }
+.vb .who { font-weight: 700; color: var(--text-strong); font-size: 13.5px; }
+.vb .who small { display: block; font-weight: 500; margin-top: 3px; }
+.vb q { quotes: "« " " »"; color: var(--text-body); line-height: 1.45; }
+.act { padding: 11px 0; border-bottom: 1px solid var(--border-subtle); display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: start; }
+.act:last-child { border-bottom: 0; padding-bottom: 0; }
+.act .ic { font-family: 'DejaVu Sans'; color: var(--danger); font-size: 15px; }
+.act b { color: var(--text-strong); font-size: 14px; display: block; }
+.act small { color: var(--text-muted); font-size: 12.5px; display: block; margin-top: 2px; }
+</style>
+
+<div class="filt">
+  <span class="inp sel">Semestre : S2 2026</span>
+  <span class="inp sel">Toutes les boutiques</span>
+  <span class="inp sel">Fournisseurs &amp; prestataires</span>
+  <span class="resp"><b>11 / 12</b> boutiques ont répondu · Mons en attente</span>
+</div>
+
+<div class="card box">
+  <div style="display:flex;align-items:center;margin-bottom:12px"><span class="h5" style="margin:0">Classement du semestre</span>
+    <span class="divleg" style="margin-left:auto"><b style="font-weight:700;color:var(--text-muted)">Continuer ?</b><span><s style="background:#A93A57"></s>Non</span><span><s style="background:#DDD8D2"></s>Réserves</span><span><s style="background:#2E6DA4"></s>Oui</span></span></div>
+  <table class="rank">
+    <thead><tr><th>Fournisseur / prestataire</th><th>Score moyen</th><th>vs S1</th><th>Continuer ? (centré sur « réserves »)</th><th></th><th>Statut</th></tr></thead>
+    <tbody>
+<tr><td class="nm"><b>TFBuddy</b><small>Prestataire IT &amp; numérique</small></td>
+      <td class="sc"><span class="meter"><i style="width:84%"></i></span><b>84 %</b></td>
+      <td class="dl up">▲ +3</td>
+      <td><span class="div"><i style="left:114.5px;width:9.1px;background:#DDD8D2;color:#241009"></i><i style="left:125.5px;width:108.9px;background:#2E6DA4;color:#fff">10</i><s></s></span></td>
+      <td class="cnt">10 oui · 1 rés. · 0 non</td>
+      <td><span class="chip ok">✓ Bon</span></td></tr>
+<tr><td class="nm"><b>Bruyerre</b><small>Matières premières</small></td>
+      <td class="sc"><span class="meter"><i style="width:80%"></i></span><b>80 %</b></td>
+      <td class="dl eq">= 0</td>
+      <td><span class="div"><i style="left:108.9px;width:20.2px;background:#DDD8D2;color:#241009">2</i><i style="left:131.1px;width:97.8px;background:#2E6DA4;color:#fff">9</i><s></s></span></td>
+      <td class="cnt">9 oui · 2 rés. · 0 non</td>
+      <td><span class="chip ok">✓ Bon</span></td></tr>
+<tr class="sel"><td class="nm"><b>Glace Rawette</b><small>Glaces</small></td>
+      <td class="sc"><span class="meter"><i style="width:71%"></i></span><b>71 %</b></td>
+      <td class="dl down">▼ −8</td>
+      <td><span class="div"><i style="left:86.7px;width:9.1px;background:#A93A57;color:#fff"></i><i style="left:97.8px;width:42.3px;background:#DDD8D2;color:#241009">4</i><i style="left:142.2px;width:64.5px;background:#2E6DA4;color:#fff">6</i><s></s></span></td>
+      <td class="cnt">6 oui · 4 rés. · 1 non</td>
+      <td><span class="chip gold">⚠ À surveiller</span></td></tr>
+<tr><td class="nm"><b>Collectif marketing</b><small>Marketing réseau</small></td>
+      <td class="sc"><span class="meter"><i style="width:66%"></i></span><b>66 %</b></td>
+      <td class="dl up">▲ +2</td>
+      <td><span class="div"><i style="left:81.2px;width:9.1px;background:#A93A57;color:#fff"></i><i style="left:92.3px;width:53.4px;background:#DDD8D2;color:#241009">5</i><i style="left:147.7px;width:53.4px;background:#2E6DA4;color:#fff">5</i><s></s></span></td>
+      <td class="cnt">5 oui · 5 rés. · 1 non</td>
+      <td><span class="chip gold">⚠ À surveiller</span></td></tr>
+<tr><td class="nm"><b>SLFood</b><small>Marchandise</small></td>
+      <td class="sc"><span class="meter"><i style="width:58%"></i></span><b>58 %</b></td>
+      <td class="dl down">▼ −6</td>
+      <td><span class="div"><i style="left:70.1px;width:20.2px;background:#A93A57;color:#fff">2</i><i style="left:92.3px;width:53.4px;background:#DDD8D2;color:#241009">5</i><i style="left:147.7px;width:42.3px;background:#2E6DA4;color:#fff">4</i><s></s></span></td>
+      <td class="cnt">4 oui · 5 rés. · 2 non</td>
+      <td><span class="chip warn">⚠ Revoir le contrat</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card det">
+  <div class="dh"><h2>Glace Rawette</h2><span class="cat">Glaces · fournisseur</span>
+    <div class="acts"><span class="btn">Exporter en PDF</span><span class="btn brand">Préparer la copie pour Rawette</span></div></div>
+  <div class="tiles">
+    <div class="tile"><small>Score moyen</small><div class="big">71 %<em>17,8 / 25</em></div><div class="sub"><span class="dl down">▼ −8 pts</span> vs S1 2026 · <span class="chip gold sm" style="margin:0"><span class="sym">⚠</span> À surveiller</span></div></div>
+    <div class="tile"><small>Continuer avec Rawette ?</small><div class="big">6<em>oui</em> · 4<em>réserves</em> · 1<em>non</em></div><div class="sub">Liège teste un glacier local</div></div>
+    <div class="tile"><small>Note des prix</small><div class="big">2,3<em>/ 5</em></div><div class="sub"><span class="dl down">▼ −1,1</span> · 7 boutiques notent 2 ou moins</div></div>
+  </div>
+  <div class="dgrid">
+    <div>
+      <div class="h5">Réponses par boutique</div>
+      <table class="heat"><thead><tr><th>Boutique</th><th>Continuer ?</th><th>Prix</th><th>Délais &amp; réactivité</th><th>Qualité visuelle</th><th>Goût &amp; constance</th></tr></thead><tbody>
+<tr><td class="b">Ixelles</td><td><span class="hc" style="background:#DDD8D2;color:#241009">Rés.</span></td><td><span class="hc" style="background:#D98A9E;color:#241009">2</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td></tr>
+<tr><td class="b">Uccle</td><td><span class="hc" style="background:#2E6DA4;color:#fff">Oui</span></td><td><span class="hc" style="background:#D98A9E;color:#241009">2</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td></tr>
+<tr><td class="b">Etterbeek</td><td><span class="hc" style="background:#2E6DA4;color:#fff">Oui</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td></tr>
+<tr><td class="b">Woluwe</td><td><span class="hc" style="background:#DDD8D2;color:#241009">Rés.</span></td><td><span class="hc" style="background:#D98A9E;color:#241009">2</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td></tr>
+<tr><td class="b">Schaerbeek</td><td><span class="hc" style="background:#2E6DA4;color:#fff">Oui</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td></tr>
+<tr><td class="b">Saint-Gilles</td><td><span class="hc" style="background:#DDD8D2;color:#241009">Rés.</span></td><td><span class="hc" style="background:#D98A9E;color:#241009">2</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td></tr>
+<tr><td class="b">Anderlecht</td><td><span class="hc" style="background:#2E6DA4;color:#fff">Oui</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td></tr>
+<tr><td class="b">Waterloo</td><td><span class="hc" style="background:#2E6DA4;color:#fff">Oui</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td></tr>
+<tr><td class="b">Wavre</td><td><span class="hc" style="background:#2E6DA4;color:#fff">Oui</span></td><td><span class="hc" style="background:#D98A9E;color:#241009">2</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td></tr>
+<tr><td class="b">Namur</td><td><span class="hc" style="background:#DDD8D2;color:#241009">Rés.</span></td><td><span class="hc" style="background:#D98A9E;color:#241009">2</span></td><td><span class="hc" style="background:#D98A9E;color:#241009">2</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td></tr>
+<tr><td class="b">Liège</td><td><span class="hc" style="background:#A93A57;color:#fff">Non</span></td><td><span class="hc" style="background:#A93A57;color:#fff">1</span></td><td><span class="hc" style="background:#DDD8D2;color:#241009">3</span></td><td><span class="hc" style="background:#7FA6CF;color:#241009">4</span></td><td><span class="hc" style="background:#2E6DA4;color:#fff">5</span></td></tr>
+<tr class="avg"><td class="b">Moyenne</td><td>3,5</td><td>2,3</td><td>3,5</td><td>4,1</td><td>4,5</td></tr>
+</tbody></table>
+      <div class="hleg"><b>Note</b><span><s style="background:#A93A57"></s>1</span><span><s style="background:#D98A9E"></s>2</span><span><s style="background:#DDD8D2"></s>3</span><span><s style="background:#7FA6CF"></s>4</span><span><s style="background:#2E6DA4"></s>5</span><span style="margin-left:6px">1 = très mauvais · 3 = moyen · 5 = très bien</span></div>
+    </div>
+    <div>
+      <div class="h5">Moyenne par question (sur 5)</div>
+      <div class="ml"><span class="q">Continuer ? (pts)</span><span class="meter"><i style="width:69%"></i></span><b>3,5</b><span class="dl down">▼ −0,4</span></div>
+<div class="ml"><span class="q">Prix <span class="chip warn sm"><span class="sym">⚠</span> 7 boutiques ≤ 2</span></span><span class="meter"><i style="width:45%"></i></span><b>2,3</b><span class="dl down">▼ −1,1</span></div>
+<div class="ml"><span class="q">Délais &amp; réactivité</span><span class="meter"><i style="width:71%"></i></span><b>3,5</b><span class="dl eq">▼ −0,1</span></div>
+<div class="ml"><span class="q">Qualité visuelle</span><span class="meter"><i style="width:82%"></i></span><b>4,1</b><span class="dl eq">▼ −0,1</span></div>
+<div class="ml"><span class="q">Goût &amp; constance</span><span class="meter"><i style="width:89%"></i></span><b>4,5</b><span class="dl eq">▲ +0,1</span></div>
+      <div class="h5" style="margin-top:22px">Score de Glace Rawette par semestre</div>
+      <svg width="100%" height="150" viewBox="0 0 430 150" aria-label="Score de Glace Rawette par semestre">
+  <g stroke="var(--cream-300)" stroke-width="1">
+    <line x1="40" x2="420" y1="12.0" y2="12.0"/><line x1="40" x2="420" y1="56.0" y2="56.0" stroke-dasharray="3 4"/>
+    <line x1="40" x2="420" y1="100.0" y2="100.0" stroke-dasharray="3 4"/><line x1="40" x2="420" y1="122.00000000000001" y2="122.00000000000001"/></g>
+  <g font-family="DM Mono" font-size="11" fill="var(--ink-500)" text-anchor="end">
+    <text x="34" y="16.0">100</text><text x="34" y="60.0">80</text><text x="34" y="104.0">60</text></g>
+  <polyline fill="none" stroke="var(--choco-700)" stroke-width="2" stroke-linejoin="round" points="60,56.0 170,53.8 280,58.2 390,75.8"/>
+  <circle cx="60" cy="56.0" r="4" fill="var(--choco-700)" stroke="#fff" stroke-width="2"/><circle cx="170" cy="53.8" r="4" fill="var(--choco-700)" stroke="#fff" stroke-width="2"/><circle cx="280" cy="58.2" r="4" fill="var(--choco-700)" stroke="#fff" stroke-width="2"/><circle cx="390" cy="75.8" r="5" fill="var(--choco-700)" stroke="#fff" stroke-width="2"/>
+  <g font-family="DM Mono" font-size="12" fill="var(--choco-900)" text-anchor="middle">
+    <text x="60" y="46.0">80 %</text><text x="390" y="95.80000000000001">71 %</text></g>
+  <g font-family="Mulish" font-size="11.5" fill="var(--ink-500)" text-anchor="middle">
+    <text x="60" y="146">S1 25</text><text x="170" y="146">S2 25</text><text x="280" y="146">S1 26</text><text x="390" y="146">S2 26</text></g>
+</svg>
+    </div>
+  </div>
+</div>
+
+<div class="bot">
+  <div class="card box">
+    <h5>Ce que disent les franchisés</h5>
+    <div class="vb"><span class="who">Liège<small><span class="chip warn sm" style="margin:0">Non</span></small></span><q>On teste un glacier local depuis octobre, environ 15 % moins cher pour une qualité proche.</q></div>
+    <div class="vb"><span class="who">Ixelles<small><span class="chip plain sm" style="margin:0">Réserves</span></small></span><q>Prix en hausse de 8 % depuis septembre, sans prévenir.</q></div>
+    <div class="vb"><span class="who">Namur<small><span class="chip plain sm" style="margin:0">Réserves</span></small></span><q>La livraison du vendredi arrive souvent après 11 h, on ouvre sans pistache.</q></div>
+    <div class="vb"><span class="who">Waterloo<small><span class="chip ok sm" style="margin:0">Oui</span></small></span><q>Vitrine superbe, les clients adorent les nouveaux parfums.</q></div>
+  </div>
+  <div class="card box">
+    <h5>Actions proposées par les règles</h5>
+    <div class="act"><span class="ic">⚠</span><div><b>Renégocier les tarifs avec Rawette</b><small>Prix noté 2 ou moins dans 7 boutiques sur 11</small></div><span class="btn sm brand">Créer l'action</span></div>
+    <div class="act"><span class="ic">⚠</span><div><b>Point avec Rawette sur la livraison du vendredi</b><small>Délais notés 2 ou moins à Namur ; 3 boutiques à 3</small></div><span class="btn sm">Créer l'action</span></div>
+    <div class="act"><span class="ic">⚠</span><div><b>Appeler Liège : fournisseur remis en question</b><small>Réponse « Non » à « Continuer avec Rawette ? »</small></div><span class="btn sm">Créer l'action</span></div>
+  </div>
+</div>
+
+    </main>
+  </div>
+</div>
+</body></html>
