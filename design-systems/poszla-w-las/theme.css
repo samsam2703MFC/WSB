@@ -1,0 +1,89 @@
+/* Poszła w las — retouches de composants (spécification : « Visual foundations »).
+   Imprimées APRÈS shop.css. La structure des pages ne change pas ; seul
+   l'habillage des composants communs suit la marque. Couleurs : toujours les
+   jetons, donc Wygląd s'applique encore par-dessus. */
+
+/* ---- Titres : Baloo 2, lourds, serrés, en minuscules comme le logo -------- */
+h1, h2, h3, .tytul-2, .section-head h2, .promise h2, .card h3,
+.hero:not(.sek) h1, .hero:not(.sek) .slajd-h {
+  font-family: var(--font-display);
+  font-weight: var(--weight-extra);
+  letter-spacing: var(--tracking-tight);
+}
+h1, h2, .tytul-2, .section-head h2, .hero:not(.sek) h1, .hero:not(.sek) .slajd-h {
+  text-transform: lowercase;
+  line-height: var(--leading-tight);
+}
+.tytul-2 span { color: var(--text-muted); }
+
+/* ---- Le texte : Work Sans 15/1,6, mesure de 64 caractères --------------------- */
+body { font-size: var(--text-md); line-height: var(--leading-relaxed); }
+.prose, .lead, .section-head .sub { max-width: 64ch; }
+
+/* ---- La voix « étiquette » : Space Mono, capitales, approche 0,12em ---------
+   Sur-titres, métadonnées, badges, prix. */
+.eyebrow, .hero:not(.sek) .eyebrow, .eyebrow.accent, .product-buy .eyebrow, .kontakt-txt .eyebrow,
+.card-meta, .badge {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--text-strong);
+}
+.price { font-family: var(--font-mono); font-weight: var(--weight-bold); letter-spacing: 0; }
+.pro .eyebrow, .blok--ciemny .eyebrow, .foot-nl .eyebrow { color: var(--pwl-sage); }
+
+/* ---- Boutons : toujours en pilule ; le survol assombrit, l'appui descend ---- */
+.btn { border-radius: var(--radius-pill); }
+.btn:active { transform: translateY(1px); }
+/* Bouton au trait : se remplit d'encre au survol, son libellé passe au papier. */
+.btn--ghost { background: transparent; border: 2px solid var(--pwl-olive); color: var(--pwl-olive); }
+.btn--ghost:hover { background: var(--pwl-olive); border-color: var(--pwl-olive); color: var(--pwl-paper); }
+.pro .btn--accent { background: var(--pwl-sage); color: var(--brand-900); }
+.pro .btn--accent:hover { background: var(--paper-400); }
+
+/* ---- Cartes : 22 px, trait d'encre de 2 px, AUCUNE ombre --------------------
+   Le survol assombrit le trait ; rien ne s'agrandit. */
+.card, .promise {
+  background: var(--surface-card);
+  border: 2px solid var(--pwl-olive);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+.card { transition: border-color var(--dur-fast) var(--ease-out); }
+.card:hover { transform: none; box-shadow: none; border-color: var(--brand-900); }
+.card-media { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.card-photo, .product-media, .slajd-foto { border-radius: var(--radius-lg); }
+.hero--foto:not(.sek)::after, .slajd-foto { border-radius: var(--radius-xl); }
+.kontakt-karta, .summary, .checkout-form fieldset { border-radius: var(--radius-lg); }
+
+/* ---- Champs : 14 px, trait d'encre de 2 px ----------------------------------- */
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+input[type="search"], input[type="password"], textarea, select {
+  border: 2px solid var(--field-line);
+  border-radius: var(--radius-md);
+}
+
+/* ---- Liens : le soulignement s'épaissit au survol, rien d'autre ------------- */
+.prose a, .check a, .legal-spis a, .page a:not(.btn) {
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px;
+}
+.prose a:hover, .check a:hover, .legal-spis a:hover, .page a:not(.btn):hover { text-decoration-thickness: 2.5px; }
+
+/* ---- Focus : anneau olive de 3 px à 28 % + trait d'encre, sur tous les fonds - */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--pwl-olive);
+  outline-offset: 2px;
+  box-shadow: var(--ring);
+}
+
+/* ---- En-tête : à plat, sans flou (le flou n'est permis que sous les modales) - */
+.site-head {
+  background: var(--paper);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom: 2px solid var(--pwl-olive);
+}
+
+/* ---- Respiration : 96 px entre les sections ---------------------------------- */
+.block { padding-top: clamp(56px, 7vw, 96px); padding-bottom: clamp(56px, 7vw, 96px); }

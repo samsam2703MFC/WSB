@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Poszła w las">
+  <!-- PROVISOIRE : un signe dessiné pour essayer le design system, en attendant
+       le vrai logo (la spécification cite assets/poszla-w-las/logo-*.png, non
+       fournis ici). Champ sauge, encre olive : la cabane dans les pins. -->
+  <rect width="64" height="64" rx="16" fill="#CDCB9A"/>
+  <g fill="#465803">
+    <path d="M14 46 22 22 30 46Z"/>
+    <path d="M36 46 44 18 52 46Z"/>
+    <path d="M24 46V36l8-7 8 7v10Z"/>
+  </g>
+  <path d="M30 46v-6h4v6" fill="#CDCB9A"/>
+  <path d="M10 48h44" stroke="#465803" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -1,6 +1,6 @@
 # design-systems — une marque par boutique, un seul code
 
-Toutes les boutiques (Szoko Shop, MyCobotBuddy, Candle in the Wind…) partagent
+Toutes les boutiques (Szoko Shop, MyCobotBuddy, Poszła w las…) partagent
 le même code : boutique, console, API. Ce qui les distingue visuellement vit
 ici, un dossier par marque :
 
@@ -9,6 +9,7 @@ design-systems/
   contract.json     la SEULE interface entre le code et une marque
   szoko/            Szoko Shop (ex-mrszoko/design-system)
   mycobot/          MyCobotBuddy
+  poszla-w-las/     Poszła w las (pracownia roślinna)
 ```
 
 ## Le principe : un contrat de jetons

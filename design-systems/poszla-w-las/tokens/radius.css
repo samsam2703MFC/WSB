@@ -1,0 +1,12 @@
+/* Poszła w las — formes : 4 / 8 / 14 / 22 / 34 px et pilule. Cartes 22 px, champs
+   14 px, cadres photo 22 px (34 px pour la photo du haut de page). Boutons et
+   étiquettes TOUJOURS en pilule. */
+:root {
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   22px;
+  --radius-xl:   34px;
+  --radius-2xl:  34px;
+  --radius-pill: 999px;
+}

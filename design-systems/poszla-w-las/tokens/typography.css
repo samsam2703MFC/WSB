@@ -1,0 +1,38 @@
+/* Poszła w las — typographie.
+   Deux voix : l'affichage, lourd et serré (−0,02em, interligne 0,92, lignes
+   courtes empilées, en minuscules comme le logo) ; le texte, Work Sans 15/1,6
+   jusqu'à 64 caractères. Le mono porte les prix, les sur-titres, les badges et
+   les métadonnées : c'est la voix « étiquette » du système. Jamais de texte
+   courant en titre, jamais de titre en Work Sans.
+   Polices de SUBSTITUTION (la spécification le dit) : Baloo 2 pour le lettrage
+   dessiné à la main, Work Sans, Space Mono. */
+:root {
+  --font-display: 'Baloo 2', 'Work Sans', system-ui, sans-serif;
+  --font-sans:    'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --text-2xs: 0.75rem;
+  --text-xs:  0.8125rem;
+  --text-sm:  0.875rem;
+  --text-md:  0.9375rem;   /* 15 px — le texte courant */
+  --text-lg:  1.125rem;
+  --text-xl:  1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.5rem;
+  --text-4xl: 3.5rem;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extra:    800;   /* Baloo 2 800 : l'affichage */
+
+  --leading-tight:   0.92;  /* titres empilés */
+  --leading-snug:    1.2;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.6;
+
+  --tracking-tight: -0.02em;
+  --tracking-wide:  0.04em;
+  --tracking-caps:  0.12em;   /* le mono des étiquettes */
+}

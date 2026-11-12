@@ -1,0 +1,11 @@
+/* Poszła w las — ombres chaudes, teintées olive, et RARES : une carte qui ne
+   flotte pas prend un bord d'encre, pas une ombre. --shadow-md pour ce qui flotte
+   vraiment, --shadow-lg pour les modales et les toasts. Focus : anneau olive de
+   3 px à 28 %, plus un bord d'encre — visible sur tous les fonds. */
+:root {
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 6px 18px rgba(var(--shadow-tint), .14);
+  --shadow-lg: 0 16px 40px rgba(var(--shadow-tint), .20);
+  --ring:      0 0 0 3px rgba(70, 88, 3, .28);
+}
