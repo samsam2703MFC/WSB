@@ -109,6 +109,23 @@ CSS);
 </div>
 <?php endif; ?>
 
+<?php
+// L'ASSISTANT DE DÉMARRAGE, résumé : tant que la boutique n'est pas prête,
+// le tableau de bord dit où on en est et quelle est la prochaine étape.
+// Rien quand tout est fait — un bandeau qui reste après l'ouverture n'est
+// plus lu par personne.
+require_once $API . '/start.php';
+$startAv = wsm_start_avancement($pdo);
+$startLien = $startAv['nastepny'] !== null
+    ? console_lien($me, 'start.php#' . $startAv['nastepny'], wsm_start_etapy()[$startAv['nastepny']]['tytul'] . ' →')
+    : '';
+if ($startLien !== ''): ?>
+<p class="warnbox">
+  Start sklepu: <b><?= (int) $startAv['fait'] ?> z <?= (int) $startAv['razem'] ?></b> kroków gotowe.
+  Następny: <?= $startLien ?>
+</p>
+<?php endif; ?>
+
 <?php if ($missing): ?>
 <p class="warnbox">
   Sklep działa, ale te integracje czekają na dane:

@@ -142,6 +142,17 @@ design-systems/
   (« Dziennik błędów »), SSL qui expire, disque, boutique qui ne répond plus,
   notes manuelles.
 - **Bouton « Nouvelle boutique »** et **écran « Versions »** (ci-dessous).
+- **Pays de vente** : par boutique et par pays, le Siège décide **quelles
+  langues** la boutique propose aux visiteurs de ce pays et **quels
+  transporteurs** (InPost, DPD, palette…) y livrent. La boutique ne montre
+  que ce que le Siège a ouvert ; ses écrans Kraje et Dostawa règlent ensuite
+  les prix et les seuils à l'intérieur de ce cadre.
+- **Module marketing réseau** : influenceurs (fiches, codes et liens suivis
+  par boutique, commission par vente attribuée, versements), campagnes
+  publicitaires (Meta, Google : budget, boutique, période, résultats
+  remontés), et vue d'ensemble de ce que chaque boutique dépense et gagne.
+  S'appuie sur ce que les boutiques ont déjà : codes promo, Kampanie,
+  Meta / Google (`reklama.php`, `marketing.php`).
 
 **L'agent serveur.** Le Siège tourne en `www-data` et ne crée ni base ni
 virtual host. Il dépose une demande dans `hq_jobs` ; un agent root
@@ -166,7 +177,12 @@ commission, design system (existant ou nouveau à partir de `_neutre`).
 7. Lien d'ouverture du compte Stripe connecté envoyé au propriétaire.
 8. Vérifications → statut « active ».
 
-## L'assistant de démarrage
+## L'assistant de démarrage — FAIT (côté console)
+
+Livré : écran **Start sklepu** (`mrszoko/backoffice/start.php`, moteur
+`php-api/start.php`, test `tests/e2e_start.php`), juste sous le Pulpit, qui
+résume aussi l'avancement. Reste au Siège : afficher l'avancement de chaque
+boutique.
 
 Créer la boutique (base, domaine, design system) ne prend que quelques
 minutes. La rendre prête à vendre prend des jours, et dépend de choses hors
@@ -225,6 +241,7 @@ la nouvelle base, le retour arrière reste possible) ; une boutique peut être
 | **0a. Contrat de design — FAIT** | `contract.json` (125 jetons), code sans nom propre à Szoko, `design-systems/szoko/` + `design-systems/mycobot/`, compilation + contrôle dans les 3 déploiements, console aux couleurs de la boutique | Szoko identique au pixel près (34 captures, boutique + console, 2 largeurs) ; MyCobotBuddy habille tout le site et la console sans toucher au code |
 | **0b. Code générique** | chemin de base, nom de base et domaine en config, contenu « boutique vierge », `.htaccess` sans `/mrszoko` | une 2e boutique tourne sur le même serveur, montée à la main |
 | **1. Versions + ligne de commande** | `releases/ shops/`, `wsm-shop create/upgrade/rollback/backup/freeze`, Szoko migrée dans ce schéma | tout se fait en une commande |
-| **2. Siège v1 + assistant** | registre, taux, tableau de bord, journal, « Nouvelle boutique » via l'agent, **assistant de démarrage** dans la console de chaque boutique, avancement visible au Siège | mycobotpartner créée depuis l'écran, guidée jusqu'à l'ouverture |
+| **2. Siège v1** | registre, taux, tableau de bord, journal, « Nouvelle boutique » via l'agent, avancement de l'assistant (fait côté console) visible par boutique, **langues et transporteurs par pays** | mycobotpartner créée depuis l'écran, guidée jusqu'à l'ouverture |
+| **2b. Marketing réseau** | influenceurs (codes, liens, commissions), campagnes publicitaires par boutique, dépenses et résultats | une campagne d'influence suivie de bout en bout sur une boutique |
 | **3. Versions** | sandbox multi-design, validation, boutique test, déploiement, retour arrière | un changement validé arrive partout |
 | **4. Argent & surveillance** | taux poussé par le Siège, rapprochement Stripe, alertes | rapport mensuel par boutique |

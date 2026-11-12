@@ -326,7 +326,8 @@ function console_sections(?array $me = null): array {
     }
     $s = [
         // Le tableau de bord n'appartient à aucune section : il les résume.
-        '' => ['pulpit.php' => 'Pulpit'],
+        // L'assistant de démarrage le suit : quoi faire, et où, pour ouvrir.
+        '' => ['pulpit.php' => 'Pulpit', 'start.php' => 'Start sklepu'],
 
         // CE QU'UN CLIENT A DEMANDÉ. La commande, ce qui la prolonge, ce qui
         // se plaint. Ni le document, ni le colis : ce sont d'autres gestes.
@@ -485,7 +486,8 @@ function console_ouvre(?array $me, string $fichier): bool {
  * @param string $href  « produkty.php » ou « klienci.php?widok=analiza »
  */
 function console_lien(?array $me, string $href, string $texte, string $classe = ''): string {
-    $f = basename(explode('?', $href)[0]);
+    // L'écran visé, sans requête ni ancre : « start.php#platnosci » vise start.php.
+    $f = basename(preg_split('/[?#]/', $href)[0]);
     if (!console_ouvre($me, $f)) return '';
     return '<a' . ($classe !== '' ? ' class="' . h($classe) . '"' : '')
          . ' href="' . h($href) . '">' . h($texte) . '</a>';

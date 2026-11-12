@@ -43,7 +43,7 @@ const SHOP = 'http://localhost:8093/shop';
 // n'est jamais ouvert par personne avant un client — c'est exactement ainsi
 // que le formulaire de contact est resté mort en production.
 const ECRANS = [
-  'pulpit.php',
+  'pulpit.php', 'start.php',
   'zamowienia.php', 'subskrypcje.php', 'faktury.php', 'ksef.php', 'wysylka.php', 'zgloszenia.php',
   'klienci.php', 'kontrahenci.php', 'poczta.php', 'przypomnienia.php', 'kampanie.php',
   'produkty.php', 'magazyn.php', 'rabaty.php', 'tresci.php', 'allegro.php',
