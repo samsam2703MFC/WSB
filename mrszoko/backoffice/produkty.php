@@ -149,9 +149,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     wsm_slugify($newSlug !== '' ? $newSlug : $nazwa, $newId), 'slug', $newId);
                 try {
                     $pdo->prepare("INSERT INTO wsm_products
-                            (id, category_id, nom, slug, statut, active, shop_visible, sort_order)
-                            VALUES (?,?,?,?,?,1,0,?)")
+                            (id, category_id, nom, slug, statut, active, shop_visible, sort_order, rodzaj)
+                            VALUES (?,?,?,?,?,1,0,?,?)")
                         ->execute([$newId, $kat, $nazwa, $newSlug, 'Szkic',
+                                   wsm_rodzaj((string) ($_POST['rodzaj'] ?? 'towar')),
                                    (int) $pdo->query("SELECT COALESCE(MAX(sort_order),0)+1 FROM wsm_products")->fetchColumn()]);
                     // Les trois textes naissent avec lui : wsm_cms_save()
                     // refuse une cle absente, donc sans ces lignes la
@@ -204,6 +205,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 if ($kid > 0) {
                     try {
                         $pdo->prepare("UPDATE wsm_categories SET name = ? WHERE id = ?")->execute([$knom, $kid]);
+                        wsm_kat_rodzic($pdo, $kid, (int) ($_POST['kat_rodzic'] ?? 0));
                         $flash = 'Zapisano kategorię ' . $knom . '.';
                     } catch (Throwable $e) {
                         // Le doublon est le cas courant ; les autres refus disent leur motif.
@@ -220,6 +222,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     // « Włącz ». Deux gestes pour un, et il fallait avoir
                     // compris pourquoi.
                     [$kid, $quoi] = wsm_categorie_assure($pdo, $knom);
+                    if ($kid > 0) wsm_kat_rodzic($pdo, $kid, (int) ($_POST['kat_rodzic'] ?? 0));
                     if ($kid === 0) {
                         $flash = 'Nie udało się dodać kategorii ' . $knom . '.'; $kind = 'err';
                     } else {
@@ -433,6 +436,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         if ($stK->fetchColumn()) { $set[] = 'category_id = ?'; $vals[] = $kc; }
                         else $fieldErrors['category_id'] = 'nie ma takiej kategorii';
                     }
+                    // Ce que l'on vend : un objet (colis), une prestation ou un
+                    // logiciel. Seul un objet appelle un transporteur à la caisse.
+                    if (isset($_POST['rodzaj'])) { $set[] = 'rodzaj = ?'; $vals[] = wsm_rodzaj((string) $_POST['rodzaj']); }
                     if (isset($_POST['brand_id'])) {
                         $bid = (int) $_POST['brand_id'];
                         $set[] = 'brand_id = ?'; $vals[] = $bid > 0 ? $bid : null;
@@ -591,15 +597,26 @@ $vv = function (string $champ, string $defaut) use (&$fieldErrors, &$openId, &$i
     return ($fieldErrors && $vise && isset($_POST[$champ])) ? (string) $_POST[$champ] : $defaut;
 };
 
-$kategorie = $pdo->query("SELECT id, name FROM wsm_categories WHERE active = 1 ORDER BY sort_order, name")
+$kategorie = $pdo->query("SELECT id, name, parent_id FROM wsm_categories WHERE active = 1 ORDER BY sort_order, name")
                  ->fetchAll(PDO::FETCH_ASSOC);
 // Toutes, actives ou non, avec le nombre de produits qui les portent : on ne
 // désactive pas une catégorie sans savoir ce qu'elle tient.
 $katWszystkie = $pdo->query(
-    "SELECT c.id, c.name, c.active, COUNT(p.id) AS ile
+    "SELECT c.id, c.name, c.active, c.parent_id, COUNT(p.id) AS ile
        FROM wsm_categories c LEFT JOIN wsm_products p ON p.category_id = c.id
-      GROUP BY c.id, c.name, c.active
+      GROUP BY c.id, c.name, c.active, c.parent_id
       ORDER BY c.sort_order, c.name")->fetchAll(PDO::FETCH_ASSOC);
+// Les rayons qui peuvent en ranger d'autres : ceux du premier niveau.
+$katGlowne = array_values(array_filter($katWszystkie, fn($k) => (int) $k['parent_id'] === 0 && (int) $k['active'] === 1));
+/** La liste « rayon parent » d'un formulaire de catégorie. */
+$rodzicSelect = function (int $actuel, int $soi = 0) use ($katGlowne): string {
+    $h = '<select name="kat_rodzic" aria-label="Kategoria nadrzędna"><option value="0">— główna —</option>';
+    foreach ($katGlowne as $g) {
+        if ((int) $g['id'] === $soi) continue;
+        $h .= '<option value="' . (int) $g['id'] . '"' . ($actuel === (int) $g['id'] ? ' selected' : '') . '>w: ' . h((string) $g['name']) . '</option>';
+    }
+    return $h . '</select>';
+};
 
 $T = wsm_cms_load($pdo, 'wsm_shop_i18n', [WSM_CMS_BASE_LANG]);
 $txt = fn(string $id, string $champ): string
@@ -858,6 +875,15 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Produkty' => null]);
           <?php // GRAMATURA ET WYMIARY. Absents de tous les écrans jusqu'ici,
                 // alors qu'ils choisissent le gabarit InPost et donc le prix
                 // payé pour expédier. ?>
+          <label class="f">Rodzaj
+            <select name="rodzaj"<?= $isAdmin ? '' : ' disabled' ?>>
+              <?php $rodzAkt = wsm_rodzaj((string) $vv('rodzaj', (string) ($p['rodzaj'] ?? 'towar')));
+                    foreach (WSM_RODZAJE as $rk => $rl): ?>
+              <option value="<?= h($rk) ?>"<?= $rodzAkt === $rk ? ' selected' : '' ?>><?= h($rl) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <small>Usługa i licencja nie wymagają wysyłki: koszyk bez towaru dostaje tylko metodę „bez wysyłki” (Dostawa).</small>
+          </label>
           <label class="f">Gramatura (g)
             <input type="text" name="weight_g" value="<?= h($vv('weight_g', (string) (int) ($p['weight_g'] ?? 0))) ?>"
                    placeholder="1000"<?= $isAdmin ? '' : ' disabled' ?>>
@@ -887,7 +913,7 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Produkty' => null]);
               <?php if ($nowy): ?><option value="">— wybierz —</option><?php endif; ?>
               <?php $catAkt = (int) $vv('category_id', (string) (int) $p['category_id']);
                     foreach ($kategorie as $k): ?>
-              <option value="<?= (int) $k['id'] ?>"<?= $catAkt === (int) $k['id'] ? ' selected' : '' ?>><?= h((string) $k['name']) ?></option>
+              <option value="<?= (int) $k['id'] ?>"<?= $catAkt === (int) $k['id'] ? ' selected' : '' ?>><?= (int) $k['parent_id'] > 0 ? '↳ ' : '' ?><?= h((string) $k['name']) ?></option>
               <?php endforeach; ?>
             </select>
             <?php if (isset($fieldErrors['category_id']) && $open): ?>
@@ -1038,7 +1064,7 @@ $editB = isset($_GET['marka']) ? wsm_brand($pdo, (int) $_GET['marka']) : null;
     wyboru, ale nie rusza tego, co już jest do niej przypisane.
   </p>
   <table class="rwd dense">
-    <thead><tr><th>Nazwa</th><th class="num">Produkty</th><th>Stan</th><th></th></tr></thead>
+    <thead><tr><th>Nazwa i kategoria nadrzędna</th><th class="num">Produkty</th><th>Stan</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($katWszystkie as $k): ?>
     <tr>
@@ -1047,9 +1073,10 @@ $editB = isset($_GET['marka']) ? wsm_brand($pdo, (int) $_GET['marka']) : null;
         <form method="post" class="kat-in">
           <input type="hidden" name="_t" value="<?= h($csrf) ?>">
           <input type="text" name="kat_nazwa" value="<?= h((string) $k['name']) ?>" maxlength="80" required>
+          <?= $rodzicSelect((int) $k['parent_id'], (int) $k['id']) ?>
           <button type="submit" name="kat_zapisz" value="<?= (int) $k['id'] ?>">Zapisz</button>
         </form>
-        <?php else: ?><?= h((string) $k['name']) ?><?php endif; ?>
+        <?php else: ?><?= (int) $k['parent_id'] > 0 ? '↳ ' : '' ?><?= h((string) $k['name']) ?><?php endif; ?>
       </td>
       <td data-l="Produkty" class="num"><?= (int) $k['ile'] ?></td>
       <td data-l="Stan"><span class="stan <?= (int) $k['active'] ? 'p-ok' : 'p-bad' ?>"><i class="kropka"></i><?= (int) $k['active'] ? 'Aktywna' : 'Wyłączona' ?></span></td>
@@ -1070,6 +1097,7 @@ $editB = isset($_GET['marka']) ? wsm_brand($pdo, (int) $_GET['marka']) : null;
   <form method="post" class="kat-in" style="margin-top:14px">
     <input type="hidden" name="_t" value="<?= h($csrf) ?>">
     <input type="text" name="kat_nazwa" placeholder="Nowa kategoria" maxlength="80" required>
+    <?= $rodzicSelect(0) ?>
     <button class="primary" type="submit" name="kat_zapisz" value="0">Dodaj kategorię</button>
   </form>
   <?php endif; ?>

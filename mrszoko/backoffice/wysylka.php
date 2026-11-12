@@ -208,9 +208,7 @@ if ($detail) {
               <?php // Le transporteur est nommé : c'est l'écran depuis lequel on
                     // nadaje, et savoir chez QUI part le colis est la première
                     // chose qu'on regarde quand un envoi coince. ?>
-              · <?= h(wsm_ship_kind($pdo, (string) $o['delivery_method']) === 'punkt'
-                    ? 'Paczkomat ' . (string) $o['inpost_point']
-                    : 'Kurier ' . strtoupper(wsm_ship_carrier($pdo, (string) $o['delivery_method']))) ?></small>
+              · <?= h(wsm_ship_opis($pdo, (string) $o['delivery_method'], (string) $o['inpost_point'])) ?></small>
             <?php if (!$x['pret']): ?>
             <span class="stop">
               <?php foreach ($x['blockers'] as $b): ?>

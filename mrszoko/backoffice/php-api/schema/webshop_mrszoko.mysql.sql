@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `wsm_shops` (
 CREATE TABLE IF NOT EXISTS `wsm_categories` (
   `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name`            VARCHAR(120) NOT NULL,
+  `parent_id`       INT NOT NULL DEFAULT 0,          -- 0 = rayon de premier niveau
   `sort_order`      INT NOT NULL DEFAULT 0,
   `menu_default`    TINYINT(1) NOT NULL DEFAULT 0,
   `brand_whitelist` TINYINT(1) NOT NULL DEFAULT 1,
@@ -74,6 +75,7 @@ CREATE TABLE IF NOT EXISTS `wsm_products` (
   `badge`           VARCHAR(40)  NOT NULL DEFAULT '',
   `nutrition`       TEXT,                          -- wartości odżywcze / 100 g, JSON
   -- Expédition InPost + fiscalité tpay
+  `rodzaj`          VARCHAR(12)  NOT NULL DEFAULT 'towar',  -- towar | usluga | subskrypcja
   `sku`             VARCHAR(60)  NOT NULL DEFAULT '',
   `ean`             VARCHAR(14)  NOT NULL DEFAULT '',
   `vat_rate`        DECIMAL(4,2) NOT NULL DEFAULT 0.23,

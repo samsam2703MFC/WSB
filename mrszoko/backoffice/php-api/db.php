@@ -491,7 +491,19 @@ function wsm_ensure_commerce_columns(PDO $pdo): void {
         'contact_email'   => $txt(200),
     ]);
 
+    // LES SOUS-CATÉGORIES. Une catégorie peut en ranger d'autres (MyCobotBuddy :
+    // Akcesoria › Chwytaki). 0 = rayon de premier niveau. Un seul niveau
+    // d'imbrication est montré en vitrine : un menu à trois étages se perd.
+    wsm_ensure_columns($pdo, 'wsm_categories', [
+        'parent_id' => $int,
+    ]);
+
     wsm_ensure_columns($pdo, 'wsm_products', [
+        // CE QUE L'ON VEND : 'towar' (un objet qui part en colis), 'usluga'
+        // (une formation, une prestation) ou 'subskrypcja' (un logiciel, une
+        // licence, un accès). Seul un 'towar' appelle un transporteur : un
+        // panier sans aucun objet ne demande ni Paczkomat ni adresse.
+        'rodzaj'          => $txt(12, "'towar'"),
         'sku'             => $txt(60),
         'ean'             => $txt(14),
         'vat_rate'        => ['DECIMAL(4,2) NOT NULL DEFAULT 0.23', 'REAL NOT NULL DEFAULT 0.23'],
@@ -540,6 +552,8 @@ function wsm_ensure_countries(PDO $pdo): void {
         //
         //   'punkt' = le client désigne un point (Paczkomat, DPD Pickup)
         //   'adres' = le colis va à une adresse
+        //   'brak'  = rien ne part : formation, logiciel, accès en ligne. Proposé
+        //             SEULEMENT quand le panier ne contient aucun objet.
         'kind'      => ["VARCHAR(12) NOT NULL DEFAULT 'adres'", "TEXT NOT NULL DEFAULT 'adres'"],
         // LE POIDS PLANCHER. Sans lui, un transporteur de palettes se propose
         // pour une commande d'une tablette : le client le choisit, et le

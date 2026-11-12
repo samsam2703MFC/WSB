@@ -480,6 +480,9 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 .rayons a:hover { border-color: var(--brand-300); }
 .rayons a.on { background: var(--brand-800); border-color: var(--brand-800); color: var(--paper-50); }
 .rayons a i { font-style: normal; font-family: var(--font-mono); font-size: var(--text-2xs); opacity: .65; }
+/* Les sous-rayons : une seconde ligne, plus discrète, sous le rayon ouvert. */
+.rayons--pod { margin-top: calc(-1 * var(--space-3)); }
+.rayons.rayons--pod a { font-size: var(--text-sm); padding: 6px 12px; }
 
 /* Le prix au kilo : discret, mais lisible. Il répond à la question qu'on se
    pose entre un format 1 kg et un format 3 kg — sans obliger à la calculer. */
@@ -1119,7 +1122,7 @@ h3 { font-weight: var(--weight-bold); }
 .dostawa-info { list-style: none; margin: 0; padding: 0; border: 1px solid var(--hairline); border-radius: 18px; }
 .dostawa-info li { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-top: 1px solid var(--hairline); }
 .dostawa-info li:first-child { border-top: 0; }
-.dostawa-info svg { flex: none; width: 32px; height: 32px; }
+.dostawa-info svg, .dostawa-info img.promise-ikona { flex: none; width: 32px; height: 32px; }
 .dostawa-info b { display: block; font-size: 15px; font-weight: var(--weight-bold); color: var(--text-strong); }
 .dostawa-info small { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
@@ -1361,3 +1364,6 @@ h3 { font-weight: var(--weight-bold); }
 .zgody [hidden] { display: none !important; }
 .zgody p a { text-decoration: underline; text-underline-offset: 2px; }
 .formularz .checkout-form { margin-top: 24px; }
+
+/* L'unité de prix d'un abonnement ou d'une formation : « 249 zł / mies. ». */
+.cena-jedn { font-size: .62em; font-weight: var(--weight-medium); color: var(--text-muted); letter-spacing: 0; }

@@ -803,6 +803,31 @@ function sekcje_html(PDO $pdo, string $lang, int $pageId): void {
     foreach (wsm_section_views($pdo, $pageId, $lang) as $v) sekcja_html($v, ['home_anchors' => $pageId !== WSM_SECTION_HOME]);
 }
 
+/**
+ * L'icône d'une promesse (1 camion, 2 colis, 3 troisième promesse), là où une
+ * fiche produit la reprend : celle déposée dans Integracje → Sklep si elle
+ * existe — comme sur l'accueil —, sinon le dessin de la maison (znaki.php).
+ * La fiche montrait toujours le dessin, même quand la boutique avait déposé
+ * les siennes : deux icônes différentes pour la même promesse.
+ */
+function ikona_promesse(int $i): string {
+    $ikona = trim((string) ((wsm_config()['shop'] ?? [])["promise_icon_$i"] ?? ''));
+    if ($ikona !== '' && !preg_match('/^x{2,}$/i', $ikona)) {
+        return '<img class="promise-ikona" src="' . e(media_src($ikona)) . '" alt="" width="28" height="28" loading="lazy" decoding="async">';
+    }
+    return function_exists('ikona_obietnicy') ? ikona_obietnicy($i) : '';
+}
+
+/**
+ * L'unité DE PRIX, collée au montant : « / mies. », « / osoba », « / rok ».
+ * Seulement quand l'unité commence par « / » — chez Szoko, « 1 kg » décrit le
+ * conditionnement (il s'affiche ailleurs), pas ce que paie le montant.
+ */
+function cena_jednostka(array $p): string {
+    $u = trim((string) ($p['unit'] ?? ''));
+    return str_starts_with($u, '/') ? '<span class="cena-jedn"> ' . e($u) . '</span>' : '';
+}
+
 /** Ce que <head> imprime après shop.css : les jetons redéfinis, ou rien. */
 function theme_head(): string {
     theme_values();

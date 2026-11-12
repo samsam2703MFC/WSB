@@ -215,7 +215,7 @@ function upsell_block(PDO $pdo, array $ids, string $lang, array $S): void {
           <p class="card-meta mono"><?= e($S[wsm_upsell_cle($x['source'])] ?? '') ?></p>
           <h3><a href="<?= e(u('p/' . $p['slug'])) ?>"><?= e($p['name']) ?></a></h3>
           <div class="card-buy">
-            <span class="price"><?= e(zl($p['price'])) ?><small><?= e($S['price.vat_incl'] ?? '') ?></small></span><?php
+            <span class="price"><?= e(zl($p['price'])) ?><?= cena_jednostka($p) ?><small><?= e($S['price.vat_incl'] ?? '') ?></small></span><?php
               // LE PRIX AU KILO, EN PETIT. La même chocolat existe en 1 kg et
               // en 3 kg : 64,90 et 169,90 ne se comparent pas de tête, et c'est
               // le moment où le client décide. Rien ne s'affiche quand le poids
@@ -684,15 +684,31 @@ if ($page === '') {
           // seule, le filtre ne filtre rien : il ferait cliquer pour rien.
           // Des liens, pas du JavaScript — ils marchent partout, se partagent,
           // et le navigateur sait déjà les mettre en signet. ?>
-    <?php if (count($kategorie) > 1): ?>
+    <?php if (count($kategorie) > 1):
+          // DEUX NIVEAUX : les rayons de premier niveau, puis — quand l'un
+          // d'eux est ouvert — ses sous-rayons sur une seconde ligne. Un
+          // sous-rayon ouvert garde son parent allumé : on voit où l'on est.
+          $katParent = 0;
+          foreach ($kategorie as $c) if ((int) $c['id'] === $katId) $katParent = (int) $c['parent_id'] ?: $katId;
+          $katTop = array_values(array_filter($kategorie, fn($c) => (int) $c['parent_id'] === 0));
+          $katPod = $katParent > 0 ? array_values(array_filter($kategorie, fn($c) => (int) $c['parent_id'] === $katParent)) : []; ?>
     <nav class="rayons" aria-label="<?= e($S['catalog.title'] ?? '') ?>">
       <a href="<?= e(u()) ?>#katalog"<?= $katId === 0 ? ' class="on" aria-current="true"' : '' ?>><?= e($S['catalog.all'] ?? 'Wszystkie') ?></a>
-      <?php foreach ($kategorie as $c): ?>
+      <?php foreach ($katTop as $c): $on = $katId === (int) $c['id'] || $katParent === (int) $c['id']; ?>
+      <a href="<?= e(u('', ['k' => (int) $c['id']])) ?>#katalog"<?= $on ? ' class="on"' . ($katId === (int) $c['id'] ? ' aria-current="true"' : '') : '' ?>>
+        <?= e((string) $c['name']) ?> <i><?= (int) $c['ile'] ?></i>
+      </a>
+      <?php endforeach; ?>
+    </nav>
+    <?php if ($katPod): ?>
+    <nav class="rayons rayons--pod" aria-label="<?= e($katNom) ?>">
+      <?php foreach ($katPod as $c): ?>
       <a href="<?= e(u('', ['k' => (int) $c['id']])) ?>#katalog"<?= $katId === (int) $c['id'] ? ' class="on" aria-current="true"' : '' ?>>
         <?= e((string) $c['name']) ?> <i><?= (int) $c['ile'] ?></i>
       </a>
       <?php endforeach; ?>
     </nav>
+    <?php endif; ?>
     <?php endif; ?>
     <?php if (!$products): ?>
       <p class="muted"><?= e($S['catalog.empty'] ?? '') ?></p>
@@ -709,7 +725,7 @@ if ($page === '') {
           <p class="card-meta mono"><?= e($p['subtitle']) ?></p>
           <h3><a href="<?= e(u('p/' . $p['slug'])) ?>"><?= e($p['name']) ?></a></h3>
           <div class="card-buy">
-            <span class="price"><?= e(zl($p['price'])) ?><small><?= e($S['price.vat_incl'] ?? '') ?></small></span><?php
+            <span class="price"><?= e(zl($p['price'])) ?><?= cena_jednostka($p) ?><small><?= e($S['price.vat_incl'] ?? '') ?></small></span><?php
               // LE PRIX AU KILO, EN PETIT. La même chocolat existe en 1 kg et
               // en 3 kg : 64,90 et 169,90 ne se comparent pas de tête, et c'est
               // le moment où le client décide. Rien ne s'affiche quand le poids
@@ -857,7 +873,7 @@ layout_head($S, $lang, $langs, $p['name'], $p['desc'], 'p', $ogImg);
       <?php endif; ?>
       <?php if ($p['subtitle'] !== ''): ?><p class="mono eyebrow"><?= e($p['subtitle']) ?></p><?php endif; ?>
       <h1><?= e($p['name']) ?></h1>
-      <p class="price price--lg"><?= e(zl($p['price'])) ?><small><?= e($S['price.vat_incl'] ?? '') ?></small><?php
+      <p class="price price--lg"><?= e(zl($p['price'])) ?><?= cena_jednostka($p) ?><small><?= e($S['price.vat_incl'] ?? '') ?></small><?php
         if (!empty($p['price_per_kg'])): ?><span class="za-kg mono"><?= e(zl($p['price_per_kg'])) ?><?= e($S['price.per_kg'] ?? '') ?></span><?php endif; ?></p>
       <p class="mono muted"><?= e(zl($p['price_net'])) ?> <?= e($S['price.net'] ?? '') ?>
         · VAT <?= e(wsm_vat_percent((float) $p['vat_rate'])) ?> %
@@ -948,13 +964,22 @@ layout_head($S, $lang, $langs, $p['name'], $p['desc'], 'p', $ogImg);
                 // (Paczkomat au-delà de 25 kg, un minimum de palette) n'est pas
                 // annoncé ici — le panier fait le même tri. ?>
           <?php $metodyD = wsm_shipping_methods($pdo, $lang, WSM_SHOP_HOME_COUNTRY, max(0, (int) $p['weight_g']));
+                // Une formation ou une licence ne voyage pas : on annonce le mode
+                // « bez wysyłki » (s'il existe), et ni Paczkomat ni seuil de port.
+                $bezWysylki = $p['rodzaj'] !== 'towar'
+                    ? array_values(array_filter($metodyD, fn($m) => $m['kind'] === 'brak')) : [];
+                if ($p['rodzaj'] === 'towar') $metodyD = array_values(array_filter($metodyD, fn($m) => $m['kind'] !== 'brak'));
                 $darmD = z_progiem((string) ($S['info.darmowa'] ?? ''), prog_darmowej($pdo)); ?>
           <h2 class="kup-tytul"><?= e($S['product.ship_title'] ?? '') ?> <span><?= e($S['product.ship_sub'] ?? '') ?></span></h2>
           <ul class="dostawa-info">
-            <li><?= ikona_obietnicy(1) ?><span><b><?= e((string) ($S['promise.1.d'] ?? '')) ?></b>
+            <?php if ($bezWysylki): $bw = $bezWysylki[0]; ?>
+            <li><?= ikona_promesse(2) ?><span><b><?= e($bw['label']) ?></b><?php if ($bw['note'] !== ''): ?><small><?= e($bw['note']) ?></small><?php endif; ?></span></li>
+            <?php else: ?>
+            <li><?= ikona_promesse(1) ?><span><b><?= e((string) ($S['promise.1.d'] ?? '')) ?></b>
               <?php if ($metodyD): ?><small><?= e(implode(' · ', array_map(fn($m) => $m['label'] . ' ' . zl($m['price']), $metodyD))) ?></small><?php endif; ?></span></li>
-            <?php if ($darmD !== ''): ?><li><?= ikona_obietnicy(2) ?><span><b><?= e($darmD) ?></b></span></li><?php endif; ?>
-            <?php if (($S['promise.3.t'] ?? '') !== ''): ?><li><?= ikona_obietnicy(3) ?><span><b><?= e((string) $S['promise.3.t']) ?></b><small><?= e((string) ($S['promise.3.d'] ?? '')) ?></small></span></li><?php endif; ?>
+            <?php if ($darmD !== ''): ?><li><?= ikona_promesse(2) ?><span><b><?= e($darmD) ?></b></span></li><?php endif; ?>
+            <?php endif; ?>
+            <?php if (($S['promise.3.t'] ?? '') !== ''): ?><li><?= ikona_promesse(3) ?><span><b><?= e((string) $S['promise.3.t']) ?></b><small><?= e((string) ($S['promise.3.d'] ?? '')) ?></small></span></li><?php endif; ?>
           </ul>
 
           <div class="kup-razem">
@@ -1691,6 +1716,11 @@ if ($page === 'kasa') {
     [$q, ] = wsm_shop_quote($pdo, cart_items($cart), $shipId, $lang,
         ['country' => $shipCty, 'vat_eu' => (string) ($v['vat_eu'] ?? ''),
          'email' => (string) ($v['email'] ?? ''), 'voucher' => voucher_read()]);
+    // Un panier sans objet (formations, licences) n'a qu'un mode, « bez
+    // wysyłki » : il est choisi d'office, sinon aucun bouton ne serait coché.
+    if (($q['methods'][0]['kind'] ?? '') === 'brak' && !in_array($shipId, array_column($q['methods'], 'id'), true)) {
+        $shipId = (string) $q['methods'][0]['id'];
+    }
 
     /** Champ de formulaire : valeur réaffichée, erreur montrée sous le champ. */
     $field = function (string $name, string $label, array $opt = []) use ($v, $errors, $S) {
@@ -1795,6 +1825,7 @@ if ($page === 'kasa') {
         $kindSel = 'adres';
         foreach ($q['methods'] as $sm) if ($sm['id'] === $shipId) $kindSel = $sm['kind'] ?? 'adres';
         ?>
+        <?php // « brak » : ni point ni adresse — les deux blocs restent cachés. ?>
         <div class="ship-locker"<?= $kindSel === 'punkt' ? '' : ' hidden' ?> data-ship-locker>
           <?php $field('inpost_point', $S['checkout.point'] ?? '', ['hint' => $S['checkout.point_hint'] ?? '', 'placeholder' => 'KRA010']); ?>
           <?php
@@ -1849,7 +1880,7 @@ if ($page === 'kasa') {
           <script src="https://geowidget.inpost.pl/inpost-geowidget.js" defer></script>
           <?php endif; ?>
         </div>
-        <div class="ship-courier"<?= $kindSel === 'punkt' ? ' hidden' : '' ?> data-ship-courier>
+        <div class="ship-courier"<?= $kindSel === 'adres' ? '' : ' hidden' ?> data-ship-courier>
           <div class="row">
             <?php $field('ship_street', $S['checkout.street'] ?? '', ['autocomplete' => 'address-line1', 'required' => false]); ?>
             <?php $field('ship_building', $S['checkout.building'] ?? '', ['required' => false]); ?>

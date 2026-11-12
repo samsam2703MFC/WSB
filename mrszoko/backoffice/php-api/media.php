@@ -24,7 +24,10 @@ const WSM_MEDIA_QUALITY   = 82;
 
 /** Dossier physique des médias, côté serveur comme en dépôt. */
 function wsm_media_dir(): string {
-    return dirname(__DIR__, 2) . '/shop/media';
+    // WSM_MEDIA_DIR : un autre dossier (tests, boutique dont les photos vivent
+    // ailleurs). Par défaut, shop/media à côté de la boutique.
+    $d = (string) getenv('WSM_MEDIA_DIR');
+    return $d !== '' ? rtrim($d, '/') : dirname(__DIR__, 2) . '/shop/media';
 }
 
 /** Chemin enregistré en base : relatif à la page boutique qui l'affichera. */

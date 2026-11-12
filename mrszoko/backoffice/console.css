@@ -671,7 +671,9 @@ table.zam2 .kasa2 .kw, .tablica .kol > header .ile, .karta .gora .kw {
 
 /* Renommer une catégorie : le champ et son bouton sur une ligne. */
 .kat-in { display: flex; gap: 8px; align-items: center; margin: 0; }
-.kat-in input { flex: 1 1 auto; min-width: 0; }
+.kat-in { flex-wrap: wrap; }
+.kat-in input { flex: 1 1 160px; min-width: 0; }
+.kat-in select { flex: 1 1 140px; min-width: 0; max-width: 100%; }
 
 /* ─── LE TEMPS QUI RESTE ────────────────────────────────────────────────────
    Le compteur de la promesse « wysyłka w 24 h ». Il vit dans la case de

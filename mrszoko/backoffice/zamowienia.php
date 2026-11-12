@@ -759,8 +759,7 @@ console_crumbs($detail
         <span class="dt"><?= h(substr((string) $o['created_at'], 0, 10)) ?> · <?= h(substr((string) $o['created_at'], 11, 5)) ?></span>
       </td>
       <td data-l="Klient" class="kli"><span class="im"><?= h($o['client']) ?></span><span class="ml"><?= h($o['email']) ?></span></td>
-      <td data-l="Dostawa" class="dost"><?= h(wsm_ship_kind($pdo, (string) $o['delivery_method']) === 'punkt'
-            ? 'Paczkomat' : 'Kurier ' . strtoupper(wsm_ship_carrier($pdo, (string) $o['delivery_method']))) ?>
+      <td data-l="Dostawa" class="dost"><?= h(wsm_ship_opis($pdo, (string) $o['delivery_method'])) ?>
         <?= $o['inpost_point'] !== '' ? '<span class="pkt">' . h($o['inpost_point']) . '</span>' : '' ?></td>
       <td data-l="Brutto" class="num kasa2"><span class="kw"><?= h(pln($o['total_gross'])) ?></span>
         <span class="dt"><?= (int) $o['units'] ?> poz.</span></td>
@@ -857,8 +856,7 @@ console_crumbs($detail
           <p class="im"><?= h($o['client']) ?></p>
           <div class="sz">
             <span class="dokchip <?= $d['pf']['kind'] === 'faktura' ? 'f' : 'p' ?>"><?= h(strtoupper($d['pf']['kind'])) ?></span>
-            <?= h(wsm_ship_kind($pdo, (string) $o['delivery_method']) === 'punkt'
-                  ? 'Paczkomat' : 'Kurier ' . strtoupper(wsm_ship_carrier($pdo, (string) $o['delivery_method']))) ?>
+            <?= h(wsm_ship_opis($pdo, (string) $o['delivery_method'])) ?>
             · <?= (int) $o['units'] ?> poz.
           </div>
           <?php // Le blocage tient en UNE ligne sur la carte, et nomme le trou.

@@ -210,6 +210,28 @@ function wsm_price_per_kg(int $brutGrosze, int $poidsG): ?int {
     return (int) round($brutGrosze * 1000 / $poidsG);
 }
 
+/**
+ * LA BOUTIQUE VEND-ELLE AU POIDS ? Oui quand elle a des paliers de remise au
+ * poids (Rabaty) : c'est sa politique commerciale (Szoko : du chocolat au
+ * kilo). Alors le prix au kilo a un sens sur la fiche. Pour un chwytak ou une
+ * licence, « 8 090 zł/kg » n'en a aucun — sans paliers, il ne s'affiche pas.
+ */
+function wsm_sprzedaz_na_wage(bool $fresh = false): bool {
+    static $oui = null;
+    if ($oui === null || $fresh) {
+        try { $oui = (bool) wsm_discount_tiers(wsm_pdo()); } catch (Throwable $e) { $oui = true; }
+    }
+    return $oui;
+}
+
+/** Les types de produit, et ce qu'ils impliquent. Seul un 'towar' s'expédie. */
+const WSM_RODZAJE = ['towar' => 'Towar (wysyłka)', 'usluga' => 'Usługa / szkolenie', 'subskrypcja' => 'Oprogramowanie / licencja'];
+
+/** Un type de produit valide ; tout ce qui n'est pas connu est un objet à expédier. */
+function wsm_rodzaj(string $r): string {
+    return isset(WSM_RODZAJE[$r]) ? $r : 'towar';
+}
+
 function wsm_shop_row_to_product(array $r, array $S): array {
     $id    = (string) $r['id'];
     $gross = wsm_grosze($r['prix']);
@@ -233,6 +255,9 @@ function wsm_shop_row_to_product(array $r, array $S): array {
         'price_vat' => $vatAmt,
         'vat_rate'  => $vat,
         'stock'     => (int) ($r['stock'] ?? 0),
+        // 'towar' (un colis), 'usluga' (formation, prestation) ou 'subskrypcja'
+        // (logiciel, licence) — voir wsm_rodzaj().
+        'rodzaj'    => wsm_rodzaj((string) ($r['rodzaj'] ?? 'towar')),
         // La marque telle que la vitrine l'affiche, apportée par la jointure du
         // catalogue : nom, logo, adresse. null quand le produit n'en porte pas,
         // ou quand elle est désactivée — la boutique n'affiche alors rien,
@@ -244,7 +269,7 @@ function wsm_shop_row_to_product(array $r, array $S): array {
             'site' => (string) ($r['brand_site'] ?? ''),
         ] : null,
         'weight_g'  => (int) ($r['weight_g'] ?? 0),
-        'price_per_kg' => wsm_price_per_kg($gross, (int) ($r['weight_g'] ?? 0)),
+        'price_per_kg' => wsm_sprzedaz_na_wage() ? wsm_price_per_kg($gross, (int) ($r['weight_g'] ?? 0)) : null,
         'sku'       => (string) ($r['sku'] ?? ''),
         'ean'       => (string) ($r['ean'] ?? ''),
         'category'  => (string) ($r['category_name'] ?? ''),
@@ -355,16 +380,32 @@ function wsm_product_props(array $S, string $id): array {
  * @return list<array{id:int,name:string,ile:int}>
  */
 function wsm_shop_categories(PDO $pdo): array {
-    return $pdo->query(
-        "SELECT c.id, c.name, COUNT(p.id) AS ile
-           FROM wsm_categories c
-           JOIN wsm_products p ON p.category_id = c.id
-                              AND p.shop_visible = 1 AND p.active = 1
-          WHERE c.active = 1
-          GROUP BY c.id, c.name
-          HAVING COUNT(p.id) > 0
-          ORDER BY c.sort_order, c.name"
-    )->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    // DEUX NIVEAUX. Un rayon parent compte ses produits ET ceux de ses
+    // sous-rayons : « Akcesoria (12) » doit dire ce qu'on trouvera en cliquant.
+    // Un rayon vide — lui et ses enfants — ne s'affiche pas.
+    // Une base qui n'a pas encore reçu la colonne parent_id (le premier
+    // démarrage la pose) garde ses rayons, sur un seul niveau.
+    $sql = "SELECT c.id, c.name, %s AS parent_id, c.sort_order,
+                   (SELECT COUNT(*) FROM wsm_products p
+                     WHERE p.category_id = c.id AND p.shop_visible = 1 AND p.active = 1) AS wlasne
+              FROM wsm_categories c
+             WHERE c.active = 1
+             ORDER BY c.sort_order, c.name";
+    try { $rows = $pdo->query(sprintf($sql, 'c.parent_id'))->fetchAll(PDO::FETCH_ASSOC) ?: []; }
+    catch (Throwable $e) { $rows = $pdo->query(sprintf($sql, '0'))->fetchAll(PDO::FETCH_ASSOC) ?: []; }
+    $ids = array_map(fn($r) => (int) $r['id'], $rows);
+    $out = [];
+    foreach ($rows as $r) {
+        $id = (int) $r['id'];
+        $parent = (int) ($r['parent_id'] ?? 0);
+        // Un parent éteint ou inexistant : le sous-rayon remonte au premier
+        // niveau plutôt que de disparaître avec ses produits.
+        if ($parent === $id || !in_array($parent, $ids, true)) $parent = 0;
+        $ile = (int) $r['wlasne'];
+        foreach ($rows as $k) if ((int) ($k['parent_id'] ?? 0) === $id && (int) $k['id'] !== $id) $ile += (int) $k['wlasne'];
+        if ($ile > 0) $out[] = ['id' => $id, 'name' => (string) $r['name'], 'parent_id' => $parent, 'ile' => $ile];
+    }
+    return $out;
 }
 
 /**
@@ -384,9 +425,19 @@ function wsm_shop_products(PDO $pdo, string $lang, ?int $cat = null): array {
            LEFT JOIN wsm_categories c ON c.id = p.category_id
            LEFT JOIN wsm_brands b ON b.id = p.brand_id
           WHERE p.shop_visible = 1 AND p.active = 1"
-        . ($cat !== null ? " AND p.category_id = ?" : '')
+        // Un rayon parent montre aussi ses sous-rayons.
+        . ($cat !== null ? " AND (p.category_id = ? OR p.category_id IN
+                               (SELECT id FROM wsm_categories WHERE parent_id = ? AND active = 1))" : '')
         . " ORDER BY p.sort_order, p.nom";
-    if ($cat !== null) { $st = $pdo->prepare($sql); $st->execute([$cat]); }
+    if ($cat !== null) {
+        try { $st = $pdo->prepare($sql); $st->execute([$cat, $cat]); }
+        catch (Throwable $e) {   // pas encore de parent_id : un seul niveau
+            $st = $pdo->prepare(str_replace(
+                " OR p.category_id IN
+                               (SELECT id FROM wsm_categories WHERE parent_id = ? AND active = 1)", '', $sql));
+            $st->execute([$cat]);
+        }
+    }
     else               { $st = $pdo->query($sql); }
     return array_map(fn($r) => wsm_shop_row_to_product($r, $S), $st->fetchAll());
 }
@@ -599,7 +650,7 @@ function wsm_shipping_methods(PDO $pdo, string $lang, string $country = '', int 
  */
 function wsm_ship_kind_row(array $r): string {
     $k = strtolower(trim((string) ($r['kind'] ?? '')));
-    if ($k === 'punkt' || $k === 'adres') return $k;
+    if ($k === 'punkt' || $k === 'adres' || $k === 'brak') return $k;
     return str_contains(strtolower((string) ($r['id'] ?? '')), 'locker')
         || str_contains(strtolower((string) ($r['id'] ?? '')), 'point')
         || str_contains(strtolower((string) ($r['id'] ?? '')), 'pickup') ? 'punkt' : 'adres';
@@ -623,6 +674,14 @@ function wsm_ship_kind(PDO $pdo, string $methodId): string {
         $row = $st->fetch();
     } catch (Throwable $e) { $row = false; }
     return $cache[$methodId] = wsm_ship_kind_row($row ?: ['id' => $methodId]);
+}
+
+/** Comment part une commande, en une ligne de console : point, coursier, ou rien. */
+function wsm_ship_opis(PDO $pdo, string $methodId, string $point = ''): string {
+    $k = wsm_ship_kind($pdo, $methodId);
+    if ($k === 'brak')  return 'Bez wysyłki';
+    if ($k === 'punkt') return trim('Paczkomat ' . $point);
+    return 'Kurier ' . strtoupper(wsm_ship_carrier($pdo, $methodId));
 }
 
 /** Le transporteur d'une commande, lu dans la table — jamais deviné du nom. */
@@ -685,6 +744,7 @@ function wsm_shop_quote(PDO $pdo, array $items, string $methodId, string $lang, 
     // La remise dépend du poids total, donc rien ne peut être chiffré avant de
     // connaître le panier entier.
     $picked = [];
+    $fizyczny = false;   // le panier contient-il au moins un objet à expédier ?
     foreach ($wanted as $id => $qty) {
         $st = $pdo->prepare("SELECT * FROM wsm_products WHERE id = ? AND shop_visible = 1 AND active = 1");
         $st->execute([$id]);
@@ -693,6 +753,7 @@ function wsm_shop_quote(PDO $pdo, array $items, string $methodId, string $lang, 
         $p = wsm_shop_row_to_product($r, $S);
         $picked[] = ['p' => $p, 'qty' => $qty];
         $weight += $p['weight_g'] * $qty;
+        if ($p['rodzaj'] === 'towar') $fizyczny = true;
     }
 
     [$discountPct, $tier] = wsm_discount_for_weight($pdo, $weight);
@@ -829,6 +890,21 @@ function wsm_shop_quote(PDO $pdo, array $items, string $methodId, string $lang, 
     // l'autre bout.
     $tousPays = wsm_shipping_methods($pdo, $lang, $country);
     $methods  = wsm_shipping_methods($pdo, $lang, $country, $weight);
+    // SANS EXPÉDITION, SEULEMENT SANS OBJET. Un panier de formations et de
+    // licences n'a rien à mettre dans un colis : s'il existe un mode « brak »,
+    // c'est le seul proposé — on ne fait pas payer un Paczkomat pour un
+    // webinaire. Dès qu'un objet est dans le panier, « brak » disparaît : un
+    // chwytak ne voyage pas par e-mail. Sans mode « brak » en base (Szoko),
+    // rien ne change.
+    $estBrak = fn(array $m): bool => ($m['kind'] ?? '') === 'brak';
+    $aBrak = (bool) array_filter($tousPays, $estBrak);
+    if ($fizyczny || !$aBrak) {
+        $tousPays = array_values(array_filter($tousPays, fn($m) => !$estBrak($m)));
+        $methods  = array_values(array_filter($methods,  fn($m) => !$estBrak($m)));
+    } else {
+        $tousPays = array_values(array_filter($tousPays, $estBrak));
+        $methods  = array_values(array_filter($methods,  $estBrak));
+    }
     $method = null;
     foreach ($methods as $m) if ($m['id'] === $methodId) $method = $m;
 

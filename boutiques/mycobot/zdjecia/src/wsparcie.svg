@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200"><defs>
+<radialGradient id="bg" cx="50%" cy="42%" r="75%"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E4ECEB"/></radialGradient>
+<radialGradient id="sh" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0A1C33" stop-opacity=".28"/><stop offset="1" stop-color="#0A1C33" stop-opacity="0"/></radialGradient>
+<linearGradient id="metal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#AEB8BE"/><stop offset=".35" stop-color="#EEF2F3"/><stop offset=".6" stop-color="#C9D1D5"/><stop offset="1" stop-color="#8E99A0"/></linearGradient>
+<linearGradient id="metalv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EEF2F3"/><stop offset="1" stop-color="#9AA5AB"/></linearGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1A242E"/><stop offset=".4" stop-color="#3A4753"/><stop offset="1" stop-color="#121A21"/></linearGradient>
+<linearGradient id="white" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#D5DCDF"/><stop offset=".4" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C3CBCF"/></linearGradient>
+<linearGradient id="em" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#02C9A0"/><stop offset="1" stop-color="#029CD0"/></linearGradient>
+<linearGradient id="yel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E0A800"/><stop offset=".45" stop-color="#FFD23F"/><stop offset="1" stop-color="#D19A00"/></linearGradient>
+<linearGradient id="scr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0E2240"/><stop offset="1" stop-color="#081629"/></linearGradient>
+</defs><rect width="1200" height="1200" fill="url(#bg)"/><ellipse cx="600" cy="960" rx="330" ry="40" fill="url(#sh)"/><path d="M380 640 a220 220 0 0 1 440 0" fill="none" stroke="#1A242E" stroke-width="44"/>
+<rect x="320" y="600" width="120" height="200" rx="40" fill="url(#dark)"/><rect x="760" y="600" width="120" height="200" rx="40" fill="url(#dark)"/>
+<path d="M800 790 C 790 880, 700 900, 620 900" fill="none" stroke="#1A242E" stroke-width="16"/><rect x="560" y="880" width="80" height="40" rx="18" fill="url(#em)"/>
+<circle cx="600" cy="560" r="80" fill="#02C9A0" opacity=".14"/><path d="M570 540 l20 20 l40 -46" stroke="#02C9A0" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>

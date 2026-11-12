@@ -261,9 +261,11 @@
   document.querySelectorAll('input[data-ship]').forEach(function (r) {
     r.addEventListener('change', function () {
       if (!locker || !courier) return;
-      var punkt = r.getAttribute('data-kind') === 'punkt';
-      locker.hidden = !punkt;
-      courier.hidden = punkt;
+      // Trois types : 'punkt' (un code de point), 'adres' (une adresse) et
+      // 'brak' (formation, licence : rien à livrer, aucun des deux blocs).
+      var kind = r.getAttribute('data-kind');
+      locker.hidden = kind !== 'punkt';
+      courier.hidden = kind !== 'adres';
     });
   });
 

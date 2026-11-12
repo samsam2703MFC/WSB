@@ -11,6 +11,8 @@
 //    php migrate.php --set-password <email> <mot-de-passe> [role] [nom]
 //        crée le compte s'il n'existe pas, sinon repose son mot de passe.
 //    php migrate.php --ensure-admin <email> <mot-de-passe>
+//    php migrate.php --import-katalog <fichier.json>
+//        le catalogue de départ d'une boutique (katalog.php), rejouable.
 //        ne fait rien si un compte capable de se connecter existe déjà ;
 //        sinon crée ce compte administrateur. Idempotent : c'est l'amorçage
 //        utilisé par le déploiement.
@@ -120,6 +122,22 @@ $fresh = in_array('--fresh', $args, true);
 $seed = !in_array('--no-seed', $args, true);
 $cfg = wsm_config();
 $pdo = wsm_pdo();
+
+// ---- Le catalogue de départ d'une boutique (sortie immédiate) ---------------
+//   php migrate.php --import-katalog <fichier.json>   (voir katalog.php)
+// Rejouable : met à jour, ne duplique rien. Refuse en bloc un fichier fautif.
+if (($ik = array_search('--import-katalog', $args, true)) !== false) {
+    $f = (string) ($args[$ik + 1] ?? '');
+    $data = is_file($f) ? json_decode((string) file_get_contents($f), true) : null;
+    if (!is_array($data)) { fwrite(STDERR, "usage : php migrate.php --import-katalog <fichier.json> (fichier absent ou JSON illisible)\n"); exit(2); }
+    $pdo = wsm_bootstrap();
+    require_once __DIR__ . '/delivery.php';
+    require_once __DIR__ . '/katalog.php';
+    $b = wsm_katalog_import($pdo, $data, dirname(realpath($f)));
+    if (!$b['ok']) { fwrite(STDERR, "katalog ODRZUCONY :\n  " . implode("\n  ", $b['erreurs']) . "\n"); exit(1); }
+    echo "katalog : {$b['kategorie']} kategorii, {$b['produkty']} produktów, {$b['zdjecia']} zdjęć, {$b['dostawa']} metod dostawy, {$b['slajdy']} slajdów, {$b['teksty']} tekstów\n";
+    exit(0);
+}
 
 // ---- Synchronisation du contenu éditorial (sortie immédiate) ---------------
 // Ajoute les libellés livrés depuis le dernier déploiement SANS écraser ceux

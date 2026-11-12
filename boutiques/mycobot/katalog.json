@@ -1,0 +1,631 @@
+{
+ "_opis": "Catalogue de départ de MyCobotBuddy. Import : php migrate.php --import-katalog <ce fichier>. Rejouable. Prix INDICATIFS, à valider avant l'ouverture. Images : illustrations provisoires (zdjecia/src/*.svg), à remplacer par de vraies photos depuis la console.",
+ "kategorie": [
+  {
+   "nazwa": "Oprogramowanie (SaaS)",
+   "pod": [
+    {
+     "nazwa": "Monitoring i analityka"
+    },
+    {
+     "nazwa": "Programowanie offline"
+    },
+    {
+     "nazwa": "Licencje i wsparcie"
+    }
+   ]
+  },
+  {
+   "nazwa": "Akcesoria",
+   "pod": [
+    {
+     "nazwa": "Chwytaki i efektory"
+    },
+    {
+     "nazwa": "Montaż i podstawy"
+    },
+    {
+     "nazwa": "Bezpieczeństwo"
+    },
+    {
+     "nazwa": "Kable i części"
+    }
+   ]
+  },
+  {
+   "nazwa": "Szkolenia",
+   "pod": [
+    {
+     "nazwa": "Szkolenia podstawowe"
+    },
+    {
+     "nazwa": "Szkolenia zaawansowane"
+    },
+    {
+     "nazwa": "Szkolenia online"
+    }
+   ]
+  }
+ ],
+ "dostawa": [
+  {
+   "id": "bez_wysylki",
+   "carrier": "",
+   "kind": "brak",
+   "cena_netto": 0,
+   "vat": 0.23,
+   "kraje": "*",
+   "kolejnosc": 1,
+   "teksty": {
+    "pl": {
+     "label": "Bez wysyłki — dostęp online lub szkolenie",
+     "note": "Licencję i dane dostępowe wysyłamy e-mailem; termin szkolenia potwierdzamy w ciągu 1 dnia roboczego."
+    },
+    "en": {
+     "label": "No shipping — online access or training",
+     "note": "Licence and access details are sent by e-mail; we confirm the training date within 1 business day."
+    }
+   }
+  }
+ ],
+ "rabaty_wagowe": false,
+ "ikony_obietnic": [
+  "zdjecia/ikona-1.png",
+  "zdjecia/ikona-2.png",
+  "zdjecia/ikona-3.png"
+ ],
+ "teksty": {
+  "pl": {
+   "brand": "MyCobotBuddy",
+   "meta.title": "MyCobotBuddy — oprogramowanie, akcesoria i szkolenia dla cobotów",
+   "meta.desc": "Monitoring floty cobotów, programowanie offline, chwytaki, skanery bezpieczeństwa i szkolenia z robotyki współpracującej.",
+   "footer.tagline": "Wszystko, czego potrzebuje Twój cobot",
+   "catalog.title": "Oferta",
+   "catalog.sub": "Oprogramowanie, akcesoria i szkolenia — wszystko dla cobotów w jednym miejscu.",
+   "promise.title": "Dlaczego MyCobotBuddy.",
+   "promise.sub": "Jeden partner od wyboru chwytaka po szkolenie zespołu.",
+   "promise.1.t": "Wysyłka w 24 h",
+   "promise.1.d": "Akcesoria z magazynu wysyłamy tego samego dnia przy zamówieniu do 12:00.",
+   "promise.2.t": "Licencja od ręki",
+   "promise.2.d": "Oprogramowanie aktywujemy zdalnie — dane dostępowe przychodzą e-mailem.",
+   "promise.3.t": "Szkolą inżynierowie",
+   "promise.3.d": "Szkolenia na prawdziwych cobotach, w małych grupach, z certyfikatem.",
+   "story.pro.eyebrow": "Dla integratorów",
+   "story.pro.title": "Wdrażasz coboty u klientów? Mamy dla Ciebie warunki partnerskie.",
+   "story.pro.text": "Napisz do MyCobotBuddy — odpowiadamy tego samego dnia roboczego.",
+   "story.pro.cta": "Napisz do MyCobotBuddy"
+  },
+  "en": {
+   "brand": "MyCobotBuddy",
+   "meta.title": "MyCobotBuddy — software, accessories and training for cobots",
+   "catalog.title": "Our offer",
+   "catalog.sub": "Software, accessories and training — everything for cobots in one place.",
+   "promise.title": "Why MyCobotBuddy.",
+   "promise.sub": "One partner from choosing a gripper to training your team.",
+   "promise.1.t": "Shipped in 24 h",
+   "promise.1.d": "In-stock accessories ship the same day when ordered by 12:00.",
+   "promise.2.t": "Licence right away",
+   "promise.2.d": "Software is activated remotely — access details arrive by e-mail.",
+   "promise.3.t": "Trained by engineers",
+   "promise.3.d": "Training on real cobots, in small groups, with a certificate."
+  }
+ },
+ "slajdy": [
+  {
+   "zdjecie": "zdjecia/hero.webp",
+   "link": "#katalog",
+   "teksty": {
+    "pl": {
+     "eyebrow": "Robotyka współpracująca",
+     "title": "Twój cobot. Gotowy do pracy.",
+     "tekst": "Oprogramowanie, akcesoria i szkolenia dla cobotów — od jednego partnera.",
+     "cta_label": "Zobacz ofertę"
+    },
+    "en": {
+     "eyebrow": "Collaborative robotics",
+     "title": "Your cobot. Ready to work.",
+     "tekst": "Software, accessories and training for cobots — from one partner.",
+     "cta_label": "See the offer"
+    }
+   }
+  }
+ ],
+ "produkty": [
+  {
+   "id": "mcb-saas-monitoring-m",
+   "kategoria": "Monitoring i analityka",
+   "rodzaj": "subskrypcja",
+   "cena": 249,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ mies. / cobot",
+   "zdjecie": "zdjecia/saas-monitoring.webp",
+   "teksty": {
+    "pl": {
+     "name": "Monitoring floty cobotów — abonament miesięczny",
+     "subtitle": "SaaS · 1 cobot · miesięcznie",
+     "desc": "Stan każdego cobota na żywo: dostępność, cykle, alarmy i OEE w jednym panelu. Powiadomienia e-mail i SMS, eksport do Excela. Cena za jednego cobota."
+    },
+    "en": {
+     "name": "Cobot fleet monitoring — monthly plan",
+     "subtitle": "SaaS · 1 cobot · monthly",
+     "desc": "Live status of every cobot: availability, cycles, alarms and OEE in one dashboard. E-mail and SMS alerts, Excel export. Price per cobot."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-monitoring-r",
+   "kategoria": "Monitoring i analityka",
+   "rodzaj": "subskrypcja",
+   "cena": 2490,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok / cobot",
+   "zdjecie": "zdjecia/saas-monitoring.webp",
+   "teksty": {
+    "pl": {
+     "name": "Monitoring floty cobotów — licencja roczna",
+     "subtitle": "SaaS · 1 cobot · 12 miesięcy",
+     "desc": "Ten sam panel co w abonamencie miesięcznym, dwa miesiące taniej. Historia danych przez 24 miesiące i raport miesięczny w PDF."
+    },
+    "en": {
+     "name": "Cobot fleet monitoring — annual licence",
+     "subtitle": "SaaS · 1 cobot · 12 months",
+     "desc": "The same dashboard as the monthly plan, two months cheaper. 24 months of data history and a monthly PDF report."
+    }
+   },
+   "badge": "Bestseller"
+  },
+  {
+   "id": "mcb-saas-predykcja",
+   "kategoria": "Monitoring i analityka",
+   "rodzaj": "subskrypcja",
+   "cena": 1990,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok / cobot",
+   "zdjecie": "zdjecia/saas-predykcja.webp",
+   "teksty": {
+    "pl": {
+     "name": "Konserwacja predykcyjna — moduł roczny",
+     "subtitle": "SaaS · dodatek · 12 miesięcy",
+     "desc": "Analiza prądów i temperatur przegubów przewiduje zużycie, zanim zatrzyma linię. Dodatek do monitoringu floty."
+    },
+    "en": {
+     "name": "Predictive maintenance — annual module",
+     "subtitle": "SaaS · add-on · 12 months",
+     "desc": "Joint current and temperature analysis predicts wear before it stops the line. Add-on to fleet monitoring."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-offline",
+   "kategoria": "Programowanie offline",
+   "rodzaj": "subskrypcja",
+   "cena": 3990,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok",
+   "zdjecie": "zdjecia/saas-offline.webp",
+   "teksty": {
+    "pl": {
+     "name": "Programowanie offline — licencja roczna, 1 stanowisko",
+     "subtitle": "SaaS · 1 stanowisko · 12 miesięcy",
+     "desc": "Programuj i testuj trajektorie na komputerze, bez zatrzymywania produkcji. Biblioteka chwytaków, wykrywanie kolizji, eksport programu do cobota."
+    },
+    "en": {
+     "name": "Offline programming — annual licence, 1 seat",
+     "subtitle": "SaaS · 1 seat · 12 months",
+     "desc": "Program and test trajectories on your computer without stopping production. Gripper library, collision detection, program export to the cobot."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-symulacja",
+   "kategoria": "Programowanie offline",
+   "rodzaj": "subskrypcja",
+   "cena": 1490,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ 3 mies.",
+   "zdjecie": "zdjecia/saas-offline.webp",
+   "teksty": {
+    "pl": {
+     "name": "Symulacja celi zrobotyzowanej — pakiet 3 miesiące",
+     "subtitle": "SaaS · 3 miesiące",
+     "desc": "Sprawdź czas cyklu i rozmieszczenie celi przed zakupem sprzętu. Idealne na etap ofertowania."
+    },
+    "en": {
+     "name": "Robotic cell simulation — 3-month pack",
+     "subtitle": "SaaS · 3 months",
+     "desc": "Check cycle time and cell layout before buying hardware. Ideal for the quoting stage."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-wsparcie",
+   "kategoria": "Licencje i wsparcie",
+   "rodzaj": "subskrypcja",
+   "cena": 2990,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok",
+   "zdjecie": "zdjecia/wsparcie.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wsparcie zdalne Premium — 12 miesięcy",
+     "subtitle": "Wsparcie · 12 miesięcy",
+     "desc": "Inżynier na wideo w ciągu 4 godzin roboczych, zdalny dostęp do cobota, kopie zapasowe programów."
+    },
+    "en": {
+     "name": "Premium remote support — 12 months",
+     "subtitle": "Support · 12 months",
+     "desc": "An engineer on video within 4 business hours, remote access to the cobot, program backups."
+    }
+   }
+  },
+  {
+   "id": "mcb-usl-wdrozenie",
+   "kategoria": "Licencje i wsparcie",
+   "rodzaj": "usluga",
+   "cena": 1490,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ wdrożenie",
+   "zdjecie": "zdjecia/saas-monitoring.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wdrożenie platformy — konfiguracja zdalna",
+     "subtitle": "Usługa · online",
+     "desc": "Podłączamy Twoje coboty do monitoringu, ustawiamy alarmy i uczymy zespół korzystać z panelu. 2 sesje online."
+    },
+    "en": {
+     "name": "Platform onboarding — remote setup",
+     "subtitle": "Service · online",
+     "desc": "We connect your cobots to monitoring, set up alarms and train your team on the dashboard. 2 online sessions."
+    }
+   }
+  },
+  {
+   "id": "mcb-acc-chwytak-2f",
+   "kategoria": "Chwytaki i efektory",
+   "rodzaj": "towar",
+   "cena": 8900,
+   "vat": 0.23,
+   "stan": 6,
+   "jednostka": "",
+   "zdjecie": "zdjecia/chwytak-2f.webp",
+   "teksty": {
+    "pl": {
+     "name": "Chwytak elektryczny dwupalcowy, skok 85 mm",
+     "subtitle": "Chwytak · 1,1 kg · ISO 9409-1",
+     "desc": "Siła chwytu regulowana 20–235 N, montaż ISO 9409-1-50-4-M6, sterowanie z panelu cobota. Gotowe szczęki do wymiany."
+    },
+    "en": {
+     "name": "Two-finger electric gripper, 85 mm stroke",
+     "subtitle": "Gripper · 1.1 kg · ISO 9409-1",
+     "desc": "Adjustable grip force 20–235 N, ISO 9409-1-50-4-M6 mount, controlled from the cobot pendant. Replaceable jaws."
+    }
+   },
+   "waga_g": 1100,
+   "badge": "Bestseller"
+  },
+  {
+   "id": "mcb-acc-chwytak-vac",
+   "kategoria": "Chwytaki i efektory",
+   "rodzaj": "towar",
+   "cena": 3490,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "",
+   "zdjecie": "zdjecia/chwytak-vac.webp",
+   "teksty": {
+    "pl": {
+     "name": "Chwytak podciśnieniowy z 4 przyssawkami",
+     "subtitle": "Chwytak · do 10 kg",
+     "desc": "Elektryczna pompa w zestawie — bez sprężonego powietrza. Do kartonów, płyt i opakowań do 10 kg."
+    },
+    "en": {
+     "name": "Vacuum gripper with 4 suction cups",
+     "subtitle": "Gripper · up to 10 kg",
+     "desc": "Built-in electric pump — no compressed air needed. For boxes, panels and packaging up to 10 kg."
+    }
+   },
+   "waga_g": 800
+  },
+  {
+   "id": "mcb-acc-zmieniacz",
+   "kategoria": "Chwytaki i efektory",
+   "rodzaj": "towar",
+   "cena": 1890,
+   "vat": 0.23,
+   "stan": 12,
+   "jednostka": "",
+   "zdjecie": "zdjecia/zmieniacz.webp",
+   "teksty": {
+    "pl": {
+     "name": "Szybkozłącze narzędziowe (tool changer)",
+     "subtitle": "Złącze · ISO 9409-1-50",
+     "desc": "Zmiana chwytaka w kilka sekund, bez narzędzi. Przelotka elektryczna 8 pin i pneumatyczna."
+    },
+    "en": {
+     "name": "Quick tool changer",
+     "subtitle": "Changer · ISO 9409-1-50",
+     "desc": "Swap grippers in seconds without tools. 8-pin electrical and pneumatic pass-through."
+    }
+   },
+   "waga_g": 450
+  },
+  {
+   "id": "mcb-acc-podstawa",
+   "kategoria": "Montaż i podstawy",
+   "rodzaj": "towar",
+   "cena": 6490,
+   "vat": 0.23,
+   "stan": 3,
+   "jednostka": "",
+   "zdjecie": "zdjecia/podstawa.webp",
+   "teksty": {
+    "pl": {
+     "name": "Podstawa mobilna cobota z poziomowaniem",
+     "subtitle": "Podstawa · 38 kg · wysyłka paletą",
+     "desc": "Stalowy wózek z kołami i stopkami poziomującymi, miejsce na sterownik. Przenosisz cobota między stanowiskami w 5 minut."
+    },
+    "en": {
+     "name": "Mobile cobot pedestal with levelling",
+     "subtitle": "Pedestal · 38 kg · pallet shipping",
+     "desc": "Steel cart with castors and levelling feet, room for the controller. Move the cobot between stations in 5 minutes."
+    }
+   },
+   "waga_g": 38000
+  },
+  {
+   "id": "mcb-acc-plyta",
+   "kategoria": "Montaż i podstawy",
+   "rodzaj": "towar",
+   "cena": 590,
+   "vat": 0.23,
+   "stan": 25,
+   "jednostka": "",
+   "zdjecie": "zdjecia/plyta.webp",
+   "teksty": {
+    "pl": {
+     "name": "Płyta adaptacyjna ISO 9409-1-50 / -63",
+     "subtitle": "Montaż · aluminium",
+     "desc": "Łączy kołnierz cobota z chwytakami o innym rozstawie otworów. Aluminium anodowane, śruby w zestawie."
+    },
+    "en": {
+     "name": "Adapter plate ISO 9409-1-50 / -63",
+     "subtitle": "Mounting · aluminium",
+     "desc": "Connects the cobot flange to grippers with a different bolt pattern. Anodised aluminium, screws included."
+    }
+   },
+   "waga_g": 900
+  },
+  {
+   "id": "mcb-acc-skaner",
+   "kategoria": "Bezpieczeństwo",
+   "rodzaj": "towar",
+   "cena": 7900,
+   "vat": 0.23,
+   "stan": 4,
+   "jednostka": "",
+   "zdjecie": "zdjecia/skaner.webp",
+   "teksty": {
+    "pl": {
+     "name": "Laserowy skaner bezpieczeństwa, zasięg 5,5 m",
+     "subtitle": "Bezpieczeństwo · PL d",
+     "desc": "Zwalnia cobota, gdy ktoś wchodzi w strefę, i zatrzymuje go w strefie ochronnej. Pozwala pracować bez wygrodzenia."
+    },
+    "en": {
+     "name": "Safety laser scanner, 5.5 m range",
+     "subtitle": "Safety · PL d",
+     "desc": "Slows the cobot when someone enters the zone and stops it in the protective field. Lets you work without fencing."
+    }
+   },
+   "waga_g": 1300
+  },
+  {
+   "id": "mcb-acc-estop",
+   "kategoria": "Bezpieczeństwo",
+   "rodzaj": "towar",
+   "cena": 690,
+   "vat": 0.23,
+   "stan": 20,
+   "jednostka": "",
+   "zdjecie": "zdjecia/estop.webp",
+   "teksty": {
+    "pl": {
+     "name": "Zewnętrzny wyłącznik awaryjny z przewodem 5 m",
+     "subtitle": "Bezpieczeństwo · 5 m",
+     "desc": "Drugi grzybek bezpieczeństwa przy stanowisku operatora. Podłączenie do wejścia bezpieczeństwa sterownika."
+    },
+    "en": {
+     "name": "External emergency stop with 5 m cable",
+     "subtitle": "Safety · 5 m",
+     "desc": "A second emergency stop at the operator station. Connects to the controller safety input."
+    }
+   },
+   "waga_g": 400
+  },
+  {
+   "id": "mcb-acc-kabel",
+   "kategoria": "Kable i części",
+   "rodzaj": "towar",
+   "cena": 290,
+   "vat": 0.23,
+   "stan": 40,
+   "jednostka": "",
+   "zdjecie": "zdjecia/kabel.webp",
+   "teksty": {
+    "pl": {
+     "name": "Przewód narzędziowy M8 8-pin, 5 m",
+     "subtitle": "Kabel · M8 · 5 m",
+     "desc": "Przewód do chwytaków i czujników montowanych na kiści. Elastyczny, do prowadzenia wzdłuż ramienia."
+    },
+    "en": {
+     "name": "Tool cable M8 8-pin, 5 m",
+     "subtitle": "Cable · M8 · 5 m",
+     "desc": "Cable for grippers and wrist-mounted sensors. Flexible, for routing along the arm."
+    }
+   },
+   "waga_g": 250
+  },
+  {
+   "id": "mcb-acc-oslona",
+   "kategoria": "Kable i części",
+   "rodzaj": "towar",
+   "cena": 790,
+   "vat": 0.23,
+   "stan": 15,
+   "jednostka": "",
+   "zdjecie": "zdjecia/oslona.webp",
+   "teksty": {
+    "pl": {
+     "name": "Osłona ochronna ramienia, rozmiar M",
+     "subtitle": "Osłona · rozmiar M",
+     "desc": "Chroni cobota przed pyłem, odpryskami i wilgocią. Materiał zmywalny, mocowanie na rzepy."
+    },
+    "en": {
+     "name": "Protective arm cover, size M",
+     "subtitle": "Cover · size M",
+     "desc": "Protects the cobot from dust, spatter and moisture. Washable fabric, hook-and-loop fastening."
+    }
+   },
+   "waga_g": 600
+  },
+  {
+   "id": "mcb-szk-start",
+   "kategoria": "Szkolenia podstawowe",
+   "rodzaj": "usluga",
+   "cena": 1490,
+   "vat": 0.23,
+   "stan": 8,
+   "jednostka": "/ osoba",
+   "zdjecie": "zdjecia/szkolenie-sala.webp",
+   "teksty": {
+    "pl": {
+     "name": "Cobot od zera — szkolenie 1-dniowe, stacjonarnie",
+     "subtitle": "Szkolenie · 1 dzień · maks. 8 osób",
+     "desc": "Uruchomienie, bezpieczeństwo, pierwsze programy pick & place. Praca na prawdziwym cobocie, maks. 8 osób. Certyfikat ukończenia."
+    },
+    "en": {
+     "name": "Cobot from scratch — 1-day on-site training",
+     "subtitle": "Training · 1 day · max 8 people",
+     "desc": "Start-up, safety, first pick & place programs. Hands-on with a real cobot, max 8 people. Certificate of completion."
+    }
+   },
+   "badge": "Nowość"
+  },
+  {
+   "id": "mcb-szk-bhp",
+   "kategoria": "Szkolenia podstawowe",
+   "rodzaj": "usluga",
+   "cena": 1290,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ osoba",
+   "zdjecie": "zdjecia/szkolenie-bhp.webp",
+   "teksty": {
+    "pl": {
+     "name": "Bezpieczeństwo pracy z cobotem i ocena ryzyka",
+     "subtitle": "Szkolenie · 1 dzień · ISO/TS 15066",
+     "desc": "Strefy współpracy, limity siły według ISO/TS 15066, ocena ryzyka stanowiska krok po kroku. Dla działów BHP i utrzymania ruchu."
+    },
+    "en": {
+     "name": "Cobot safety and risk assessment",
+     "subtitle": "Training · 1 day · ISO/TS 15066",
+     "desc": "Collaborative zones, force limits according to ISO/TS 15066, step-by-step workstation risk assessment. For H&S and maintenance teams."
+    }
+   }
+  },
+  {
+   "id": "mcb-szk-prog",
+   "kategoria": "Szkolenia zaawansowane",
+   "rodzaj": "usluga",
+   "cena": 2690,
+   "vat": 0.23,
+   "stan": 6,
+   "jednostka": "/ osoba",
+   "zdjecie": "zdjecia/szkolenie-sala.webp",
+   "teksty": {
+    "pl": {
+     "name": "Programowanie zaawansowane — 2 dni",
+     "subtitle": "Szkolenie · 2 dni · maks. 6 osób",
+     "desc": "Zmienne, warunki, pętle, komunikacja z PLC, obsługa błędów. Każdy uczestnik kończy z własnym programem produkcyjnym."
+    },
+    "en": {
+     "name": "Advanced programming — 2 days",
+     "subtitle": "Training · 2 days · max 6 people",
+     "desc": "Variables, conditions, loops, PLC communication, error handling. Every participant leaves with their own production program."
+    }
+   }
+  },
+  {
+   "id": "mcb-szk-paletyzacja",
+   "kategoria": "Szkolenia zaawansowane",
+   "rodzaj": "usluga",
+   "cena": 2190,
+   "vat": 0.23,
+   "stan": 6,
+   "jednostka": "/ osoba",
+   "zdjecie": "zdjecia/chwytak-vac.webp",
+   "teksty": {
+    "pl": {
+     "name": "Paletyzacja i pick & place — warsztat",
+     "subtitle": "Warsztat · 1 dzień",
+     "desc": "Wzory paletowe, chwytaki podciśnieniowe, optymalizacja czasu cyklu. Na końcu działająca cela paletyzacji."
+    },
+    "en": {
+     "name": "Palletising and pick & place — workshop",
+     "subtitle": "Workshop · 1 day",
+     "desc": "Pallet patterns, vacuum grippers, cycle-time optimisation. You finish with a working palletising cell."
+    }
+   }
+  },
+  {
+   "id": "mcb-szk-online",
+   "kategoria": "Szkolenia online",
+   "rodzaj": "usluga",
+   "cena": 490,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ dostęp 12 mies.",
+   "zdjecie": "zdjecia/szkolenie-online.webp",
+   "teksty": {
+    "pl": {
+     "name": "Kurs online: pierwsze kroki z cobotem",
+     "subtitle": "E-learning · 12 lekcji",
+     "desc": "12 lekcji wideo, quizy i ćwiczenia w symulatorze. Dostęp na 12 miesięcy, we własnym tempie."
+    },
+    "en": {
+     "name": "Online course: first steps with a cobot",
+     "subtitle": "E-learning · 12 lessons",
+     "desc": "12 video lessons, quizzes and simulator exercises. 12 months of access, at your own pace."
+    }
+   }
+  },
+  {
+   "id": "mcb-szk-konsultacja",
+   "kategoria": "Szkolenia online",
+   "rodzaj": "usluga",
+   "cena": 590,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ 2 h",
+   "zdjecie": "zdjecia/wsparcie.webp",
+   "teksty": {
+    "pl": {
+     "name": "Konsultacja online z inżynierem — 2 godziny",
+     "subtitle": "Konsultacja · online · 2 h",
+     "desc": "Twoje stanowisko, Twój problem, nasz inżynier na wideo. Przygotuj zdjęcia celi — resztę zrobimy razem."
+    },
+    "en": {
+     "name": "Online consultation with an engineer — 2 hours",
+     "subtitle": "Consultation · online · 2 h",
+     "desc": "Your workstation, your problem, our engineer on video. Bring photos of the cell — we'll do the rest together."
+    }
+   }
+  }
+ ]
+}

@@ -213,6 +213,9 @@ function wsm_ship_queue(PDO $pdo, int $limit = 200): array {
     foreach ($ids as $id) {
         $o = wsm_order_by_id($pdo, (int) $id);
         if (!$o) continue;
+        // Une commande sans expédition (formation, licence) n'a pas de colis :
+        // elle n'a rien à faire dans la file des étiquettes.
+        if (wsm_ship_kind($pdo, (string) $o['delivery_method']) === 'brak') continue;
         $b = wsm_ship_blockers($pdo, $o);
         $out[] = ['order' => $o, 'shipment' => $o['shipment'] ?? null,
                   'blockers' => $b, 'pret' => $b === []];

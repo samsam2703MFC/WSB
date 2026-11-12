@@ -279,6 +279,29 @@ function wsm_validate_product_logistics(array $in): array {
  * @return array{0:int,1:string} identifiant (0 si refus), et ce qui s'est
  *         passé : 'cree' | 'rallume' | 'trouve' | 'refuse'
  */
+/**
+ * Range une catégorie sous une autre (ou au premier niveau avec 0).
+ *
+ * UN SEUL NIVEAU D'IMBRICATION : le parent doit être lui-même de premier
+ * niveau, et une catégorie qui range déjà des sous-catégories ne peut pas
+ * devenir sous-catégorie à son tour. Sinon la vitrine, qui montre deux
+ * étages, perdrait le troisième — et ses produits avec.
+ */
+function wsm_kat_rodzic(PDO $pdo, int $id, int $parent): bool {
+    if ($parent === $id) return false;
+    if ($parent > 0) {
+        $st = $pdo->prepare("SELECT parent_id FROM wsm_categories WHERE id = ?");
+        $st->execute([$parent]);
+        $pp = $st->fetchColumn();
+        if ($pp === false || (int) $pp !== 0) return false;
+        $st = $pdo->prepare("SELECT COUNT(*) FROM wsm_categories WHERE parent_id = ?");
+        $st->execute([$id]);
+        if ((int) $st->fetchColumn() > 0) return false;
+    }
+    $pdo->prepare("UPDATE wsm_categories SET parent_id = ? WHERE id = ?")->execute([$parent, $id]);
+    return true;
+}
+
 function wsm_categorie_assure(PDO $pdo, string $nom): array {
     $nom = trim($nom);
     if ($nom === '' || mb_strlen($nom) > 80) return [0, 'refuse'];
