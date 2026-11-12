@@ -1,5 +1,7 @@
 # Maquettes : audit des fournisseurs et prestataires (suivi franchisé)
 
+Spécification de développement : `SPEC.md` (cockpit consultant › Pilotage).
+
 Maquettes statiques, **non déployées** (le dossier `design-system/` n'est pas
 copié sur le serveur). Chaque écran existe en `.png` (capture) et en `.html`
 (s'ouvre depuis le dépôt ; il réutilise les feuilles de style de la console).
