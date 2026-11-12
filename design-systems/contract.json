@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "a_quoi_ca_sert": "La SEULE interface entre le code (boutique + console) et un design system. Le code n'emploie que ces noms ; chaque design system leur donne sa valeur. Un jeton sans « defaut » est OBLIGATOIRE : c'est l'identité de la marque. Un jeton avec « defaut » peut être omis — tools/build-ds.php pose alors la valeur par défaut, exprimée à partir des jetons obligatoires. Ajouter un jeton ici = l'ajouter à TOUS les design systems (ou lui donner un défaut).",
+  "console": "La console est commune à toutes les boutiques : elle ne prend du design system que les jetons du groupe « couleurs » (et le logo). Polices, espacements et rayons de la console ne changent pas d'une boutique à l'autre.",
+  "groupes": {
+    "couleurs": {
+      "--brand-950": { "role": "Marque, la plus sombre (dégradés du haut de page)" },
+      "--brand-900": { "role": "Marque très sombre : bandeaux, pied de page, panneau pro" },
+      "--brand-800": { "role": "Marque sombre : fonds inversés, survol" },
+      "--brand-700": { "role": "LA couleur de marque (celle du logo)" },
+      "--brand-600": { "role": "Marque, un cran plus clair" },
+      "--brand-500": { "role": "Marque moyenne (teintes produit par défaut)" },
+      "--brand-400": { "role": "Marque claire : bordures fortes, textes discrets sur fond sombre" },
+      "--brand-300": { "role": "Marque très claire : textes sur fond sombre" },
+      "--brand-200": { "role": "Marque pâle : textes secondaires sur fond sombre" },
+      "--brand-100": { "role": "Marque presque blanche : fonds teintés" },
+
+      "--paper-50":  { "role": "Neutre le plus clair : fond de page historique" },
+      "--paper-100": { "role": "Neutre clair : bandes, surfaces surélevées" },
+      "--paper-200": { "role": "Neutre : surfaces en creux" },
+      "--paper-300": { "role": "Neutre : bordures légères" },
+      "--paper-400": { "role": "Neutre : bordures normales" },
+
+      "--ink-900": { "role": "Encre la plus sombre (texte quasi noir)" },
+      "--ink-500": { "role": "Encre moyenne (texte secondaire)" },
+      "--white":   { "role": "Blanc pur : fond des photos produit, cartes", "defaut": "#FFFFFF" },
+
+      "--accent-600": { "role": "Accent sombre : sur-titres, liens" },
+      "--accent-500": { "role": "Accent : barres de progression, pastilles" },
+      "--accent-400": { "role": "Accent clair : sur-titres sur fond sombre" },
+      "--highlight":  { "role": "Mise en avant premium (badge « nouveau »)", "defaut": "var(--accent-400)" },
+      "--sale":        { "role": "Promotion / prix barré", "defaut": "var(--danger)" },
+      "--sale-strong": { "role": "Promotion, version sombre (autoliquidation TVA)", "defaut": "color-mix(in srgb, var(--sale) 80%, black)" },
+
+      "--success": { "role": "Succès" },
+      "--warning": { "role": "Avertissement" },
+      "--danger":  { "role": "Erreur, danger" },
+      "--info":    { "role": "Information", "defaut": "var(--ink-500)" },
+
+      "--bg-page":        { "role": "Fond de page", "defaut": "var(--paper-50)" },
+      "--bg-page-alt":    { "role": "Fond de page alterné", "defaut": "var(--paper-100)" },
+      "--surface-card":   { "role": "Fond des cartes et des champs", "defaut": "var(--white)" },
+      "--surface-raised": { "role": "Surface surélevée", "defaut": "var(--paper-100)" },
+      "--surface-sunken": { "role": "Surface en creux", "defaut": "var(--paper-200)" },
+
+      "--text-strong":    { "role": "Titres et texte principal", "defaut": "var(--brand-900)" },
+      "--text-body":      { "role": "Texte courant", "defaut": "var(--ink-900)" },
+      "--text-muted":     { "role": "Texte secondaire", "defaut": "var(--ink-500)" },
+      "--text-on-accent": { "role": "Texte posé sur l'accent", "defaut": "var(--white)" },
+
+      "--border-subtle":  { "role": "Bordure légère", "defaut": "var(--paper-300)" },
+      "--border-default": { "role": "Bordure normale", "defaut": "var(--paper-400)" },
+      "--border-strong":  { "role": "Bordure appuyée (survol)", "defaut": "var(--brand-400)" },
+
+      "--accent":       { "role": "Accent (alias sémantique)", "defaut": "var(--accent-500)" },
+      "--accent-hover": { "role": "Accent au survol", "defaut": "var(--accent-600)" },
+      "--accent-quiet": { "role": "Accent discret (fonds)", "defaut": "var(--paper-200)" },
+
+      "--brand":       { "role": "Marque (alias sémantique)", "defaut": "var(--brand-700)" },
+      "--brand-hover": { "role": "Marque au survol", "defaut": "var(--brand-800)" },
+      "--brand-quiet": { "role": "Marque discrète (fonds)", "defaut": "var(--brand-100)" },
+      "--on-brand":    { "role": "Texte posé sur la marque ou sur un fond sombre", "defaut": "var(--white)" },
+
+      "--action":       { "role": "Fond du bouton principal (Ajouter au panier, Commander)", "defaut": "var(--brand)" },
+      "--action-hover": { "role": "Bouton principal au survol", "defaut": "var(--brand-hover)" },
+      "--on-action":    { "role": "Texte du bouton principal", "defaut": "var(--white)" },
+
+      "--price": { "role": "Couleur des prix", "defaut": "var(--brand-800)" },
+
+      "--paper":         { "role": "Le papier de la boutique (Wygląd → Tło strony le change)", "defaut": "var(--white)" },
+      "--paper-soft":    { "role": "Bandes et panneaux", "defaut": "var(--paper-100)" },
+      "--hairline":      { "role": "Filets entre les lignes", "defaut": "var(--paper-200)" },
+      "--hairline-soft": { "role": "Contour des vignettes du panier", "defaut": "var(--hairline)" },
+      "--field-line":    { "role": "Contour des champs et cases à cocher", "defaut": "var(--paper-300)" },
+      "--chip":          { "role": "Pastilles et boutons discrets", "defaut": "var(--paper-100)" },
+      "--track":         { "role": "Piste d'une barre de progression", "defaut": "var(--paper-200)" },
+      "--track-strong":  { "role": "Jauge pas encore remplie", "defaut": "var(--paper-400)" },
+      "--link":          { "role": "Liens", "defaut": "var(--accent-600)" },
+
+      "--bo-page":         { "role": "Console : fond des pages", "defaut": "var(--paper-50)" },
+      "--bo-raised":       { "role": "Console : surface surélevée", "defaut": "var(--paper-50)" },
+      "--bo-sunken":       { "role": "Console : surface en creux", "defaut": "var(--paper-100)" },
+      "--bo-line-subtle":  { "role": "Console : filets", "defaut": "var(--paper-100)" },
+      "--bo-line":         { "role": "Console : bordures", "defaut": "var(--paper-200)" },
+      "--bo-side":         { "role": "Console : colonne du menu (le rail)", "defaut": "color-mix(in srgb, var(--paper-50) 50%, white)" },
+      "--bo-fill":         { "role": "Console : boutons secondaires, pastilles, contrôle segmenté", "defaut": "var(--paper-100)" },
+      "--bo-fill-hover":   { "role": "Console : survol des pastilles", "defaut": "color-mix(in srgb, var(--paper-100) 60%, var(--paper-200))" },
+      "--bo-text":         { "role": "Console : texte courant (jamais var(--text-body) : la console le redéfinit à partir d'ici)", "defaut": "var(--ink-900)" },
+      "--bo-text-muted":   { "role": "Console : texte secondaire", "defaut": "var(--ink-500)" },
+
+      "--shadow-tint": { "role": "Teinte des ombres en triplet r, g, b — rgba(var(--shadow-tint), .08)" },
+      "--scrim-tint":  { "role": "Teinte des voiles posés sur les photos, triplet r, g, b", "defaut": "var(--shadow-tint)" }
+    },
+
+    "typographie": {
+      "--font-display": { "role": "Famille des titres" },
+      "--font-sans":    { "role": "Famille du texte" },
+      "--font-mono":    { "role": "Famille des identifiants (n° de commande, NIP, IBAN)", "defaut": "ui-monospace, 'SF Mono', Menlo, monospace" },
+
+      "--text-2xs": { "role": "12 px — plancher, rien en dessous", "defaut": "0.75rem" },
+      "--text-xs":  { "role": "13 px", "defaut": "0.8125rem" },
+      "--text-sm":  { "role": "14 px", "defaut": "0.875rem" },
+      "--text-md":  { "role": "16 px — base", "defaut": "1rem" },
+      "--text-lg":  { "role": "18 px", "defaut": "1.125rem" },
+      "--text-xl":  { "role": "22 px", "defaut": "1.375rem" },
+      "--text-2xl": { "role": "28 px", "defaut": "1.75rem" },
+      "--text-3xl": { "role": "36 px", "defaut": "2.25rem" },
+      "--text-4xl": { "role": "48 px — titre du haut de page", "defaut": "3rem" },
+
+      "--weight-regular":  { "role": "Graisse normale", "defaut": "400" },
+      "--weight-medium":   { "role": "Graisse moyenne", "defaut": "500" },
+      "--weight-semibold": { "role": "Demi-gras", "defaut": "600" },
+      "--weight-bold":     { "role": "Gras", "defaut": "700" },
+      "--weight-extra":    { "role": "Extra-gras (gros titres)", "defaut": "800" },
+
+      "--leading-tight":   { "role": "Interlignage des titres", "defaut": "1.1" },
+      "--leading-snug":    { "role": "Interlignage serré", "defaut": "1.25" },
+      "--leading-normal":  { "role": "Interlignage normal", "defaut": "1.5" },
+      "--leading-relaxed": { "role": "Interlignage du texte long", "defaut": "1.65" },
+
+      "--tracking-tight": { "role": "Approche serrée (gros titres)", "defaut": "-0.02em" },
+      "--tracking-wide":  { "role": "Approche large", "defaut": "0.04em" },
+      "--tracking-caps":  { "role": "Approche des sur-titres en capitales", "defaut": "0.12em" }
+    },
+
+    "espacements": {
+      "--space-1":  { "role": "4 px",   "defaut": "0.25rem" },
+      "--space-2":  { "role": "8 px",   "defaut": "0.5rem" },
+      "--space-3":  { "role": "12 px",  "defaut": "0.75rem" },
+      "--space-4":  { "role": "16 px",  "defaut": "1rem" },
+      "--space-5":  { "role": "24 px",  "defaut": "1.5rem" },
+      "--space-6":  { "role": "32 px",  "defaut": "2rem" },
+      "--space-7":  { "role": "40 px",  "defaut": "2.5rem" },
+      "--space-8":  { "role": "48 px",  "defaut": "3rem" },
+      "--space-9":  { "role": "64 px",  "defaut": "4rem" },
+      "--space-10": { "role": "80 px",  "defaut": "5rem" },
+      "--space-12": { "role": "112 px", "defaut": "7rem" },
+      "--container": { "role": "Largeur maximale du contenu", "defaut": "1240px" }
+    },
+
+    "formes": {
+      "--radius-xs":   { "role": "Coins : très petits éléments", "defaut": "4px" },
+      "--radius-sm":   { "role": "Coins : badges, petits champs", "defaut": "8px" },
+      "--radius-md":   { "role": "Coins : boutons, champs", "defaut": "12px" },
+      "--radius-lg":   { "role": "Coins : cartes", "defaut": "18px" },
+      "--radius-xl":   { "role": "Coins : grands panneaux", "defaut": "26px" },
+      "--radius-2xl":  { "role": "Coins : bandeaux", "defaut": "36px" },
+      "--radius-pill": { "role": "Pilule (entièrement arrondi)", "defaut": "999px" },
+
+      "--shadow-xs": { "role": "Ombre minimale", "defaut": "0 1px 2px rgba(var(--shadow-tint), 0.06)" },
+      "--shadow-sm": { "role": "Ombre légère", "defaut": "0 2px 6px rgba(var(--shadow-tint), 0.08)" },
+      "--shadow-md": { "role": "Ombre moyenne (survol des cartes)", "defaut": "0 8px 20px -6px rgba(var(--shadow-tint), 0.14)" },
+      "--shadow-lg": { "role": "Ombre forte (fenêtres)", "defaut": "0 18px 40px -12px rgba(var(--shadow-tint), 0.20)" },
+      "--ring":      { "role": "Anneau de focus clavier", "defaut": "0 0 0 3px color-mix(in srgb, var(--accent-500) 45%, transparent)" }
+    },
+
+    "mouvement": {
+      "--ease-out":  { "role": "Courbe d'entrée", "defaut": "cubic-bezier(0.22, 0.61, 0.36, 1)" },
+      "--ease-soft": { "role": "Courbe douce au survol", "defaut": "var(--ease-out)" },
+      "--dur-fast":  { "role": "Durée courte", "defaut": "140ms" },
+      "--dur-base":  { "role": "Durée normale", "defaut": "240ms" },
+      "--lift":      { "role": "Soulèvement d'une carte au survol", "defaut": "translateY(-4px)" }
+    }
+  }
+}

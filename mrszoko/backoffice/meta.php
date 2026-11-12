@@ -79,7 +79,7 @@ console_head('Meta — Facebook i Instagram', $me, <<<'CSS'
   .lista .ico { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
   .ico.ok { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
   .ico.bad { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
-  .ico.wait { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--caramel-600); }
+  .ico.wait { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--accent-600); }
   .lista b { color: var(--text-strong); }
   .lista p { margin: 2px 0 0; color: var(--text-muted); font-size: 14px; }
   code.url { word-break: break-all; }

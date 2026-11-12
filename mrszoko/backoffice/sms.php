@@ -97,7 +97,7 @@ console_head('SMS', $me, <<<'CSS'
   textarea.sms { min-height: 120px; font-family: var(--font-mono); font-size: 14px; }
   .war { border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
   .war p { margin: 0; flex: 1; white-space: pre-wrap; font-family: var(--font-mono); font-size: 13px; }
-  .ai { background: color-mix(in srgb, var(--caramel-500) 8%, var(--surface-card)); }
+  .ai { background: color-mix(in srgb, var(--accent-500) 8%, var(--surface-card)); }
 CSS);
 console_flash($flash, $kind);
 console_crumbs(['Pulpit' => 'pulpit.php', 'Marketing' => null, 'SMS' => $c ? 'sms.php' : null] + ($c ? [(string) $c['nazwa'] => null] : []));

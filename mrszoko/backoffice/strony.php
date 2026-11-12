@@ -152,7 +152,7 @@ $css = <<<CSS
   .podglad-tresci hr { border: 0; border-top: 1px solid var(--border-subtle); margin: 14px 0; }
   .gram { font-size: 13px; color: var(--text-muted); } .gram code { font-size: 12px; }
   .media-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 8px; }
-  .media-pick figure { margin: 0; text-align: center; } .media-pick img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--cream-200); }
+  .media-pick figure { margin: 0; text-align: center; } .media-pick img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--paper-200); }
   .media-pick figcaption { font-size: 11px; line-height: 1.3; overflow-wrap: anywhere; margin-top: 4px; }
   .media-pick figcaption .code { font-size: 10px; word-break: break-all; }
   .str-foto { display: block; max-width: 100%; max-height: 180px; border-radius: 10px; margin-bottom: 8px; }

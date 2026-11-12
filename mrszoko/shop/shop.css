@@ -53,7 +53,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 .btn:active { transform: translateY(0) scale(0.98); box-shadow: var(--shadow-sm); }
 .btn--accent { background: var(--accent); color: var(--text-on-accent); }
 .btn--accent:hover { background: var(--accent-hover); }
-.btn--brand { background: var(--brand); color: var(--cream-50); }
+.btn--brand { background: var(--brand); color: var(--paper-50); }
 .btn--brand:hover { background: var(--brand-hover); }
 .btn--ghost { background: transparent; color: var(--text-body); border-color: var(--border-default); }
 .btn--ghost:hover { background: var(--surface-raised); }
@@ -79,7 +79,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 /* ---- En-tête --------------------------------------------------------------- */
 .site-head {
   position: sticky; top: 0; z-index: 20;
-  background: color-mix(in srgb, var(--cream-50) 90%, transparent);
+  background: color-mix(in srgb, var(--paper-50) 90%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -102,7 +102,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
   .langs a { min-width: 44px; min-height: 40px; display: inline-flex;
              align-items: center; justify-content: center; padding: 5px 8px; }
 }
-.langs a[aria-current="true"] { background: var(--brand); color: var(--cream-50); }
+.langs a[aria-current="true"] { background: var(--brand); color: var(--paper-50); }
 
 .cart-btn { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-sm);
             font-weight: var(--weight-semibold); color: var(--text-strong);
@@ -112,14 +112,14 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 .cart-count { font-family: var(--font-mono); font-size: var(--text-2xs); min-width: 20px; height: 20px;
               display: inline-flex; align-items: center; justify-content: center;
               background: var(--accent); color: var(--text-on-accent); border-radius: var(--radius-pill); padding: 0 6px; }
-.cart-count.is-zero { background: var(--cream-300); color: var(--text-muted); }
+.cart-count.is-zero { background: var(--paper-300); color: var(--text-muted); }
 
 /* ---- Hero ------------------------------------------------------------------ */
-.hero { background: radial-gradient(130% 120% at 15% 10%, var(--choco-600), var(--choco-900)); color: var(--cream-50); }
+.hero { background: radial-gradient(130% 120% at 15% 10%, var(--brand-600), var(--brand-900)); color: var(--paper-50); }
 .hero-in { padding-top: var(--space-10); padding-bottom: var(--space-10); }
-.hero .eyebrow { color: var(--caramel-400); margin-bottom: var(--space-4); }
-.hero h1 { color: var(--cream-50); font-size: clamp(2rem, 5vw, var(--text-4xl)); max-width: 18ch; margin-bottom: var(--space-4); }
-.hero .lead { color: var(--cream-200); max-width: 48ch; margin-bottom: var(--space-6); }
+.hero .eyebrow { color: var(--accent-400); margin-bottom: var(--space-4); }
+.hero h1 { color: var(--paper-50); font-size: clamp(2rem, 5vw, var(--text-4xl)); max-width: 18ch; margin-bottom: var(--space-4); }
+.hero .lead { color: var(--paper-200); max-width: 48ch; margin-bottom: var(--space-6); }
 
 /* ---- Promesses ------------------------------------------------------------- */
 /* Le bandeau mono ferme désormais le hero : les promesses ne le chevauchent
@@ -142,7 +142,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
         overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
         transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out),
                     border-color var(--dur-base) var(--ease-out); }
-.card:hover { transform: var(--lift); box-shadow: var(--shadow-md); border-color: var(--choco-300); }
+.card:hover { transform: var(--lift); box-shadow: var(--shadow-md); border-color: var(--brand-300); }
 .card-media { display: block; position: relative; }
 /* « cover » remplit le cadre en COUPANT ce qui dépasse. Sur une photo de
    tablette prise debout — 600 × 1000 — le cadre 4/3 en jetait 40 % : les deux
@@ -152,7 +152,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 .card-photo { aspect-ratio: 4 / 3; width: 100%; object-fit: contain; }
 .badge { position: absolute; top: 12px; left: 12px; font-family: var(--font-mono); font-size: var(--text-2xs);
          text-transform: uppercase; letter-spacing: var(--tracking-wide);
-         background: var(--gold-500); color: var(--choco-900); border-radius: var(--radius-pill); padding: 4px 10px; }
+         background: var(--highlight); color: var(--brand-900); border-radius: var(--radius-pill); padding: 4px 10px; }
 .card-body { padding: var(--space-4); display: flex; flex-direction: column; gap: 6px; flex: 1; }
 /* Deux lignes réservées : sans cela une référence longue décale le titre et
    les cartes d'une même rangée ne s'alignent plus. */
@@ -176,7 +176,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
    chocolat noir que sur le dégradé crème de la chocolat blanc — où du texte
    crème sur fond crème disparaissait purement et simplement. */
 .visual-mark { font-family: var(--font-mono); font-size: var(--text-sm); letter-spacing: var(--tracking-caps);
-               color: var(--cream-50); background: rgba(28, 13, 6, 0.34);
+               color: var(--paper-50); background: rgba(28, 13, 6, 0.34);
                padding: 6px 14px; border-radius: var(--radius-pill); backdrop-filter: blur(2px); }
 
 /* ---- Fiche produit --------------------------------------------------------- */
@@ -191,7 +191,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
    que la photo. */
 .product-photo { aspect-ratio: 1 / 1; width: 100%; object-fit: contain;
                  border-radius: var(--radius-xl); }
-.product-buy .eyebrow { color: var(--caramel-600); margin-bottom: var(--space-2); }
+.product-buy .eyebrow { color: var(--accent-600); margin-bottom: var(--space-2); }
 .product-buy h1 { margin-bottom: var(--space-3); }
 .product-buy .lead { margin-bottom: var(--space-5); max-width: 46ch; }
 .product-buy .price--lg { margin-bottom: 4px; }
@@ -210,7 +210,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 .cart-line { display: grid; grid-template-columns: 88px 1fr auto auto auto; gap: var(--space-4); align-items: center;
              padding: var(--space-4) 0; border-bottom: 1px solid var(--border-subtle); }
 .thumb { width: 88px; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--radius-md); }
-.cart-thumb .thumb { width: 72px; object-fit: contain; background: #fff; border: 1px solid #EFE4D8; border-radius: 12px; padding: 4px; }
+.cart-thumb .thumb { width: 72px; object-fit: contain; background: var(--white); border: 1px solid var(--hairline-soft); border-radius: 12px; padding: 4px; }
 .cart-info h2 { font-size: var(--text-lg); }
 .cart-sum { font-size: var(--text-md); color: var(--text-strong); }
 .cart-actions { display: flex; gap: var(--space-3); margin-top: var(--space-5); flex-wrap: wrap; }
@@ -249,7 +249,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 .voucher-row .btn { flex: none; white-space: nowrap; }
 .voucher-on { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
               padding: 10px 14px; border-radius: var(--radius-md);
-              background: var(--cream-200, var(--surface-card));
+              background: var(--paper-200, var(--surface-card));
               border: 1px solid var(--border-subtle); font-size: var(--text-sm); }
 .voucher-on strong { color: var(--text-strong); letter-spacing: .04em; }
 .voucher-on span { color: var(--price); }
@@ -292,7 +292,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 
 .notice { border-radius: var(--radius-md); padding: 12px 16px; font-size: var(--text-sm); margin-bottom: var(--space-5); }
 .notice--error { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
-.notice--warn  { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--caramel-600); }
+.notice--warn  { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--accent-600); }
 .notice--ok    { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
 
 /* ---- Confirmation ---------------------------------------------------------- */
@@ -302,13 +302,13 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
 .order-grid section h2 { font-size: var(--text-xl); margin-bottom: var(--space-4); }
 
 /* ---- Pied de page ---------------------------------------------------------- */
-.site-foot { background: var(--choco-950); color: var(--choco-300); margin-top: var(--space-10); }
+.site-foot { background: var(--brand-950); color: var(--brand-300); margin-top: var(--space-10); }
 .foot-in { padding-top: var(--space-7); padding-bottom: var(--space-7); display: flex;
            justify-content: space-between; gap: var(--space-6); flex-wrap: wrap; align-items: flex-start; }
 .foot-logo { height: 36px; width: auto; opacity: 0.9; margin-bottom: var(--space-3); }
 .foot-links { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-.foot-links a { border-bottom: 1px solid var(--choco-700); padding-bottom: 1px; }
-.foot-links a:hover { color: var(--cream-100); }
+.foot-links a { border-bottom: 1px solid var(--brand-700); padding-bottom: 1px; }
+.foot-links a:hover { color: var(--paper-100); }
 
 /* ---- Adaptations ----------------------------------------------------------- */
 @media (max-width: 900px) {
@@ -340,26 +340,26 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
    ============================================================================ */
 
 /* Bandeau mono sous le hero : les trois arguments qui décident un pro. */
-.hero-strip { border-top: 1px solid var(--choco-700); }
+.hero-strip { border-top: 1px solid var(--brand-700); }
 .hero-strip-in { display: flex; gap: var(--space-8); flex-wrap: wrap;
                  padding-top: var(--space-4); padding-bottom: var(--space-4);
-                 color: var(--choco-300); }
+                 color: var(--brand-300); }
 
-.eyebrow.accent { color: var(--caramel-600); margin-bottom: var(--space-2); }
+.eyebrow.accent { color: var(--accent-600); margin-bottom: var(--space-2); }
 .tagline { margin-top: var(--space-4); }
 
-.pro { background: var(--choco-800); color: var(--cream-50); border-radius: var(--radius-2xl); overflow: hidden; }
+.pro { background: var(--brand-800); color: var(--paper-50); border-radius: var(--radius-2xl); overflow: hidden; }
 .pro-in { padding: var(--space-8); display: flex; align-items: center; justify-content: space-between;
           gap: var(--space-6); flex-wrap: wrap; }
-.pro .eyebrow { color: var(--caramel-400); margin-bottom: var(--space-2); }
-.pro h2 { color: var(--cream-50); margin-bottom: var(--space-2); }
-.pro p { color: var(--cream-200); max-width: 56ch; }
+.pro .eyebrow { color: var(--accent-400); margin-bottom: var(--space-2); }
+.pro h2 { color: var(--paper-50); margin-bottom: var(--space-2); }
+.pro p { color: var(--paper-200); max-width: 56ch; }
 
-.site-foot .foot-links a { color: var(--choco-300); }
+.site-foot .foot-links a { color: var(--brand-300); }
 
 /* Mentions légales du vendeur : lisibles, jamais mises en avant. */
-.site-foot .seller { margin: var(--space-4) 0; line-height: 1.7; color: var(--choco-300); }
-.site-foot .seller-label { display: block; color: var(--choco-400); text-transform: uppercase;
+.site-foot .seller { margin: var(--space-4) 0; line-height: 1.7; color: var(--brand-300); }
+.site-foot .seller-label { display: block; color: var(--brand-400); text-transform: uppercase;
                            letter-spacing: var(--tracking-caps); font-size: var(--text-2xs); margin-bottom: 3px; }
 
 /* Sélecteur de pays : même traitement que les champs texte. */
@@ -367,11 +367,11 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
                 padding: 11px 14px; border: 1px solid var(--border-default); border-radius: var(--radius-md);
                 background: var(--bg-page); width: 100%; }
 .field select:hover { border-color: var(--border-strong); }
-.totals .rc { color: var(--berry-600); font-weight: var(--weight-semibold); }
+.totals .rc { color: var(--sale-strong); font-weight: var(--weight-semibold); }
 
 /* Rupture assumée et remise au poids : deux informations qui doivent se voir
    sans crier — l'une rassure, l'autre récompense. */
-.ondemand { color: var(--caramel-600); text-transform: uppercase; font-size: var(--text-2xs);
+.ondemand { color: var(--accent-600); text-transform: uppercase; font-size: var(--text-2xs);
             letter-spacing: var(--tracking-wide); }
 .totals .disc { color: var(--success); font-weight: var(--weight-semibold); }
 
@@ -477,8 +477,8 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
             padding: 8px 14px; border-radius: var(--radius-pill);
             border: 1px solid var(--border-default); font-size: var(--text-sm);
             color: var(--text-body); transition: border-color var(--dur-base) var(--ease-out); }
-.rayons a:hover { border-color: var(--choco-300); }
-.rayons a.on { background: var(--choco-800); border-color: var(--choco-800); color: var(--cream-50); }
+.rayons a:hover { border-color: var(--brand-300); }
+.rayons a.on { background: var(--brand-800); border-color: var(--brand-800); color: var(--paper-50); }
 .rayons a i { font-style: normal; font-family: var(--font-mono); font-size: var(--text-2xs); opacity: .65; }
 
 /* Le prix au kilo : discret, mais lisible. Il répond à la question qu'on se
@@ -491,7 +491,7 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
    par-dessous : si le fichier manque ou tarde, le haut de page ne devient pas
    un rectangle blanc avec du texte blanc dessus. */
 .hero--foto { position: relative; background-image:
-    linear-gradient(90deg, rgba(43,26,18,.92) 0%, rgba(43,26,18,.72) 45%, rgba(43,26,18,.45) 100%),
+    linear-gradient(90deg, rgba(var(--scrim-tint), .92) 0%, rgba(var(--scrim-tint), .72) 45%, rgba(var(--scrim-tint), .45) 100%),
     var(--hero-foto);
   background-size: cover; background-position: center; }
 
@@ -505,12 +505,12 @@ h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--t
    Quatre-vingt-dix-neuf commandes sur cent se passent bien — leur page n'a
    pas à s'ouvrir sur un formulaire qui suggère un problème. */
 details.claim { margin-top: var(--space-6); border-top: 1px solid var(--border-subtle); padding-top: var(--space-5); }
-details.claim > summary { cursor: pointer; font-weight: 600; font-size: var(--text-base);
+details.claim > summary { cursor: pointer; font-weight: 600; font-size: inherit; /* --text-base n'a jamais existé : la règle héritait déjà */
                           list-style: none; display: flex; align-items: center; gap: 8px; }
 details.claim > summary::-webkit-details-marker { display: none; }
 details.claim > summary::before { content: '+'; font-weight: 400; color: var(--text-muted); }
 details.claim[open] > summary::before { content: '−'; }
-details.claim > summary:hover { color: var(--choco-700); }
+details.claim > summary:hover { color: var(--brand-700); }
 details.claim > *:not(summary) { margin-top: var(--space-3); }
 
 /* Le bouton « remplir depuis le registre » : présent, mais jamais confondu
@@ -518,9 +518,9 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
    d'important doit se voir comme un outil, pas comme une issue. */
 .reg-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: var(--space-3) 0; }
 .reg-ligne small { color: var(--text-muted); font-size: var(--text-xs); line-height: 1.5; flex: 1 1 240px; }
-.btn--ghost { background: transparent; color: var(--choco-700);
+.btn--ghost { background: transparent; color: var(--brand-700);
               border: 1px solid var(--border-default); }
-.btn--ghost:hover { background: var(--cream-100); }
+.btn--ghost:hover { background: var(--paper-100); }
 
 /* ─── LES PAGES JURIDIQUES ───────────────────────────────────────────────────
    Un règlement se LIT, parfois sous la contrainte d'un litige. Colonne étroite,
@@ -530,7 +530,7 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .legal h1 { margin-bottom: var(--space-2); }
 .legal-spis { margin: var(--space-6) 0 var(--space-8); padding-left: 1.4em;
               color: var(--text-muted); line-height: 1.9; font-size: var(--text-sm); }
-.legal-spis a { color: var(--choco-700); text-decoration: none; }
+.legal-spis a { color: var(--brand-700); text-decoration: none; }
 .legal-spis a:hover { text-decoration: underline; }
 .legal-sec { margin-bottom: var(--space-7); scroll-margin-top: 90px; }
 .legal-sec h2 { font-size: var(--text-lg); margin-bottom: var(--space-3); }
@@ -544,7 +544,7 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 /* La case de la caisse porte maintenant deux liens : ils doivent se voir
    comme des liens, sinon personne ne les ouvre — et c'est justement ce que
    l'opérateur de paiement veut éviter. */
-.check a { color: var(--choco-700); text-decoration: underline; }
+.check a { color: var(--brand-700); text-decoration: underline; }
 
 /* ---- Strony i bloki pisane w konsoli (Strony) ------------------------------ */
 /* La page : une colonne de lecture, comme le règlement. La grammaire du corps
@@ -562,7 +562,7 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .prose h2 { font-size: var(--text-xl); margin: var(--space-6) 0 var(--space-3); }
 .prose h3 { font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-2); }
 .prose hr { border: 0; border-top: 1px solid var(--border-subtle); margin: var(--space-6) 0; }
-.prose a { color: var(--choco-700); text-decoration: underline; }
+.prose a { color: var(--brand-700); text-decoration: underline; }
 .page-fig { margin: var(--space-5) 0; }
 .page-fig img, .page-img { max-width: 100%; height: auto; border-radius: var(--radius-md); display: block; }
 .page-fig figcaption { color: var(--text-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
@@ -578,20 +578,20 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 @media (max-width: 720px) { .blok--foto .blok-in { grid-template-columns: minmax(0, 1fr); } }
 /* Les styles cochés dans Strony : fond sombre (couleur de marque, texte
    crème), photo à droite, sans carte. Des classes, jamais du style inline. */
-.blok--ciemny .blok-in { background: var(--choco-800); border-color: var(--choco-700); color: var(--cream-100); }
-.blok--ciemny .blok-txt h2, .blok--ciemny .prose h2, .blok--ciemny .prose h3 { color: var(--cream-50); }
-.blok--ciemny .blok-txt .lead { color: var(--cream-200); }
-.blok--ciemny .prose a { color: var(--caramel-400); }
+.blok--ciemny .blok-in { background: var(--brand-800); border-color: var(--brand-700); color: var(--paper-100); }
+.blok--ciemny .blok-txt h2, .blok--ciemny .prose h2, .blok--ciemny .prose h3 { color: var(--paper-50); }
+.blok--ciemny .blok-txt .lead { color: var(--paper-200); }
+.blok--ciemny .prose a { color: var(--accent-400); }
 .blok--foto.blok--foto_prawo .blok-in { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 .blok--foto_prawo .blok-img { order: 2; }
 .blok--szeroki .blok-in { background: transparent; border: 0; box-shadow: none; padding: 0; border-radius: 0; }
-.blok--szeroki.blok--ciemny .blok-in { background: var(--choco-800); padding: var(--space-6); border-radius: var(--radius-xl); }
+.blok--szeroki.blok--ciemny .blok-in { background: var(--brand-800); padding: var(--space-6); border-radius: var(--radius-xl); }
 @media (max-width: 720px) { .blok--foto_prawo .blok-img { order: 0; } }
 
 /* ---- Sekcje z Kreatora ------------------------------------------------------- */
 /* Un gabarit par type, des classes pour les styles cochés. Rien n'est stylé
    inline : ce que l'équipe compose passe par les mêmes jetons que le reste. */
-.sek--hero .sek-h1 { color: var(--cream-50); font-size: clamp(2rem, 5vw, var(--text-4xl)); line-height: var(--leading-tight);
+.sek--hero .sek-h1 { color: var(--paper-50); font-size: clamp(2rem, 5vw, var(--text-4xl)); line-height: var(--leading-tight);
                      max-width: 18ch; margin-bottom: var(--space-4); }
 .sek--hero.sek--wysokosc-wysoki .hero-in { padding-top: var(--space-12, 6rem); padding-bottom: var(--space-12, 6rem); }
 .sek--hero.sek--srodek .hero-in { text-align: center; }
@@ -610,7 +610,7 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .kafelki--4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .kafelki--2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 .sek--baner.sek--akcent .pro { background: var(--accent); color: var(--text-on-accent); }
-.sek--baner.sek--akcent .pro .btn--accent { background: var(--choco-800); color: var(--cream-50); }
+.sek--baner.sek--akcent .pro .btn--accent { background: var(--brand-800); color: var(--paper-50); }
 .faq { max-width: 760px; }
 .faq-q { border-top: 1px solid var(--border-subtle); padding: var(--space-3) 0; }
 .faq-q:last-child { border-bottom: 1px solid var(--border-subtle); }
@@ -621,11 +621,11 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .cytat p { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-snug); margin: 0 0 var(--space-3); }
 .cytat footer { color: var(--text-muted); }
 .cytat-foto { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; margin-bottom: var(--space-4); display: block; }
-.sek--cytat.sek--ciemny .cytat { background: var(--choco-800); border-color: var(--choco-700); color: var(--cream-100); }
-.sek--cytat.sek--ciemny .cytat p { color: var(--cream-50); } .sek--cytat.sek--ciemny .cytat footer { color: var(--cream-200); }
+.sek--cytat.sek--ciemny .cytat { background: var(--brand-800); border-color: var(--brand-700); color: var(--paper-100); }
+.sek--cytat.sek--ciemny .cytat p { color: var(--paper-50); } .sek--cytat.sek--ciemny .cytat footer { color: var(--paper-200); }
 .sek--odstep { height: var(--space-6); } .sek--odstep.sek--rozmiar-duzy { height: var(--space-10); }
 .sek--odstep hr { border: 0; border-top: 1px solid var(--border-subtle); margin: 0; }
-.ogloszenie { background: var(--choco-800); color: var(--cream-100); font-size: var(--text-sm); }
+.ogloszenie { background: var(--brand-800); color: var(--paper-100); font-size: var(--text-sm); }
 .ogloszenie.sek--akcent { background: var(--accent); color: var(--text-on-accent); }
 .ogloszenie-in { display: flex; gap: var(--space-4); justify-content: center; align-items: center; padding: var(--space-2) 0; flex-wrap: wrap; text-align: center; }
 .ogloszenie a { color: inherit; font-weight: 600; text-decoration: underline; }
@@ -652,17 +652,17 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
    à gauche garde le titre lisible, même sur un téléphone où l'image passe
    sous le texte. */
 .hero--art { background-image:
-    linear-gradient(90deg, rgba(43,26,18,.55) 0%, rgba(43,26,18,0) 55%),
+    linear-gradient(90deg, rgba(var(--scrim-tint), .55) 0%, rgba(var(--scrim-tint), 0) 55%),
     url("assets/hero-art.svg"),
-    radial-gradient(130% 120% at 15% 10%, var(--choco-600), var(--choco-900));
+    radial-gradient(130% 120% at 15% 10%, var(--brand-600), var(--brand-900));
   background-repeat: no-repeat;
   background-position: 0 0, right max(-40px, calc((100% - var(--container)) / 2 - 20px)) bottom -6px, 0 0;
   background-size: cover, auto 104%, cover; }
 @media (max-width: 760px) {
   .hero--art { background-image:
-      linear-gradient(180deg, rgba(43,26,18,.15) 0%, rgba(43,26,18,.78) 70%),
+      linear-gradient(180deg, rgba(var(--scrim-tint), .15) 0%, rgba(var(--scrim-tint), .78) 70%),
       url("assets/hero-art.svg"),
-      radial-gradient(130% 120% at 15% 10%, var(--choco-600), var(--choco-900));
+      radial-gradient(130% 120% at 15% 10%, var(--brand-600), var(--brand-900));
     background-position: 0 0, right -80px bottom -20px, 0 0; background-size: cover, auto 70%, cover; }
   /* Le bandeau du bas passe sur les pastilles : un fond sombre le garde lisible. */
   .hero--art .hero-strip { background: rgba(28,16,10,.8); }
@@ -687,7 +687,7 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .znak-label { font-size: 11px; line-height: 1.25; }
 .znak-svg { width: 74%; height: auto; max-height: 62%; display: block; }
 .znak-svg--visa { width: 70%; } .znak-svg--mc { width: 58%; } .znak-svg--apple { width: 68%; max-height: 66%; }
-.znak-svg--gpay { width: 72%; } .znak-svg--ikona { width: 46%; max-height: 70%; color: var(--choco-800); }
+.znak-svg--gpay { width: 72%; } .znak-svg--ikona { width: 46%; max-height: 70%; color: var(--brand-800); }
 .znak-tile--inpost { background: #FFCD00; color: #1D1D1B; justify-content: flex-start; padding-top: 9px; }
 .znak-tile--inpost b { font-family: var(--font-sans); font-weight: 800; font-size: 15px; letter-spacing: -0.02em; line-height: 1; }
 .znak-tile--inpost i { position: absolute; left: 0; right: 0; bottom: 0; background: #1D1D1B; color: #FFCD00;
@@ -702,10 +702,10 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .znak-tile--blik b { color: #fff; font-family: var(--font-sans); font-weight: 900; font-size: 19px; letter-spacing: -0.04em; }
 
 /* Dans le pied de page : sur le chocolat, comme la maquette. */
-.foot-metody { background: var(--choco-900); border-bottom: 1px solid var(--choco-800); }
+.foot-metody { background: var(--brand-900); border-bottom: 1px solid var(--brand-800); }
 .foot-metody .wrap { padding-top: var(--space-6); padding-bottom: var(--space-6); }
-.metody--stopka .metody-tytul { color: var(--cream-50); }
-.metody--stopka .znak-label { color: var(--choco-200); }
+.metody--stopka .metody-tytul { color: var(--paper-50); }
+.metody--stopka .znak-label { color: var(--brand-200); }
 
 /* Sur la fiche produit : plus petit, sous le bouton. */
 .metody--karta { margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--border-subtle);
@@ -719,12 +719,12 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 
 /* ---- Pied de page : la police du texte, plus le mono ---------------------- */
 .site-foot { font-family: var(--font-sans); font-size: var(--text-sm); }
-.foot-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--cream-50); text-decoration: none;
+.foot-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--paper-50); text-decoration: none;
               margin-bottom: var(--space-3); }
 .foot-brand span { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; }
 .site-foot .foot-logo { height: 40px; width: auto; margin-bottom: 0; opacity: 1; }
-.foot-tagline { color: var(--choco-200); max-width: 42ch; }
-.foot-copy { color: var(--choco-400); font-size: var(--text-xs); }
+.foot-tagline { color: var(--brand-200); max-width: 42ch; }
+.foot-copy { color: var(--brand-400); font-size: var(--text-xs); }
 .site-foot .seller { font-size: var(--text-xs); }
 .foot-links { font-size: var(--text-sm); }
 
@@ -732,12 +732,12 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .kontakt-karta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-6);
                  align-items: center; background: var(--surface-card); border: 1px solid var(--border-subtle);
                  border-radius: var(--radius-2xl); padding: var(--space-7); box-shadow: var(--shadow-sm); }
-.kontakt-txt .eyebrow { color: var(--caramel-600); margin-bottom: var(--space-2); }
+.kontakt-txt .eyebrow { color: var(--accent-600); margin-bottom: var(--space-2); }
 .kontakt-txt h2 { margin-bottom: var(--space-2); }
 .kontakt-txt p { color: var(--text-muted); max-width: 46ch; }
 .kontakt-dane { display: grid; gap: var(--space-3); }
 .kontakt-poz { display: flex; align-items: center; gap: var(--space-3); padding: 12px 16px; border-radius: var(--radius-lg);
-               border: 1px solid var(--border-default); background: var(--cream-50); color: var(--text-strong);
+               border: 1px solid var(--border-default); background: var(--paper-50); color: var(--text-strong);
                text-decoration: none; transition: border-color var(--dur-base) var(--ease-out); }
 .kontakt-poz:hover { border-color: var(--accent); }
 .kontakt-poz .kontakt-ikona { color: var(--brand); flex: 0 0 auto; }
@@ -779,7 +779,7 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
    remplace le bandeau mono du bas. */
 .hero-strip--gora { border-top: 0; border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(18,10,6,.32); }
 .hero-strip--gora .hero-strip-in { justify-content: center; align-items: center; gap: 10px 44px;
-                                   padding-top: 12px; padding-bottom: 12px; color: var(--cream-100);
+                                   padding-top: 12px; padding-bottom: 12px; color: var(--paper-100);
                                    font-family: var(--font-sans); font-size: var(--text-sm); letter-spacing: 0; }
 .korzysc { display: inline-flex; align-items: center; gap: 12px; }
 .korzysc > span { font-weight: 600; }
@@ -806,7 +806,7 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
 .zwroty-kroki li { margin-bottom: var(--space-2); line-height: var(--leading-relaxed); }
 .zwroty-reklamacja { margin-top: var(--space-6); max-width: 72ch; }
 .zwroty-cta { margin-top: var(--space-6); display: flex; flex-wrap: wrap; gap: var(--space-3); }
-.site-foot .seller--zwrot a { color: var(--choco-200, var(--cream-200)); text-decoration: underline; }
+.site-foot .seller--zwrot a { color: var(--brand-200, var(--paper-200)); text-decoration: underline; }
 .claim-adres a { text-decoration: underline; }
 @media (max-width: 760px) { .zwroty-uklad { grid-template-columns: 1fr; gap: var(--space-5); } }
 
@@ -837,16 +837,10 @@ details.claim > *:not(summary) { margin-top: var(--space-3); }
    accent, coins), le thème s'applique donc toujours.
    ============================================================================ */
 :root {
-  --paper: #FFFFFF;          /* le papier — Wygląd → Tło strony le change */
-  --paper-soft: #F7F3EE;     /* les bandes et panneaux gris chaud */
-  --hairline: #EBE3D9;       /* les filets entre les lignes */
-  --field-line: #D9CFC3;     /* le contour des cartes à cocher et des champs */
-  /* Les liens : l'accent assombri, 5,6:1 sur blanc au réglage d'origine. */
-  --link: color-mix(in srgb, var(--caramel-600) 86%, black);
-  --link-hover: color-mix(in srgb, var(--caramel-600) 64%, black);
+  /* --paper, --paper-soft, --hairline, --field-line, --link, --chip… : dans le
+     design system de la boutique (design-systems/<slug>/tokens/colors.css). */
   --ok: #3F6B3B;
   --ok-soft: #E8F1E5;
-  --chip: #EFE9E1;
 }
 
 body { background: var(--paper); }
@@ -870,8 +864,8 @@ h3 { font-weight: var(--weight-bold); }
 .btn { border-radius: 980px; font-size: 15px; font-weight: var(--weight-semibold); letter-spacing: -0.01em;
        padding: 11px 22px; }
 .btn:hover, .btn:active { transform: none; box-shadow: none; }
-.btn--accent, .btn--brand { background: var(--brand); color: #fff; }
-.btn--accent:hover, .btn--brand:hover { background: var(--brand-hover); }
+.btn--accent, .btn--brand { background: var(--action); color: var(--on-action); }
+.btn--accent:hover, .btn--brand:hover { background: var(--action-hover); }
 .btn--ghost { background: var(--chip); border-color: transparent; color: var(--text-strong); }
 .btn--ghost:hover { background: color-mix(in srgb, var(--chip) 85%, var(--brand)); }
 .btn--sm { padding: 7px 15px; font-size: 13px; }
@@ -899,7 +893,7 @@ h3 { font-weight: var(--weight-bold); }
 .cart-btn .cart-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .cart-count { position: absolute; top: 0; right: -4px; min-width: 17px; height: 17px; padding: 0 4px;
               font-family: var(--font-sans); font-size: 10.5px; font-weight: var(--weight-bold);
-              background: var(--brand); color: #fff; }
+              background: var(--brand); color: var(--on-brand); }
 .cart-count.is-zero { display: none; }
 .head-menu { display: none; order: 3; width: 44px; height: 44px; align-items: center; justify-content: center;
              border: 0; background: none; color: var(--text-strong); cursor: pointer; }
@@ -909,7 +903,7 @@ h3 { font-weight: var(--weight-bold); }
   .head-right { margin-left: auto; gap: 4px; }
   .site-head.is-open .head-nav { display: flex; flex-direction: column; gap: 0; margin: 0;
     position: absolute; top: 100%; left: 0; right: 0; padding: 4px 22px 18px;
-    background: var(--paper); border-bottom: 1px solid var(--hairline); box-shadow: 0 18px 30px rgba(46, 22, 12, .08); }
+    background: var(--paper); border-bottom: 1px solid var(--hairline); box-shadow: 0 18px 30px rgba(var(--shadow-tint), .08); }
   .site-head.is-open .navlink { font-size: 19px; font-weight: var(--weight-bold); padding: 13px 0;
     border-bottom: 1px solid var(--hairline); opacity: 1; }
 }
@@ -935,7 +929,7 @@ h3 { font-weight: var(--weight-bold); }
 /* La photo de Integracje → Sklep, quand aucun slajd n'est en ligne. */
 .hero--foto:not(.sek)::after { content: ""; display: block; width: min(1240px, calc(100% - 44px));
   height: clamp(260px, 38vw, 540px); margin: 44px auto 0; border-radius: 28px;
-  background: var(--hero-foto) center / cover no-repeat, var(--choco-800); }
+  background: var(--hero-foto) center / cover no-repeat, var(--brand-800); }
 
 /* ---- Les slajdy (console → Slajdy) -----------------------------------------
    Les slajdy s'empilent dans la même case de grille (la hauteur est celle du
@@ -966,7 +960,7 @@ h3 { font-weight: var(--weight-bold); }
 .slajdy-btn[data-slajdy-pauza][aria-pressed="true"] .ui-ikona:last-child { display: block; }
 .slajdy-kropki { display: inline-flex; align-items: center; gap: 8px; }
 .slajdy-kropka { width: 8px; height: 8px; border-radius: 999px; border: 0; padding: 0; cursor: pointer;
-  background: #CFC4B8; transition: width .3s ease, background-color .3s ease; }
+  background: var(--track-strong); transition: width .3s ease, background-color .3s ease; }
 .slajdy-kropka[aria-current="true"] { width: 24px; background: var(--text-strong); }
 @media (max-width: 760px) {
   .slajd-foto { width: 100%; height: 300px; border-radius: 0; margin-top: 28px; }
@@ -979,21 +973,21 @@ h3 { font-weight: var(--weight-bold); }
 /* ---- « Dlaczego Szoko Shop. » : la bande grise, des cartes blanches -------- */
 .obietnice-pas { background: var(--paper-soft); padding: clamp(48px, 6vw, 80px) 0; margin-top: clamp(48px, 6vw, 80px); }
 .obietnice-pas .promises { margin-top: 0; gap: 20px; }
-.promise { background: #fff; border: 0; border-radius: 18px; box-shadow: none; padding: 28px; }
+.promise { background: var(--surface-card); border: 0; border-radius: 18px; box-shadow: none; padding: 28px; }
 .promise h2 { font-size: 21px; font-weight: var(--weight-extra); margin-bottom: 6px; }
 .promise p { font-size: 15px; line-height: 1.5; color: var(--text-body); }
 
 /* ---- Le catalogue : rayons en pastilles, cartes de magasin ----------------- */
 .rayons a { background: var(--chip); border: 0; color: var(--text-strong); font-weight: var(--weight-semibold); padding: 9px 16px; }
 .rayons a:hover { background: color-mix(in srgb, var(--chip) 85%, var(--brand)); }
-.rayons a.on { background: var(--text-strong); color: #fff; }
+.rayons a.on { background: var(--text-strong); color: var(--on-brand); }
 .rayons a i { font-family: var(--font-sans); }
 .grid { gap: 20px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-.card { border: 0; border-radius: 18px; box-shadow: 0 4px 24px rgba(46, 22, 12, .08);
+.card { border: 0; border-radius: 18px; box-shadow: 0 4px 24px rgba(var(--shadow-tint), .08);
         transition: transform .3s var(--ease-out), box-shadow .3s var(--ease-out); }
-.card:hover { transform: scale(1.012); box-shadow: 0 12px 36px rgba(46, 22, 12, .13); border-color: transparent; }
+.card:hover { transform: scale(1.012); box-shadow: 0 12px 36px rgba(var(--shadow-tint), .13); border-color: transparent; }
 /* Sur du blanc : les photos produit ont un fond blanc, il se fond dans la carte. */
-.card-media { background: #fff; padding: 16px 16px 0; }
+.card-media { background: var(--white); padding: 16px 16px 0; }
 .card-photo { border-radius: 12px; }
 .card-body { padding: 18px 20px 20px; gap: 6px; }
 .card-meta { font-family: var(--font-sans); text-transform: none; letter-spacing: 0; font-size: 12.5px;
@@ -1009,27 +1003,27 @@ h3 { font-weight: var(--weight-bold); }
 .brand-mark--text { font-family: var(--font-sans); }
 
 /* ---- « Dla firm » : la tuile sombre, centrée ------------------------------- */
-.pro { background: var(--choco-900); border-radius: 28px; text-align: center; }
+.pro { background: var(--brand-900); border-radius: 28px; text-align: center; }
 .pro-in { flex-direction: column; justify-content: center; gap: 22px; padding: clamp(48px, 6vw, 72px) 28px; }
-.pro .eyebrow { color: var(--caramel-400); }
-.pro h2 { color: #fff; font-size: clamp(32px, 4vw, 52px); letter-spacing: -0.025em; }
-.pro p { color: var(--choco-100); font-size: clamp(17px, 1.6vw, 19px); margin: 8px auto 0; }
-.pro .btn--accent { background: #fff; color: var(--text-strong); }
+.pro .eyebrow { color: var(--accent-400); }
+.pro h2 { color: var(--on-brand); font-size: clamp(32px, 4vw, 52px); letter-spacing: -0.025em; }
+.pro p { color: var(--brand-100); font-size: clamp(17px, 1.6vw, 19px); margin: 8px auto 0; }
+.pro .btn--accent { background: var(--white); color: var(--text-strong); }
 .pro .btn--accent:hover { background: var(--paper-soft); }
 
 /* ---- Le contact de l'accueil : un panneau gris, des pastilles blanches ----- */
 .kontakt-karta { background: var(--paper-soft); border: 0; box-shadow: none; border-radius: 28px; }
 .kontakt-txt .eyebrow { color: var(--link); }
-.kontakt-poz { background: #fff; border: 0; border-radius: 14px; }
+.kontakt-poz { background: var(--surface-card); border: 0; border-radius: 14px; }
 .kontakt-poz:hover { box-shadow: 0 0 0 2px var(--brand); }
 
 /* ---- Le fil d'Ariane, les champs, les notices ------------------------------ */
 .crumbs a { color: var(--link); font-weight: var(--weight-medium); }
 .crumbs [aria-current] { color: var(--text-muted); font-weight: var(--weight-medium); }
 .field input:not([type="checkbox"]):not([type="radio"]), .field textarea, .field select, .claim textarea {
-  background: #fff; border-color: var(--field-line); border-radius: 12px; }
+  background: var(--surface-card); border-color: var(--field-line); border-radius: 12px; }
 .checkout-form fieldset { background: var(--paper-soft); border: 0; box-shadow: none; border-radius: 18px; }
-.radio, .check { background: #fff; border-color: var(--field-line); border-radius: 12px; }
+.radio, .check { background: var(--surface-card); border-color: var(--field-line); border-radius: 12px; }
 .radio:has(input:checked) { border: 2px solid var(--brand); padding: 11px 13px; }
 /* Le titre d'un bloc de la caisse DANS sa carte, pas à cheval sur son bord :
    un <legend> flottant sort du filet du fieldset. */
@@ -1044,7 +1038,7 @@ h3 { font-weight: var(--weight-bold); }
    rien à faire dans l'habit « Apple ». */
 .mono { font-family: var(--font-sans); letter-spacing: 0; font-variant-numeric: tabular-nums; }
 .summary { background: var(--paper-soft); border: 0; box-shadow: none; border-radius: 18px; }
-.qty input { font-family: var(--font-sans); font-weight: var(--weight-bold); border-color: var(--field-line); background: #fff; }
+.qty input { font-family: var(--font-sans); font-weight: var(--weight-bold); border-color: var(--field-line); background: var(--surface-card); }
 
 /* ---- Le pied de page : gris clair, petit, lisible -------------------------- */
 .site-foot { background: var(--paper-soft); color: var(--text-muted); font-size: 12px; line-height: 1.6;
@@ -1075,7 +1069,7 @@ h3 { font-weight: var(--weight-bold); }
    le total et le bouton ; en bas, une barre d'achat qui suit la lecture.
    ============================================================================ */
 .product { gap: clamp(28px, 4vw, 64px); margin-top: 18px; }
-.product-media { background: #fff; border-radius: 28px; padding: clamp(16px, 3vw, 40px);
+.product-media { background: var(--white); border-radius: 28px; padding: clamp(16px, 3vw, 40px);
                  box-shadow: inset 0 0 0 1px var(--hairline); position: sticky; top: 76px; }
 .product-photo { border-radius: 16px; }
 .product-buy .eyebrow { margin-bottom: 6px; }
@@ -1093,7 +1087,7 @@ h3 { font-weight: var(--weight-bold); }
 .ile-opcje { display: grid; gap: 12px; }
 .ile-opcja { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px;
              min-height: 72px; padding: 14px 20px; border: 1px solid var(--field-line); border-radius: 14px;
-             background: #fff; cursor: pointer; }
+             background: var(--surface-card); cursor: pointer; }
 .ile-opcja:hover { border-color: var(--border-strong); }
 .ile-opcja:has(input:checked) { border: 2px solid var(--brand); padding: 13px 19px; }
 .ile-opcja:has(input:focus-visible) { box-shadow: var(--ring); }
@@ -1113,7 +1107,7 @@ h3 { font-weight: var(--weight-bold); }
 .prog-tresc { flex: 1; min-width: 0; }
 .prog-zdanie { font-size: 15px; line-height: 1.45; color: var(--text-strong); margin-bottom: 10px; }
 .prog-zdanie b { color: var(--link); font-weight: var(--weight-bold); }
-.prog-pasek { height: 6px; border-radius: 999px; background: #E6DCD0; overflow: hidden; }
+.prog-pasek { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .prog-pasek i { display: block; height: 100%; min-width: 6px; border-radius: inherit; background: var(--accent);
                 transition: width .45s var(--ease-out); }
 .prog-dopisek { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 8px; font-size: 12px; color: var(--text-muted); }
@@ -1152,7 +1146,7 @@ h3 { font-weight: var(--weight-bold); }
 .kup-pasek-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 12px 10px 20px;
                 background: color-mix(in srgb, var(--paper) 92%, transparent);
                 backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
-                border: 1px solid var(--hairline); border-radius: 18px; box-shadow: 0 10px 32px rgba(46, 22, 12, .14); }
+                border: 1px solid var(--hairline); border-radius: 18px; box-shadow: 0 10px 32px rgba(var(--shadow-tint), .14); }
 .kup-pasek-txt { display: flex; flex-direction: column; min-width: 0; font-size: 14px; color: var(--text-body); }
 .kup-pasek-txt b { color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kup-pasek .btn { flex: none; }
@@ -1203,7 +1197,7 @@ h3 { font-weight: var(--weight-bold); }
 .cart-lines { display: block; border-top: 1px solid var(--hairline); }
 .cart-line { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto 150px; gap: 24px; align-items: start;
              padding: 28px 0; border-bottom: 1px solid var(--hairline); }
-.cart-thumb .thumb { width: 120px; height: 120px; object-fit: contain; background: #fff; border-radius: 18px;
+.cart-thumb .thumb { width: 120px; height: 120px; object-fit: contain; background: var(--white); border-radius: 18px;
                      box-shadow: inset 0 0 0 1px var(--hairline); padding: 10px; box-sizing: border-box; }
 .cart-thumb .visual.thumb { padding: 0; }
 .cart-info h2 { font-family: var(--font-sans); font-size: 21px; font-weight: var(--weight-extra); line-height: 1.3; margin-bottom: 6px; }
@@ -1211,8 +1205,8 @@ h3 { font-weight: var(--weight-bold); }
 .cart-info p { font-size: 14px; }
 .stepper { display: inline-flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px; background: var(--paper-soft); }
 .stepper-btn { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
-               border: 0; border-radius: 50%; background: #fff; color: var(--text-strong); cursor: pointer; }
-.stepper-btn:hover:not(:disabled) { background: #fff; box-shadow: 0 0 0 1px var(--field-line); }
+               border: 0; border-radius: 50%; background: var(--surface-card); color: var(--text-strong); cursor: pointer; }
+.stepper-btn:hover:not(:disabled) { background: var(--surface-card); box-shadow: 0 0 0 1px var(--field-line); }
 .stepper-btn:disabled { color: var(--border-default); cursor: default; }
 .stepper .qty input { width: 42px; border: 0; padding: 7px 2px; background: transparent; border-radius: 6px;
                       -moz-appearance: textfield; appearance: textfield; }
@@ -1231,7 +1225,7 @@ h3 { font-weight: var(--weight-bold); }
              margin-top: 44px; align-items: start; }
 .ship-pick fieldset { display: grid; gap: 10px; }
 .dostawa-opcja { display: grid; grid-template-columns: auto 82px minmax(0, 1fr) auto; align-items: center; gap: 12px;
-  padding: 10px 14px; border: 1px solid var(--field-line); border-radius: 14px; background: #fff; cursor: pointer;
+  padding: 10px 14px; border: 1px solid var(--field-line); border-radius: 14px; background: var(--surface-card); cursor: pointer;
   transition: border-color var(--dur-base) var(--ease-out); }
 .dostawa-opcja:hover { border-color: var(--border-strong); }
 .dostawa-opcja.is-on, .dostawa-opcja:has(input:checked) { border: 2px solid var(--brand); padding: 9px 13px; }
@@ -1265,7 +1259,7 @@ h3 { font-weight: var(--weight-bold); }
 .zaplac-glowa h1 { font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 8px; }
 .zaplac-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: clamp(24px, 4vw, 48px);
                max-width: 1060px; margin: 0 auto; align-items: start; }
-.stripe-checkout { min-height: 420px; background: #fff; border-radius: 18px; box-shadow: inset 0 0 0 1px var(--hairline);
+.stripe-checkout { min-height: 420px; background: var(--white); border-radius: 18px; box-shadow: inset 0 0 0 1px var(--hairline);
                    padding: clamp(8px, 2vw, 20px); }
 .zaplac-laduje { padding: 24px; text-align: center; }
 .zaplac-bezp { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 14px;
@@ -1307,11 +1301,11 @@ h3 { font-weight: var(--weight-bold); }
 /* ---- Newsletter : le bandeau du pied et la page /newsletter -----------------
    Un champ, un bouton, deux cases vides. Les champs restent à 16 px : en
    dessous, l'iPhone zoome sur le formulaire et le client perd la page. */
-.foot-nl { background: var(--choco-900); border-bottom: 1px solid var(--choco-800); }
+.foot-nl { background: var(--brand-900); border-bottom: 1px solid var(--brand-800); }
 .foot-nl-in { display: grid; gap: var(--space-5); padding-top: var(--space-8); padding-bottom: var(--space-8); }
 @media (min-width: 900px) { .foot-nl-in { grid-template-columns: 1fr 1.25fr; align-items: start; } }
-.foot-nl h2 { margin: 0 0 6px; font-size: var(--text-xl); color: var(--cream-50); }
-.foot-nl p { margin: 0; color: var(--choco-300); line-height: 1.6; }
+.foot-nl h2 { margin: 0 0 6px; font-size: var(--text-xl); color: var(--paper-50); }
+.foot-nl p { margin: 0; color: var(--brand-300); line-height: 1.6; }
 .nl-form { display: grid; gap: 10px; }
 .nl-row { display: flex; gap: 8px; }
 .nl-row input { flex: 1; min-width: 0; height: 48px; padding: 0 18px; border-radius: 999px;
@@ -1323,7 +1317,7 @@ h3 { font-weight: var(--weight-bold); }
 .nl-tel input { height: 44px; max-width: 280px; padding: 0 14px; border-radius: 10px;
                 border: 1px solid var(--border-default); background: var(--white); font: inherit; font-size: 16px; }
 .nl-form .err { font-size: var(--text-xs); color: var(--danger); }
-.site-foot .nl-check span, .site-foot .nl-tel label { color: var(--choco-200, var(--cream-200)); }
+.site-foot .nl-check span, .site-foot .nl-tel label { color: var(--brand-200, var(--paper-200)); }
 .site-foot .nl-form .err { color: #f1b9ad; }
 .nl-page .nl-form { max-width: 560px; margin: var(--space-5) 0; }
 .nl-page form .btn { margin-bottom: var(--space-4); }
@@ -1361,8 +1355,8 @@ h3 { font-weight: var(--weight-bold); }
 .formularz .checkout-form fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
 .formularz .checkout-form fieldset > .hint, .formularz .checkout-form .field.wide { grid-column: 1 / -1; }
 @media (max-width: 640px) { .formularz .checkout-form fieldset { grid-template-columns: 1fr; } }
-.foot-links .foot-cookies { text-decoration: none; border-bottom: 1px solid var(--choco-700); padding-bottom: 1px; }
-.foot-links .foot-cookies:hover { color: var(--cream-100); }
+.foot-links .foot-cookies { text-decoration: none; border-bottom: 1px solid var(--brand-700); padding-bottom: 1px; }
+.foot-links .foot-cookies:hover { color: var(--paper-100); }
 /* `hidden` doit gagner sur l'affichage des boutons (.btn est en inline-flex). */
 .zgody [hidden] { display: none !important; }
 .zgody p a { text-decoration: underline; text-underline-offset: 2px; }

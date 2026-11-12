@@ -79,21 +79,19 @@ jobs:
           # copie pas les outils de développement : router.php et serve.sh ne
           # servent qu'au serveur intégré de PHP, qui n'existe pas ici.
           mkdir -p site/shop
-          rsync -a --exclude 'router.php' --exclude 'serve.sh' mrszoko/shop/. site/shop/
+          rsync -a --exclude 'router.php' --exclude 'serve.sh' --exclude '/ds' mrszoko/shop/. site/shop/
           cp mrszoko/shop/.htaccess site/shop/.htaccess
 
-          # Les jetons du design system sont RÉGÉNÉRÉS depuis la source, en un
-          # seul fichier : ils ne peuvent donc pas diverger, et la page n'a pas
-          # à découvrir six feuilles en cascade avant d'afficher un texte.
-          {
-            echo "/* Généré au déploiement depuis design-system/tokens/*.css — ne pas éditer. */"
-            for f in colors typography spacing radius shadow motion fonts; do
-              echo ""; echo "/* ---- $f ---- */"
-              grep -v "^@import" "mrszoko/design-system/tokens/$f.css"
-            done
-          } > site/shop/tokens.css
-          test -s site/shop/tokens.css && grep -q -- '--choco-700' site/shop/tokens.css \
-            || { echo "tokens.css régénéré vide ou incomplet"; exit 1; }
+          # LES DESIGN SYSTEMS DES BOUTIQUES (design-systems/<slug>/), compilés
+          # en un seul fichier chacun — la page n'a pas à découvrir six feuilles
+          # en cascade avant d'afficher un texte — et CONTRÔLÉS : un jeton du
+          # contrat oublié par une marque, ou un nom hors contrat dans le code
+          # (--choco-700…), arrête le déploiement ICI, avant le serveur. La
+          # boutique charge celui de sa configuration (design_system, défaut
+          # szoko) : voir mrszoko/backoffice/php-api/ds.php.
+          php tools/build-ds.php site/shop/ds
+          test -s site/shop/ds/szoko/tokens.css && grep -q -- '--brand-700' site/shop/ds/szoko/tokens.css \
+            || { echo "ds/szoko/tokens.css compilé vide ou incomplet"; exit 1; }
 
           # Écrans PHP autonomes de la console (même session, mêmes rôles).
           # Le fichier exporté par Claude Design n'est pas touché — un patch à
@@ -609,21 +607,35 @@ jobs:
           run "$SH/koszyk" 3000
           run "$SH/kasa" 3000
           run "$SH/shop.css" 5000
-          run "$SH/tokens.css" 2000
+          # Le design system de la boutique : les jetons, les seules couleurs
+          # (la console les emprunte) et le logo par défaut. Le chemin est lu
+          # dans la page elle-même : c'est celui que la configuration désigne.
+          DSU=$(curl -skL "$SH/" | grep -o 'ds/[a-z0-9-]*/tokens.css' | head -1 | sed 's#/tokens.css##')
+          if [ -n "$DSU" ]; then echo "  design system servi : $DSU"; else echo "  ^ NOT OK : la page ne charge aucun ds/<slug>/tokens.css"; fail=1; DSU=ds/szoko; fi
+          run "$SH/$DSU/tokens.css" 2000
+          run "$SH/$DSU/colors.css" 1000
+          run "$SH/$DSU/fonts.css" 500
           # Les polices sont servies par NOUS. Une page qui les redemanderait à
           # Google resterait blanche derrière un pare-feu d'entreprise ou un
           # bloqueur — quatorze secondes mesurées quand la connexion est
           # refusée. On vérifie donc les deux faces : plus aucune référence
           # sortante dans la feuille, et un fichier réellement servi ici.
-          if curl -skL "$SH/tokens.css" | grep -q "@import url(.https://fonts"; then
+          if curl -skL "$SH/$DSU/tokens.css" | grep -q "@import url(.https://fonts"; then
             echo "  ^ NOT OK : tokens.css réclame encore les polices à Google"; fail=1
           else
             echo "  polices : aucune dépendance sortante dans tokens.css"
           fi
-          NF2=$(curl -skL "$SH/tokens.css" | grep -c "@font-face" || echo 0)
+          NF2=$(curl -skL "$SH/$DSU/tokens.css" | grep -c "@font-face" || echo 0)
           echo "  polices : $NF2 déclarations @font-face"
           if [ "${NF2:-0}" -lt 10 ]; then echo "  ^ NOT OK : les @font-face locales manquent"; fail=1; fi
-          run "$SH/fonts/mulish-normal-300_800-latin.woff2" 20000
+          # Un vrai fichier de police, servi d'ici : chez Szoko, le Mulish du
+          # texte (30 Ko) ; ailleurs, la première police que la feuille déclare.
+          if [ "$DSU" = "ds/szoko" ]; then
+            run "$SH/$DSU/fonts/mulish-normal-300_800-latin.woff2" 20000
+          else
+            FONT1=$(curl -skL "$SH/$DSU/tokens.css" | grep -o 'url(fonts/[^)]*\.woff2)' | head -1 | sed 's/^url(//;s/)$//')
+            run "$SH/$DSU/${FONT1:-fonts/absente.woff2}" 5000
+          fi
           run "$SH/shop.js" 1000
           # Le fil d'Ariane est aussi ce que Google affiche sous le titre : s'il
           # disparaît, on le voit ici plutôt que dans les résultats de recherche.
@@ -2268,11 +2280,11 @@ jobs:
             && echo "  ekran + theme.php + witryna + szyna: obecne" \
             || { echo "  ^ NOT OK : wyglad sklepu niekompletny"; fail=1; }
           for fam in nunito jost lora playfair-display; do
-            ls "$DIR_BO/../shop/fonts/$fam-normal-"*"-latin-ext.woff2" >/dev/null 2>&1 \
+            ls "$DIR_BO/../shop/ds/szoko/fonts/$fam-normal-"*"-latin-ext.woff2" >/dev/null 2>&1 \
               && echo "  czcionka $fam: pliki na serwerze" \
               || { echo "  ^ NOT OK : brak plikow czcionki $fam — wybor w Wygladzie bylby pusty"; fail=1; }
           done
-          grep -q "font-family: 'Lora'" "$DIR_BO/../shop/tokens.css" \
+          grep -q "font-family: 'Lora'" "$DIR_BO/../shop/ds/szoko/tokens.css" \
             && echo "  tokens.css deklaruje rodziny do wyboru" \
             || { echo "  ^ NOT OK : tokens.css bez rodzin do wyboru"; fail=1; }
           # ── KILOGRAMY W KLIENTACH ─────────────────────────────────────────

@@ -113,7 +113,7 @@ $css = <<<CSS
   .szukaj select { max-width: 220px; }
   .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; }
   .chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--surface-raised); color: var(--text-body); }
-  .chip.ok { background: color-mix(in srgb, var(--berry-500, #A93A57) 12%, transparent); }
+  .chip.ok { background: color-mix(in srgb, var(--sale, #A93A57) 12%, transparent); }
   .media-card details.opis summary { color: var(--text-body); }
   .media-card details.opis form { display: grid; gap: 6px; margin-top: 6px; }
   .media-card details.opis select, .media-card details.opis input { font-size: 13px; width: 100%; }

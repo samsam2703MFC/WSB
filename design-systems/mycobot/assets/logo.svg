@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MyCobotBuddy">
+  <!-- PROVISOIRE : monogramme dessiné pour essayer le design system, en
+       attendant le vrai logo (la spécification cite assets/logo-mark.png,
+       non fourni). Marine du logo, dégradé signature émeraude → cyan. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#02C9A0"/><stop offset="1" stop-color="#029CD0"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0A1C33"/>
+  <!-- un bras de cobot stylisé : socle, deux segments, pince -->
+  <path d="M18 48h28" stroke="#F6F9F8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M24 46 30 30 44 22" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="30" cy="30" r="4" fill="#F6F9F8"/>
+  <path d="M44 22l5-5M44 22l6 1" stroke="#F6F9F8" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

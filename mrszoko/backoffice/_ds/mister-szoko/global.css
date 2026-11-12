@@ -56,13 +56,13 @@
   /* State + accent colors */
   --color-linked:             var(--accent);   /* Office client linked (Abricot) */
   --color-collect:            var(--brand);   /* Not linked / collect mode */
-  --color-on-abricot:         var(--choco-600);   /* Dark amber — text on Abricot backgrounds */
-  --color-collection-border:  var(--caramel-600);   /* Deep amber */
-  --color-collection-fill:    var(--gold-500);   /* Collection badge background */
-  --color-collection-icon:    var(--choco-800);   /* Collection badge icon/label */
+  --color-on-abricot:         var(--brand-600);   /* Dark amber — text on Abricot backgrounds */
+  --color-collection-border:  var(--accent-600);   /* Deep amber */
+  --color-collection-fill:    var(--highlight);   /* Collection badge background */
+  --color-collection-icon:    var(--brand-800);   /* Collection badge icon/label */
 
   /* Website / marketing accents */
-  --color-popup:              var(--choco-600);   /* Third color — Pop-Up markers & badges */
+  --color-popup:              var(--brand-600);   /* Third color — Pop-Up markers & badges */
   --color-ink:                var(--ink-900);   /* Illustration stroke ink */
 
   /* --- Typography -------------------------------------------------------- */

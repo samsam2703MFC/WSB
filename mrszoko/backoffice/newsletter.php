@@ -134,7 +134,7 @@ console_head('Newsletter', $me, <<<'CSS'
   .prods label { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; margin: 4px 0; }
   .dodaj { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 16px; }
   .dodaj button { font-size: 13px; padding: 6px 12px; }
-  .ai { background: color-mix(in srgb, var(--caramel-500) 8%, var(--surface-card)); }
+  .ai { background: color-mix(in srgb, var(--accent-500) 8%, var(--surface-card)); }
   .lista td, .lista th { font-size: 13.5px; }
   .tl-src { font-size: 12px; color: var(--text-muted); margin: 0 0 4px; white-space: pre-wrap; }
   .zaklad { display: flex; gap: 6px; margin-bottom: 8px; }

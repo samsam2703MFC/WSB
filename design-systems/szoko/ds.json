@@ -1,0 +1,21 @@
+{
+  "nom": "Szoko Shop",
+  "logo": "assets/logo.png",
+  "theme_color": "#41281A",
+  "fichiers": ["tokens/colors.css", "tokens/typography.css", "tokens/spacing.css", "tokens/radius.css", "tokens/shadow.css", "tokens/motion.css", "tokens/fonts.css"],
+  "polices": {
+    "mulish":   ["Mulish",           "'Mulish', system-ui, sans-serif",    "Mulish — domyślna: czysta, nowoczesna (styl Apple)"],
+    "nunito":   ["Nunito",           "'Nunito', system-ui, sans-serif",    "Nunito — zaokrąglona, przyjazna"],
+    "jost":     ["Jost",             "'Jost', system-ui, sans-serif",      "Jost — geometryczna, nowoczesna"],
+    "lora":     ["Lora",             "'Lora', Georgia, serif",             "Lora — szeryfowa, klasyczna (poprzedni tekst)"],
+    "playfair": ["Playfair Display", "'Playfair Display', Georgia, serif", "Playfair Display — szeryfowa, elegancka (poprzednie nagłówki)"]
+  },
+  "wyglad": {
+    "font_body": "mulish",
+    "font_head": "same",
+    "font_head_baza": "mulish",
+    "brand": "#41281A",
+    "accent": "#C68A3C",
+    "bg": "#FFFFFF"
+  }
+}

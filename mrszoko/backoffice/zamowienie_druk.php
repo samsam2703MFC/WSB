@@ -49,7 +49,7 @@ $manque = array_filter($o['items'], fn($l) => (int) ($l['backorder'] ?? 0) > 0);
   .tick span { display: block; width: 15px; height: 15px; border: 1.5px solid var(--text-muted); border-radius: 3px; }
   tfoot td { border-bottom: 0; border-top: 2px solid var(--text-strong); font-weight: 700; }
   .warn { margin-top: 16px; padding: 10px 13px; border-radius: 8px; font-size: 12.5px; line-height: 1.6;
-          background: var(--cream-200); color: var(--choco-700); }
+          background: var(--paper-200); color: var(--brand-700); }
   .note { margin-top: 14px; font-size: 12.5px; }
   .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 44px; font-size: 12px; color: var(--text-muted); }
   .sign div { border-top: 1px solid var(--border-default); padding-top: 6px; text-align: center; }

@@ -631,7 +631,7 @@ console_head('Produkty i zdjęcia', $me, <<<'CSS'
   .sum-meta { font-family: var(--font-sans); font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
   .sum-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
   .tag.on  { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
-  .tag.off { background: var(--cream-300); color: var(--text-muted); }
+  .tag.off { background: var(--paper-300); color: var(--text-muted); }
   .edit { padding: 18px 14px; display: grid; grid-template-columns: 1fr; gap: 20px; }
   @media (min-width: 820px) { .edit { grid-template-columns: 260px 1fr; gap: 24px; } }
   .preview img, .preview .ph { width: 100%; aspect-ratio: 4/3; object-fit: contain; border-radius: 14px;

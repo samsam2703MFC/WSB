@@ -32,8 +32,16 @@ function layout_head(array $S, string $lang, array $langs, string $title = '',
 <title><?= e($title) ?></title>
 <meta name="description" content="<?= e($desc) ?>">
 <link rel="icon" href="<?= e(logo_src()) ?>">
-<link rel="stylesheet" href="<?= e(asset('tokens.css')) ?>">
+<link rel="stylesheet" href="<?= e(asset(wsm_ds_path('tokens.css'))) ?>">
 <link rel="stylesheet" href="<?= e(asset('shop.css')) ?>">
+<?php
+// Les jetons viennent du design system de la boutique (ds.php) ; ses
+// retouches de composants passent APRÈS shop.css, et Wygląd après tout.
+// Imprimées dans la page plutôt que liées : un fichier de plus, c'est un
+// aller-retour bloquant de plus avant le premier affichage.
+$dsTheme = wsm_ds_theme_css();
+if ($dsTheme !== '') echo '<style id="ds-theme">' . str_replace('</', '<\\/', $dsTheme) . "</style>\n";
+?>
 <?= theme_head() ?><?php
 // Robots, canonique, grappe hreflang ABSOLUE et partage social. Les hreflang
 // émis ici auparavant étaient relatifs : Google les ignore en bloc, sans un

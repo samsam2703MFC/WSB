@@ -46,6 +46,12 @@ $cfg = [
     // de notification envoyées à tpay. Vide : déduite de la requête en cours.
     'shop_url' => getenv('WSM_SHOP_URL') ?: '',
 
+    // Le design system de CETTE boutique (design-systems/<slug>/) : couleurs,
+    // polices, logo par défaut. Toutes les boutiques partagent le code ;
+    // celle-ci porte celui-là. Réglé par le serveur, jamais depuis la console
+    // — voir ds.php. Inconnu ou absent : « szoko ».
+    'design_system' => getenv('WSM_DESIGN_SYSTEM') ?: 'szoko',
+
     // ---- Vitrine : ce qui se règle depuis la console -----------------------
     // VIDE PAR DÉFAUT, et ce n'est pas un détail : wsm_settings_apply() laisse
     // la main au fichier de configuration dès qu'il a posé une valeur non

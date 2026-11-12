@@ -1,0 +1,10 @@
+/* MyCobotBuddy — ombres teintées marine, jamais noires (spécification §5).
+   Une carte mise en avant prend une bordure émeraude de 2 px, pas une ombre. */
+:root {
+  --shadow-card: 0 1px 3px rgba(var(--shadow-tint), .07);
+  --shadow-xs:   var(--shadow-card);
+  --shadow-sm:   var(--shadow-card);
+  --shadow-md:   0 4px 14px rgba(var(--shadow-tint), .08);
+  --shadow-lg:   0 12px 32px rgba(var(--shadow-tint), .12);
+  --ring:        0 0 0 3px rgba(2, 156, 208, .25);   /* --shadow-focus, cyan */
+}

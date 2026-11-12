@@ -632,8 +632,8 @@ if ($method === 'POST') {
             if (empty($body['id'])) wsm_fail('id_required');
             $row = [
                 'sort_order' => (int) ($body['sort_order'] ?? 0),
-                'swatch_from' => $body['swatch_from'] ?? '--choco-900',
-                'swatch_to' => $body['swatch_to'] ?? '--choco-700',
+                'swatch_from' => $body['swatch_from'] ?? '--brand-900',
+                'swatch_to' => $body['swatch_to'] ?? '--brand-700',
                 'fluidity' => (int) ($body['fluidity'] ?? 3),
                 'active' => (int) ($body['active'] ?? 1),
                 'price_from_pln' => $body['price_from_pln'] ?? null,

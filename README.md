@@ -11,7 +11,9 @@ under **`/mrszoko`** on the server (`http://185.180.206.46/mrszoko`).
 | `/mrszoko/backoffice/api` | PHP API (`webshop_mrszoko` DB, `wsm_` tables) | [`mrszoko/backoffice/php-api/`](mrszoko/backoffice/php-api/) |
 
 - **Design system** (imported Claude Design handoff: tokens, components,
-  prototypes) — [`mrszoko/design-system/`](mrszoko/design-system/)
+  prototypes) — [`design-systems/szoko/`](design-systems/szoko/)
+- **Design systems des boutiques** — un code, une marque par boutique :
+  [`design-systems/`](design-systems/) (contrat de jetons, Szoko, MyCobotBuddy)
 - **Deploy** (SSH/rsync on push to `main`, with on-server verification) —
   [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
 

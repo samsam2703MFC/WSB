@@ -62,15 +62,15 @@ $cfg = wsm_vies_cfg();
 
 console_head('Kontrahenci i VAT UE', $me, <<<'CSS'
   .hint { color: var(--text-muted); font-size: 13.5px; margin: 0 0 20px; max-width: 82ch; line-height: 1.55; }
-  .flash.warn { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--caramel-600); }
+  .flash.warn { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--accent-600); }
   .adhoc { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
   .adhoc label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: var(--text-strong); }
   .adhoc input { font-family: var(--font-mono); min-width: 220px; }
   th, td { vertical-align: top; }
   .mono { font-family: var(--font-mono); font-size: 12.5px; }
   .tag.err  { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
-  .tag.warn { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--caramel-600); }
-  .tag.rc   { background: color-mix(in srgb, var(--berry-500) 16%, transparent); color: var(--berry-600); }
+  .tag.warn { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--accent-600); }
+  .tag.rc   { background: color-mix(in srgb, var(--sale) 16%, transparent); color: var(--sale-strong); }
   small.muted { color: var(--text-muted); }
 CSS, '');
 console_flash($flash, $kind);

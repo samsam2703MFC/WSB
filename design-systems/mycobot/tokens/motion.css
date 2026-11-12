@@ -1,0 +1,14 @@
+/* MyCobotBuddy — mouvement (spécification §5).
+   Survol = éclaircissement ou changement de bordure, JAMAIS d'agrandissement.
+   Pas de rebond, pas de parallaxe. */
+:root {
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ease-out:  var(--ease-standard);
+  --ease-soft: var(--ease-standard);
+  --dur-fast:  .15s;
+  --dur-base:  .25s;
+  --lift:      none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0s; --dur-base: 0s; }
+}

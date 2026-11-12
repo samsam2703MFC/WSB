@@ -54,7 +54,7 @@ console_head('Google i SEO', $me, <<<'CSS'
   .lista .ico { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
   .ico.ok { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
   .ico.bad { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
-  .ico.wait { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--caramel-600); }
+  .ico.wait { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--accent-600); }
   .lista b { color: var(--text-strong); }
   .lista p { margin: 2px 0 0; color: var(--text-muted); font-size: 14px; }
   code.url { word-break: break-all; }
@@ -63,7 +63,7 @@ console_head('Google i SEO', $me, <<<'CSS'
   .uwagi .blad { color: var(--danger); }
   .uwagi .info { color: var(--text-muted); }
   .wynik { font-variant-numeric: tabular-nums; font-weight: 700; }
-  .wynik.zle { color: var(--danger); } .wynik.srednio { color: var(--caramel-600); } .wynik.dobrze { color: var(--success); }
+  .wynik.zle { color: var(--danger); } .wynik.srednio { color: var(--accent-600); } .wynik.dobrze { color: var(--success); }
 CSS);
 console_flash($flash, $kind);
 console_crumbs(['Pulpit' => 'pulpit.php', 'Marketing' => null, 'Google i SEO' => null]);

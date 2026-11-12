@@ -54,7 +54,7 @@ $zl = fn(int $g) => number_format($g / 100, 2, ',', ' ');
   .pay b { font-family: var(--font-mono); }
   .note { margin-top: 18px; font-size: 12.5px; color: var(--text-body); }
   .rc { margin-top: 14px; padding: 9px 12px; border-radius: 6px; font-size: 12.5px;
-        background: var(--cream-200); color: var(--choco-700); }
+        background: var(--paper-200); color: var(--brand-700); }
   .foot { margin-top: 34px; font-size: 11px; color: var(--text-muted); line-height: 1.6; }
   .noprint { text-align: center; margin: 18px; }
   .noprint button { font: 600 14px var(--font-sans); padding: 11px 20px; border-radius: 999px;

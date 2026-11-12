@@ -26,10 +26,8 @@ Everything served under `http://185.180.206.46/mrszoko`.
   service token, and only role `Centrala` may write. See
   `backoffice/README.md` and `backoffice/php-api/README.md`.
 
-- **`design-system/`** — the Mister Szoko design system, imported from the
-  Claude Design handoff (claude.ai/design): brand guide (`readme.md`), tokens,
-  React component primitives, guidelines specimens, and two clickable prototypes
-  (`Mister Szoko Webshop Prototype.html`, `Mister Szoko Back-office Prototype.html`)
-  plus the `templates/` they build on. **Reference material** — not deployed.
-  The landing copies its tokens from here; future Mister Szoko UIs (webshop,
-  re-skinned back-office) should start from this folder.
+- **Design system** — moved to **`../design-systems/szoko/`** (the Mister Szoko
+  / Szoko Shop design system, imported from the Claude Design handoff). Every
+  shop now carries its own design system next to it (`../design-systems/<slug>/`)
+  and the code only uses the token names of `../design-systems/contract.json`.
+  See `../design-systems/README.md`.

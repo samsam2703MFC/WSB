@@ -97,14 +97,18 @@ ok('le nom lu par la console vient de Treści', wsm_brand_name() === ($val('bran
 $consoleTxt = '';
 foreach (glob($racine . '/mrszoko/backoffice/*.php') as $f) foreach (file($f) as $l) if (!preg_match('#^\s*(//|\*|/\*)#', $l)) $consoleTxt .= $l;
 ok('plus un ancien nom affiché par la console', !str_contains($consoleTxt, 'Market Levano') && !str_contains($consoleTxt, 'Mister Szoko'));
-ok('la console et l\'écran de connexion reprennent le logo d\'origine', str_contains($lire('mrszoko/backoffice/console.php'), "'img/logo.png'")
-   && str_contains($lire('mrszoko/backoffice/login.php'), 'img/logo.png') && !str_contains($consoleTxt, 'logo.svg'));
-foreach (['mrszoko/shop/assets/logo.png', 'mrszoko/backoffice/img/logo.png'] as $f) {
+// Sans logo déposé, la console, l'écran de connexion et la vitrine prennent le
+// logo du design system de la boutique (ds.php) — chez Szoko, le logo d'origine.
+ok('la console et l\'écran de connexion reprennent le logo du design system', str_contains($lire('mrszoko/backoffice/console.php'), "'../shop/' . wsm_ds_logo_path()")
+   && str_contains($lire('mrszoko/backoffice/login.php'), "'../shop/' . wsm_ds_logo_path()") && !str_contains($consoleTxt, 'logo.svg'));
+ok('le design system de Szoko porte le logo d\'origine', json_decode($lire('design-systems/szoko/ds.json'), true)['logo'] === 'assets/logo.png');
+foreach (['design-systems/szoko/assets/logo.png', 'mrszoko/shop/assets/logo.png', 'mrszoko/backoffice/img/logo.png'] as $f) {
     $png = $lire($f);
     $dim = $png === '' ? false : @getimagesizefromstring($png);
     ok("$f : le logo d'origine, un vrai PNG", str_starts_with($png, "\x89PNG\r\n\x1a\n") && $dim !== false && $dim[0] >= 100 && $dim[1] >= 100, $dim ?: null);
 }
-ok('le même fichier dans la vitrine et dans la console', $lire('mrszoko/shop/assets/logo.png') === $lire('mrszoko/backoffice/img/logo.png'));
+ok('le même fichier dans le design system, la vitrine et la console', $lire('mrszoko/shop/assets/logo.png') === $lire('mrszoko/backoffice/img/logo.png')
+   && $lire('design-systems/szoko/assets/logo.png') === $lire('mrszoko/shop/assets/logo.png'));
 ok('le monogramme SVG d\'une semaine n\'est plus livré', !is_file($racine . '/mrszoko/shop/assets/logo.svg') && !is_file($racine . '/mrszoko/backoffice/img/logo.svg'));
 
 // ---- 2. Les migrations à un seul coup, sur une copie de la base --------------------------
@@ -205,7 +209,7 @@ ok('sans seuil, la phrase qui le cite disparaît, le reste demeure', ($r[3] ?? n
 ok('avec un seuil, il remplace {prog} ; un texte sans {prog} reste tel quel', ($r[5] ?? '') === "Darmowa dostawa od 550{$nbsp}zł." && ($r[6] ?? '') === 'Bez progu.');
 $attendu = $pdo->query("SELECT MIN(free_from) FROM wsm_shipping_methods WHERE active = 1 AND free_from > 0")->fetchColumn();
 ok('le seuil lu est le plus bas des modes ACTIFS', ($r[7] ?? 'x') === ($attendu === null || $attendu === false ? null : (int) $attendu), [$r[7] ?? null, $attendu]);
-ok('sans logo déposé, le logo d\'origine', str_ends_with((string) ($r[8] ?? ''), 'assets/logo.png'), $r[8] ?? null);
+ok('sans logo déposé, le logo du design system (Szoko : celui d\'origine)', str_ends_with((string) ($r[8] ?? ''), 'ds/szoko/logo.png'), $r[8] ?? null);
 
 // ---- 4. Le logo et les dessins ------------------------------------------------------------
 echo "\n-- rysunki: kolorowe, nic z zewnątrz, nic wykonywalnego --\n";
@@ -301,7 +305,7 @@ $h = $get('/?lang=pl&t=' . microtime(true));
 if ($h === false) { echo "  (sklep na 8091 nie odpowiada — pominięte)\n"; }
 else {
     $brand = $val('brand') ?: 'Szoko Shop';
-    ok('le nom à côté du logo d\'origine', str_contains($h, '<span class="head-nazwa">' . htmlspecialchars($brand) . '</span>') && str_contains($h, 'assets/logo.png') && !str_contains($h, 'logo.svg'));
+    ok('le nom à côté du logo d\'origine', str_contains($h, '<span class="head-nazwa">' . htmlspecialchars($brand) . '</span>') && str_contains($h, 'ds/szoko/logo.png') && !str_contains($h, 'logo.svg'));
     ok('pas une trace des anciens noms, ni de l\'adresse Market Levano', !str_contains($h, 'Market Levano') && !str_contains($h, 'Mister Szoko') && !str_contains(strtolower($h), 'marketlevano@'));
     // Le haut de page est maintenant le premier slajd (le boulanger) ; sans
     // slajd en ligne, l'illustration d'origine revient — voir e2e_slajdy.

@@ -32,7 +32,7 @@ body {
   position: fixed; top: 0; left: 0; bottom: 0; z-index: 40;
   width: min(80vw, 285px);
   display: flex; flex-direction: column;
-  background: var(--choco-800); color: var(--cream-50);
+  background: var(--brand-800); color: var(--paper-50);
   transform: translateX(-100%); transition: transform .22s ease;
   overflow-y: auto; overscroll-behavior: contain;
 }
@@ -40,48 +40,48 @@ body {
 
 .side .brand {
   display: flex; align-items: center; gap: 10px;
-  height: var(--wsm-bar-h); padding: 0 16px; text-decoration: none; color: var(--cream-50);
-  border-bottom: 1px solid var(--choco-600); flex: none; overflow: hidden;
+  height: var(--wsm-bar-h); padding: 0 16px; text-decoration: none; color: var(--paper-50);
+  border-bottom: 1px solid var(--brand-600); flex: none; overflow: hidden;
 }
 .side .brand img { height: 30px !important; width: auto; max-width: none; display: block; }
-.side .brand span { font-size: 12px; line-height: 1.3; color: var(--choco-200);
+.side .brand span { font-size: 12px; line-height: 1.3; color: var(--brand-200);
                     text-transform: uppercase; letter-spacing: .09em; }
 .side .brand b { font-family: var(--font-display); font-size: 14px; letter-spacing: 0;
-                 text-transform: none; color: var(--cream-50); }
+                 text-transform: none; color: var(--paper-50); }
 
 .side-close {
   position: absolute; top: 10px; right: 10px; z-index: 1;
   width: 40px; height: 40px; display: grid; place-items: center;
   border-radius: 999px; cursor: pointer; font-size: 24px; line-height: 1;
-  color: var(--cream-100); background: var(--choco-600);
+  color: var(--paper-100); background: var(--brand-600);
 }
 
 .menu { display: flex; flex-direction: column; padding: 8px 10px 18px; flex: 1 1 auto; }
 .menu a {
-  display: block; color: var(--cream-100); text-decoration: none;
+  display: block; color: var(--paper-100); text-decoration: none;
   font-size: 14px; font-weight: 600; padding: 11px 12px; border-radius: 9px;
   min-height: 44px; line-height: 1.5;
 }
-.menu a:hover { background: var(--choco-700, rgba(255,255,255,.06)); }
-.menu a.on { background: var(--choco-600); color: var(--cream-50); }
+.menu a:hover { background: var(--brand-700, rgba(255,255,255,.06)); }
+.menu a.on { background: var(--brand-600); color: var(--paper-50); }
 .menu .sep {
   font: 700 12px/1 var(--font-sans); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--choco-200); padding: 16px 12px 6px;
+  color: var(--brand-200); padding: 16px 12px 6px;
 }
 
 .side-foot {
   flex: none; display: flex; align-items: center; gap: 10px;
-  padding: 12px 16px; border-top: 1px solid var(--choco-600);
-  font-size: 12px; color: var(--choco-200);
-  position: sticky; bottom: 0; background: var(--choco-800);
+  padding: 12px 16px; border-top: 1px solid var(--brand-600);
+  font-size: 12px; color: var(--brand-200);
+  position: sticky; bottom: 0; background: var(--brand-800);
 }
 .side-foot .who { flex: 1 1 auto; line-height: 1.5; }
-.side-foot b { color: var(--cream-50); font-family: var(--font-sans); font-size: 13px; }
+.side-foot b { color: var(--paper-50); font-family: var(--font-sans); font-size: 13px; }
 /* 34 px : sous la barre du tactile. Se déconnecter par erreur en visant le
    nom juste au-dessus fait perdre le travail en cours d'un formulaire. */
 .side-foot button {
   flex: none; min-height: 44px; padding: 0 14px; font-size: 13px; border-radius: 999px;
-  background: transparent; color: var(--cream-100); border: 1px solid var(--choco-600);
+  background: transparent; color: var(--paper-100); border: 1px solid var(--brand-600);
 }
 
 /* Le voile qui referme le tiroir : c'est un <label>, donc il fonctionne au
@@ -96,12 +96,12 @@ body {
 /* --- Bandeau de la page --------------------------------------------------- */
 header.bar {
   position: sticky; top: 0; z-index: 20;
-  background: var(--choco-800); color: var(--cream-50);
+  background: var(--brand-800); color: var(--paper-50);
   display: flex; align-items: center; gap: 12px; padding: 0 16px;
   height: var(--wsm-bar-h);
   /* Le même filet que sous le bloc marque : la ligne traverse alors tout
      l'écran d'un bord à l'autre, au lieu de s'arrêter à la colonne. */
-  border-bottom: 1px solid var(--choco-600);
+  border-bottom: 1px solid var(--brand-600);
 }
 header.bar h1 {
   font-family: var(--font-display); font-size: 19px; margin: 0; font-weight: 600;
@@ -109,17 +109,17 @@ header.bar h1 {
 }
 header.bar h1 .badge {
   font-size: 12px; vertical-align: middle; white-space: nowrap;
-  background: var(--choco-600); color: var(--cream-100); border-radius: 999px; padding: 2px 8px;
+  background: var(--brand-600); color: var(--paper-100); border-radius: 999px; padding: 2px 8px;
 }
 .menu-btn {
   cursor: pointer; user-select: none; flex: none;
   min-height: 38px; display: inline-flex; align-items: center; gap: 8px;
   padding: 0 14px; border-radius: 999px;
-  background: var(--choco-600); color: var(--cream-50);
+  background: var(--brand-600); color: var(--paper-50);
   font-size: 14px; font-weight: 600;
 }
 .menu-btn::before { content: "☰"; font-size: 16px; }
-.menu-toggle:focus-visible ~ .shell .menu-btn { outline: 2px solid var(--cream-100); outline-offset: 2px; }
+.menu-toggle:focus-visible ~ .shell .menu-btn { outline: 2px solid var(--paper-100); outline-offset: 2px; }
 
 /* --- À partir d'un écran de portable : la colonne est là, tout le temps ---- */
 @media (max-width: 979px) { :root { --wsm-bar-h: 52px; } }
@@ -244,12 +244,12 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
 /* --- Étiquettes et bandeaux ---------------------------------------------- */
 .tag {
   display: inline-block; font-size: 12px; padding: 3px 9px;
-  border-radius: 999px; background: var(--cream-200); color: var(--choco-700);
+  border-radius: 999px; background: var(--paper-200); color: var(--brand-700);
 }
 .tag.ok   { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
-.tag.wait { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--caramel-600); }
+.tag.wait { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--accent-600); }
 .tag.bad  { background: color-mix(in srgb, var(--danger) 15%, transparent);  color: var(--danger); }
-.tag.no   { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--caramel-600); }
+.tag.no   { background: color-mix(in srgb, var(--warning) 22%, transparent); color: var(--accent-600); }
 
 /* --- Le chemin d'une commande, en boutons ---------------------------------
    L'écran Zamówienia est celui qu'on ouvre quarante fois par jour, souvent au
@@ -277,8 +277,8 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
 .kolejki a b { display: block; font-family: var(--font-mono); font-size: 16px; line-height: 1.15; }
 .kolejki a span { font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
                   color: var(--text-muted); white-space: nowrap; }
-.kolejki a.on { background: var(--choco-700); border-color: var(--choco-700); color: var(--cream-50); }
-.kolejki a.on span { color: var(--choco-200); }
+.kolejki a.on { background: var(--brand-700); border-color: var(--brand-700); color: var(--paper-50); }
+.kolejki a.on span { color: var(--brand-200); }
 
 /* ═══ CE QUI VA PARTIR, AVANT QUE ÇA PARTE ═══════════════════════════════
    Replié : une ligne, avec le type de document. Ouvert : les cinq points qui
@@ -286,7 +286,7 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
 .dokchip { font-size: 12px; letter-spacing: .04em; font-weight: 700;
            padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
 .dokchip.f { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
-.dokchip.p { background: var(--cream-200); color: var(--choco-700); }
+.dokchip.p { background: var(--paper-200); color: var(--brand-700); }
 .przed-lista { list-style: none; margin: 2px 0 6px; padding: 6px 0 2px;
                border-top: 1px solid var(--border-subtle); }
 .przed-lista li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; font-size: 13px; }
@@ -297,12 +297,12 @@ td.num, th.num { text-align: right; font-family: var(--font-mono); }
                                border-color: var(--border-default); color: var(--brand); }
 .przed-lista li.ok i { color: var(--success); }
 .przed-lista li.no i, .przed-lista li.no .val { color: var(--danger); }
-.przed-lista li.wa i, .przed-lista li.wa .val { color: var(--caramel-600); }
+.przed-lista li.wa i, .przed-lista li.wa .val { color: var(--accent-600); }
 .przed-lista li.brak i, .przed-lista li.brak .val { color: var(--text-muted); }
 
 /* La sélection, et le lot. La barre colle en bas : on décide en regardant la
    liste, pas en la quittant. */
-td.zazn input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--choco-700); }
+td.zazn input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--brand-700); }
 tr.zablok { background: color-mix(in srgb, var(--danger) 4%, transparent); }
 .hurt { margin: 0; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -314,7 +314,7 @@ tr.zablok { background: color-mix(in srgb, var(--danger) 4%, transparent); }
 .lot-in { max-width: 1180px; margin: 0 auto; }
 .lot button {
   width: 100%; min-height: 52px; border-radius: 999px; font-size: 16px; font-weight: 700;
-  border: 1px solid var(--accent); background: var(--accent); color: var(--choco-900);
+  border: 1px solid var(--accent); background: var(--accent); color: var(--brand-900);
 }
 .lot button[disabled] { background: transparent; border-color: var(--border-default);
                         color: var(--text-muted); opacity: 1; }
@@ -355,16 +355,16 @@ table.rwd tr[id], table tr[id] { scroll-margin-top: 88px; }
 }
 span.etap { cursor: default; }
 /* OÙ L'ON EST : chocolat plein. CE QU'ON VA FAIRE : caramel.
-   Écrit d'abord `teraz` en --choco-700 et `nastepny` en --brand, les deux
-   pastilles sortaient IDENTIQUES — --brand EST --choco-700. L'état actuel et
+   Écrit d'abord `teraz` en --brand-700 et `nastepny` en --brand, les deux
+   pastilles sortaient IDENTIQUES — --brand EST --brand-700. L'état actuel et
    le geste suivant ne se distinguaient plus, et c'était tout l'intérêt.
    Le texte du caramel est chocolat, pas crème : crème sur #C68A3C tombe à
    3:1, sous le seuil lisible ; chocolat tient 5,3:1. */
-.etap.teraz    { background: var(--choco-700); border-color: var(--choco-700); color: var(--cream-50); }
-.etap.nastepny { background: var(--accent);    border-color: var(--accent);    color: var(--choco-900); }
+.etap.teraz    { background: var(--brand-700); border-color: var(--brand-700); color: var(--paper-50); }
+.etap.nastepny { background: var(--accent);    border-color: var(--accent);    color: var(--brand-900); }
 /* Une étape franchie s'efface SANS devenir illisible : on y revient pour
    corriger un doigt qui a glissé, il faut donc pouvoir la lire. */
-.etap.przeszly { color: var(--text-muted); font-weight: 500; background: var(--cream-100, transparent); }
+.etap.przeszly { color: var(--text-muted); font-weight: 500; background: var(--paper-100, transparent); }
 /* ANNULER N'EST PAS UNE ÉTAPE, c'est une sortie. Dessinée comme les autres —
    même pastille, même bordure — elle se ramassait au pouce à côté de
    « Dostarczone », et une commande annulée ne repart pas. Elle garde donc sa
@@ -397,7 +397,7 @@ span.etap { cursor: default; }
 .flash.ok  { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
 .flash.err { background: color-mix(in srgb, var(--danger) 13%, transparent);  color: var(--danger); }
 .warnbox {
-  background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--caramel-600);
+  background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--accent-600);
   border-radius: 10px; padding: 11px 15px; margin-bottom: 16px; font-size: 14px; line-height: 1.5;
 }
 
@@ -412,7 +412,7 @@ input, select, textarea, button {
 textarea { min-height: 150px; line-height: 1.55; resize: vertical; }
 input[type="checkbox"], input[type="radio"] { min-height: 0; width: 20px; height: 20px; padding: 0; }
 button { cursor: pointer; font-weight: 600; }
-button.primary { background: var(--brand); color: var(--cream-50); border-color: var(--brand); }
+button.primary { background: var(--brand); color: var(--paper-50); border-color: var(--brand); }
 button.ghost { background: transparent; }
 button[disabled] { opacity: .5; cursor: not-allowed; }
 
@@ -430,7 +430,7 @@ a.btn {
   background: var(--surface-card); color: var(--text-strong);
 }
 a.btn.ghost { background: transparent; }
-a.btn--brand { background: var(--brand); color: var(--cream-50); border-color: var(--brand); }
+a.btn--brand { background: var(--brand); color: var(--paper-50); border-color: var(--brand); }
 @media (min-width: 700px) { a.btn { font-size: 14px; padding: 8px 11px; min-height: 40px; } }
 
 .field { display: block; margin-bottom: 14px; }
@@ -455,7 +455,7 @@ a.btn--brand { background: var(--brand); color: var(--cream-50); border-color: v
   border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600;
   background: var(--surface-card); border: 1px solid var(--border-subtle); color: var(--text-strong);
 }
-.tabs a.on { background: var(--brand); border-color: var(--brand); color: var(--cream-50); }
+.tabs a.on { background: var(--brand); border-color: var(--brand); color: var(--paper-50); }
 
 /* UN NUMÉRO DE COMMANDE NE SE COUPE PAS. La colonne des étapes a repris de la
    largeur, et « MS-260806-1022 » s'est mis à tomber sur trois lignes — c'est
@@ -488,7 +488,7 @@ a.back { display: inline-block; margin-top: 16px; }
 .kolejki-zast { margin: 0; font-size: 13px; color: var(--text-muted); align-self: center; }
 .kolejki-zast b { color: var(--text-strong); font-family: var(--font-mono); }
 .widoki { display: flex; gap: 2px; padding: 3px; border-radius: 10px;
-          background: var(--cream-100); border: 1px solid var(--border-subtle); align-self: center; }
+          background: var(--paper-100); border: 1px solid var(--border-subtle); align-self: center; }
 .widoki a { padding: 7px 13px; border-radius: 8px; font-size: 13px; color: var(--text-muted);
             text-decoration: none; min-height: 32px; display: flex; align-items: center; }
 .widoki a.on { background: var(--surface-card); color: var(--text-strong); font-weight: 600;
@@ -498,7 +498,7 @@ a.back { display: inline-block; margin-top: 16px; }
 /* La pastille noire pleine se lisait comme un bouton et n'en était pas un : on
    appuyait dessus, rien ne se passait, on cherchait la panne. */
 .stan { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
-.stan .kropka { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--choco-200); }
+.stan .kropka { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--brand-200); }
 .s-oplacone .kropka, .s-wyslane .kropka, .s-dostarczone .kropka, .p-ok .kropka { background: var(--success); }
 .s-w_realizacji .kropka, .p-wait .kropka { background: var(--warning); }
 .s-anulowane .kropka, .p-bad .kropka { background: var(--danger); }
@@ -511,7 +511,7 @@ a.back { display: inline-block; margin-top: 16px; }
 .werd b { font-weight: 600; }
 .werd i { font-style: normal; font-size: 12px; opacity: .55; }
 .werd.w-ok b { color: var(--success); }
-.werd.w-wa b { color: var(--caramel-600); }
+.werd.w-wa b { color: var(--accent-600); }
 .werd.w-no b { color: var(--danger); }
 .werd:hover b { text-decoration: underline; }
 
@@ -522,7 +522,7 @@ a.back { display: inline-block; margin-top: 16px; }
    qui est aussi bien : on diagnostique une commande, pas douze. */
 tr.szuflada { display: none; }
 tr.szuflada:target { display: table-row; }
-tr.szuflada > td { padding: 0 12px 14px !important; background: var(--cream-50);
+tr.szuflada > td { padding: 0 12px 14px !important; background: var(--paper-50);
                    border-bottom: 2px solid var(--border-default); }
 .karta > .szuflada { display: none; }
 .karta > .szuflada:target { display: block; }
@@ -596,8 +596,8 @@ table.zam2 .ruch .etap.glowny { min-height: 34px; font-size: 13px; width: 100%; 
 .tablica .kol { background: var(--surface-card); border: 1px solid var(--border-subtle);
   border-radius: 14px; box-shadow: var(--shadow-xs); overflow: hidden; padding: 0; margin: 0; }
 .tablica .kol > header { display: flex; align-items: center; justify-content: space-between;
-  padding: 11px 14px; background: var(--cream-50); border-bottom: 1px solid var(--border-default); }
-.tablica .kol.pilne > header { background: color-mix(in srgb, var(--accent) 20%, var(--cream-50)); }
+  padding: 11px 14px; background: var(--paper-50); border-bottom: 1px solid var(--border-default); }
+.tablica .kol.pilne > header { background: color-mix(in srgb, var(--accent) 20%, var(--paper-50)); }
 .tablica .kol > header b { font-size: 14px; color: var(--text-strong); }
 .tablica .kol > header .ile { font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); }
 .tablica .tresc { padding: 10px; display: flex; flex-direction: column; gap: 9px; }
@@ -615,7 +615,7 @@ table.zam2 .ruch .etap.glowny { min-height: 34px; font-size: 13px; width: 100%; 
   font-size: 12px; line-height: 1.35; text-decoration: none; }
 .karta .stop .kropka { width: 7px; height: 7px; border-radius: 50%; flex: none; margin-top: 4px; }
 .karta .stop.w-no { color: var(--danger); } .karta .stop.w-no .kropka { background: var(--danger); }
-.karta .stop.w-wa { color: var(--caramel-600); } .karta .stop.w-wa .kropka { background: var(--warning); }
+.karta .stop.w-wa { color: var(--accent-600); } .karta .stop.w-wa .kropka { background: var(--warning); }
 .karta form { margin: 9px 0 0; }
 .karta .etap.glowny { width: 100%; min-height: 38px; font-size: 14px; }
 .karta .szuflada { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border-subtle); }
@@ -738,20 +738,22 @@ details.usun-konto[open] > summary { margin-bottom: 8px; }
    Les jetons d'abord : les feuilles propres à chaque écran (Wygląd, Audyt,
    Klienci…) lisent --border-subtle, --shadow-xs, --surface-raised : en les
    redéfinissant ici, elles prennent le nouvel habit sans être réécrites.
+
+   LES VALEURS VIENNENT DU DESIGN SYSTEM DE LA BOUTIQUE (--bo-*, groupe
+   « couleurs » du contrat) : la console est la même pour toutes les
+   boutiques, ses neutres sont ceux de la marque — chauds chez Szoko, froids
+   chez MyCobotBuddy. Ici on ne fait que les brancher.
    =========================================================================== */
 :root {
-  --bg-page-alt:    #F5F3F0;
-  --surface-raised: #F7F5F2;
-  --surface-sunken: #EFEBE6;
-  --border-subtle:  #E9E3DB;
-  --border-default: #D9CFC3;
-  --shadow-xs: 0 1px 2px rgba(46, 22, 12, .04), 0 3px 14px rgba(46, 22, 12, .05);
-  --bo-side:  #FBFAF8;
-  --bo-fill:  #EFEBE6;   /* bouton secondaire, pastilles, contrôle segmenté */
-  --bo-fill-hover: #E7E1D9;
-  --bo-hover: rgba(46, 22, 12, .05);
-  --bo-on:    rgba(46, 22, 12, .085);
-  --bo-link:  color-mix(in srgb, var(--caramel-600) 86%, black);
+  --bg-page-alt:    var(--bo-page);
+  --surface-raised: var(--bo-raised);
+  --surface-sunken: var(--bo-sunken);
+  --border-subtle:  var(--bo-line-subtle);
+  --border-default: var(--bo-line);
+  --shadow-xs: 0 1px 2px rgba(var(--shadow-tint), .04), 0 3px 14px rgba(var(--shadow-tint), .05);
+  --bo-hover: rgba(var(--shadow-tint), .05);
+  --bo-on:    rgba(var(--shadow-tint), .085);
+  --bo-link:  color-mix(in srgb, var(--accent-600) 86%, black);
 }
 body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
@@ -825,25 +827,25 @@ input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:f
 button { border-radius: 999px; border-color: transparent; background: var(--bo-fill); color: var(--text-strong);
          padding-left: 16px; padding-right: 16px; transition: filter .12s, background .12s; }
 button:hover:not([disabled]) { filter: brightness(.97); }
-button.primary { background: var(--brand); border-color: var(--brand); color: #FFFFFF; }
+button.primary { background: var(--action); border-color: var(--action); color: var(--on-action); }
 button.ghost { background: transparent; border-color: var(--border-default); }
 a.btn { border-radius: 999px; border-color: transparent; background: var(--bo-fill); padding-left: 16px; padding-right: 16px; }
 a.btn.ghost { background: transparent; border-color: var(--border-default); }
-a.btn--brand { background: var(--brand); border-color: var(--brand); color: #FFFFFF; }
+a.btn--brand { background: var(--action); border-color: var(--action); color: var(--on-action); }
 .field > span { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; color: var(--text-strong); }
 .field .hint { color: var(--text-muted); }
 
 /* --- Onglets, files, vues --------------------------------------------------- */
 .tabs a { border: 0; background: var(--bo-fill); font-weight: 600; }
-.tabs a.on { background: var(--brand); color: #FFFFFF; }
+.tabs a.on { background: var(--brand); color: var(--on-brand); }
 .kolejki a { border: 0; border-radius: 14px; box-shadow: var(--shadow-xs); }
 .kolejki a b { font-family: var(--font-sans); font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums; }
 .kolejki a span { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 500; }
-.kolejki a.on { background: var(--brand); color: #FFFFFF; }
-.kolejki a.on span { color: color-mix(in srgb, #FFFFFF 78%, transparent); }
+.kolejki a.on { background: var(--brand); color: var(--on-brand); }
+.kolejki a.on span { color: color-mix(in srgb, var(--on-brand) 78%, transparent); }
 /* Le choix de la vue, en contrôle segmenté. */
 .widoki { background: var(--bo-fill); border: 0; border-radius: 10px; }
-.widoki a.on { box-shadow: 0 1px 3px rgba(46, 22, 12, .12); }
+.widoki a.on { box-shadow: 0 1px 3px rgba(var(--shadow-tint), .12); }
 .tablica .kol { border: 0; border-radius: 18px; }
 .tablica .kol > header { background: transparent; border-bottom-color: var(--border-subtle); }
 .tablica .kol.pilne > header { background: color-mix(in srgb, var(--accent) 12%, transparent); }
@@ -875,8 +877,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--brand); }
   /* Les identifiants qu'on recopie (n° de commande, NIP) restent en chasse
      fixe — celle du système, plus nette que DM Mono à cette taille. */
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, monospace;
-  --text-body:  #2F231C;
-  --text-muted: #5F5045;     /* 7:1 sur blanc (était #7C6A5D, 5:1) */
+  --text-body:  var(--bo-text);
+  --text-muted: var(--bo-text-muted);   /* Szoko : 7:1 sur blanc */
 }
 body {
   font-family: var(--bo-font);

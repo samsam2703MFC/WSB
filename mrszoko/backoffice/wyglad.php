@@ -61,7 +61,11 @@ $dom    = wsm_theme_is_default($t);
 $zmien  = 0;
 foreach (wsm_theme_defaults() as $k => $d) if (strcasecmp((string) $t[$k], $d) !== 0) $zmien++;
 
-$css = <<<CSS
+// Les échantillons de police sont RÉELS : les @font-face du design system de
+// la boutique (ds.php), pas seulement ceux de la console — chez MyCobotBuddy,
+// Inter et Archivo ne sont déclarées que là.
+$dsFonts = '../shop/' . wsm_ds_path('fonts.css');
+$css = "@import url('" . $dsFonts . "');\n" . <<<CSS
   .wyg-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
   @media (min-width: 1100px) { .wyg-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
   .wyg-fonty { display: grid; gap: 8px; margin: 6px 0 14px; }

@@ -151,7 +151,7 @@ console_head('Klienci', $me, <<<'CSS'
   .chart .bar { display: flex; flex-direction: column; justify-content: flex-end;
                 align-items: center; height: 100%; flex: 1 1 0; min-width: 0; }
   .chart .fill { display: block; width: 70%; min-height: 0; }
-  .chart .fill.nou { background: var(--caramel-400); border-radius: 3px 3px 0 0; }
+  .chart .fill.nou { background: var(--accent-400); border-radius: 3px 3px 0 0; }
   .chart .fill.fid { background: var(--brand); }
   .chart .lbl { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted);
                 margin-top: 5px; white-space: nowrap; }
@@ -319,7 +319,7 @@ console_crumbs($fiche
   </div><div class="scale"><span><?= h(pln($maxNvr)) ?></span><span>0</span></div></div>
   <p class="legend">
     <span><i style="background:var(--brand)"></i>Wracający klienci</span>
-    <span><i style="background:var(--caramel-400)"></i>Pierwszy zakup</span>
+    <span><i style="background:var(--accent-400)"></i>Pierwszy zakup</span>
   </p>
   <?php endif; ?>
 

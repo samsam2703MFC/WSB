@@ -1,0 +1,41 @@
+/* MyCobotBuddy — typographie (spécification §4).
+   Archivo pour TOUS les titres (graisse 600, approche −0,01em), Inter pour le
+   texte et l'interface, JetBrains Mono pour les valeurs et les données
+   tabulaires seulement. Archivo n'a pas de cyrillique : la pile retombe sur
+   la police système pour l'ukrainien. */
+:root {
+  --font-display: 'Archivo', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Échelle : la spécification nomme display / h1 / h2 / h3 / lg / base / sm / xs.
+     Le contrat compte en pixels ; on range chaque taille à sa place. */
+  --text-2xs: 0.75rem;    /* 12 px — plancher */
+  --text-xs:  0.75rem;    /* 12 px — labels, sur-titres */
+  --text-sm:  0.875rem;   /* 14 px */
+  --text-md:  1rem;       /* 16 px — base */
+  --text-lg:  1.125rem;   /* 18 px */
+  --text-xl:  1.2rem;     /* h3 */
+  --text-2xl: 2rem;       /* h2 (max) */
+  --text-3xl: 2.5rem;     /* h1 (max) */
+  --text-4xl: 3.25rem;    /* display — titre du haut de page (max) */
+
+  /* Graisses 400 / 500 / 600 / 700 : les titres sont en 600, pas plus. */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extra:    600;
+
+  /* Interlignes : tight 1.15 (titres), snug 1.4, body 1.65. */
+  --leading-tight:   1.15;
+  --leading-snug:    1.4;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  /* Approche : tight −0,02em (gros titres, KPI), display −0,01em, wide 0,1em (sur-titres). */
+  --tracking-tight:   -0.02em;
+  --tracking-display: -0.01em;
+  --tracking-wide:    0.04em;
+  --tracking-caps:    0.1em;
+}

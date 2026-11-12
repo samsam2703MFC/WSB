@@ -1,0 +1,8 @@
+/* MyCobotBuddy — espacements (spécification §5).
+   La spécification compte en pas de 8 px (8 / 16 / 24 / 40 / 64) ; la grille
+   du code est de 4 px et ses multiples de 8 tombent juste. On garde donc la
+   grille du contrat (défauts) et on ne pose ici que la largeur du contenu :
+   1120 px. Sections : 64 px de respiration verticale (theme.css). */
+:root {
+  --container: 1120px;
+}

@@ -124,7 +124,7 @@ is verified by `php-api/tests/e2e_delivery.php` (23 assertions, all green).
 ## Brand — Mister Szoko design system
 
 The Mister Szoko design system (full Claude Design handoff: tokens, components,
-prototypes) lives at `../design-system/`. See `../README.md`.
+prototypes) lives at `../../design-systems/szoko/`. See `../../design-systems/README.md`.
 
 ## Deployment
 

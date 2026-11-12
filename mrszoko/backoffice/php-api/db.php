@@ -4,6 +4,10 @@
 //  local SQLite mirror in dev/CI, and can bootstrap the schema on demand.
 // ============================================================================
 
+// Le design system de la boutique (logo, couleurs, polices) : la boutique, la
+// console et Wygląd en ont tous besoin, et tous passent par ici.
+require_once __DIR__ . '/ds.php';
+
 function wsm_config(): array {
     static $cfg = null;
     if ($cfg === null) $cfg = require __DIR__ . '/config.php';
@@ -707,8 +711,8 @@ function wsm_ensure_shop(PDO $pdo): void {
         'shop_visible' => ['TINYINT(1) NOT NULL DEFAULT 0', 'INTEGER NOT NULL DEFAULT 0'],
         'stock'        => ['INT NOT NULL DEFAULT 0',        'INTEGER NOT NULL DEFAULT 0'],
         'image_url'    => $txt(255),
-        'swatch_from'  => $txt(32, "'--choco-500'"),
-        'swatch_to'    => $txt(32, "'--choco-800'"),
+        'swatch_from'  => $txt(32, "'--brand-500'"),
+        'swatch_to'    => $txt(32, "'--brand-800'"),
         'origin'       => $txt(80),
         'cocoa'        => $txt(16),
         'unit_label'   => $txt(40),

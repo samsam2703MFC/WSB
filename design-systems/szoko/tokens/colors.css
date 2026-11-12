@@ -1,0 +1,146 @@
+/* Szoko Shop — Color system
+   Rooted in the logo's deep chocolate brown (#41281A).
+   Warm, edible palette: chocolate darks, cream neutrals, caramel + berry accents.
+
+   LES NOMS SONT CEUX DU CONTRAT (design-systems/contract.json), pas ceux du
+   chocolat. Le code de la boutique et de la console ne connaît que --brand-*,
+   --paper-*, --accent-*… : c'est ce qui permet à une autre boutique de porter
+   un autre design system sans toucher une ligne de code. Ici, --brand-700
+   VAUT le chocolat du logo ; chez MyCobotBuddy, il vaut un bleu marine.
+
+   Les anciens noms (--choco-*, --cream-*, --caramel-*…) restent en fin de
+   fichier, en ALIAS : les prototypes de ce dossier et les teintes produit déjà
+   enregistrées en base (swatch_from / swatch_to) les emploient encore. Le code
+   n'a plus le droit de s'en servir — tools/build-ds.php --check le refuse. */
+:root {
+  /* ---- Brand scale (chocolate) ---- */
+  --brand-950: #1C0D06;
+  --brand-900: #241009;
+  --brand-800: #2E160C;
+  --brand-700: #41281A; /* brand core, sampled from logo */
+  --brand-600: #5A3826;
+  --brand-500: #7A4E36;
+  --brand-400: #9C6B4E;
+  --brand-300: #BC9174;
+  --brand-200: #D8BCA3;
+  --brand-100: #ECDECE;
+
+  /* ---- Paper scale (cream — warm neutrals / surfaces) ---- */
+  --paper-50:  #FBF6EF; /* page background */
+  --paper-100: #F5ECDE;
+  --paper-200: #ECDECB;
+  --paper-300: #DEC9AC;
+  --paper-400: #C9AC86;
+
+  /* ---- Ink / true neutrals ---- */
+  --ink-900: #211712;
+  --ink-700: #4A3B31;
+  --ink-500: #7C6A5D;
+  --ink-300: #B6A899;
+  --white:   #FFFFFF;
+
+  /* ---- Accents ---- */
+  --accent-600: #A96A2C;
+  --accent-500: #C68A3C; /* warm gold caramel — primary accent */
+  --accent-400: #DDA556;
+  --highlight:  #E0B24A; /* foil / premium highlight */
+  --sale-strong: #8E2A45;
+  --sale:        #A93A57; /* raspberry pairing — sale / editorial pop */
+  --pistachio:   #7C8A4E; /* garnish green */
+
+  /* ---- Semantic (warm-tuned) ---- */
+  --success: #4E7C4A;
+  --warning: #C68A3C;
+  --danger:  #B0402E;
+  --info:    #5A6E86;
+
+  /* ================= Semantic aliases ================= */
+  --bg-page:        var(--paper-50);
+  --bg-page-alt:    var(--paper-100);
+  --bg-inverse:     var(--brand-800);
+  --surface-card:   var(--white);
+  --surface-raised: var(--paper-100);
+  --surface-sunken: var(--paper-200);
+
+  --text-strong:    var(--brand-900);
+  --text-body:      var(--ink-700);
+  --text-muted:     var(--ink-500);
+  --text-inverse:   var(--paper-50);
+  --text-on-accent: var(--white);
+
+  --border-subtle:  var(--paper-300);
+  --border-default: var(--paper-400);
+  --border-strong:  var(--brand-400);
+
+  --accent:         var(--accent-500);
+  --accent-hover:   var(--accent-600);
+  --accent-quiet:   var(--paper-200);
+
+  --brand:          var(--brand-700);
+  --brand-hover:    var(--brand-800);
+  --brand-quiet:    var(--brand-100);
+  --on-brand:       var(--white);   /* texte posé sur la marque ou sur un fond sombre */
+
+  /* Le bouton principal. Chez Szoko : la marque, texte blanc. */
+  --action:         var(--brand);
+  --action-hover:   var(--brand-hover);
+  --on-action:      var(--white);
+
+  --focus-ring:     var(--accent-500);
+  --price:          var(--brand-800);
+
+  /* ================= Surfaces de la boutique (habit « Apple ») ========== */
+  --paper:        #FFFFFF;   /* le papier — Wygląd → Tło strony le change */
+  --paper-soft:   #F7F3EE;   /* les bandes et panneaux gris chaud */
+  --hairline:     #EBE3D9;   /* les filets entre les lignes */
+  --hairline-soft: #EFE4D8;  /* le contour des vignettes du panier */
+  --field-line:   #D9CFC3;   /* le contour des cartes à cocher et des champs */
+  --chip:         #EFE9E1;   /* les pastilles et boutons discrets */
+  --track:        #E6DCD0;   /* la piste d'une barre de progression */
+  --track-strong: #CFC4B8;   /* une jauge pas encore remplie */
+  /* Les liens : l'accent assombri, 5,6:1 sur blanc au réglage d'origine. */
+  --link:       color-mix(in srgb, var(--accent-600) 86%, black);
+  --link-hover: color-mix(in srgb, var(--accent-600) 64%, black);
+
+  /* ================= La console (commune à toutes les boutiques, avec
+     les neutres de la marque) — gris chauds de l'habit « Apple » ========= */
+  --bo-page:        #F5F3F0;
+  --bo-raised:      #F7F5F2;
+  --bo-sunken:      #EFEBE6;
+  --bo-line-subtle: #E9E3DB;
+  --bo-line:        #D9CFC3;
+  --bo-side:        #FBFAF8;
+  --bo-fill:        #EFEBE6;   /* bouton secondaire, pastilles, contrôle segmenté */
+  --bo-fill-hover:  #E7E1D9;
+  --bo-text:        #2F231C;
+  --bo-text-muted:  #5F5045;   /* 7:1 sur blanc (était #7C6A5D, 5:1) */
+
+  /* Teintes des ombres et des voiles sur photo, en triplets r, g, b :
+     rgba(var(--shadow-tint), .08). Brun cacao chez Szoko, jamais gris. */
+  --shadow-tint: 46, 22, 12;
+  --scrim-tint:  43, 26, 18;
+
+  /* ================= Anciens noms — alias, pour les prototypes et les
+     teintes produit enregistrées en base. Interdits dans le code. ========= */
+  --choco-950: var(--brand-950);
+  --choco-900: var(--brand-900);
+  --choco-800: var(--brand-800);
+  --choco-700: var(--brand-700);
+  --choco-600: var(--brand-600);
+  --choco-500: var(--brand-500);
+  --choco-400: var(--brand-400);
+  --choco-300: var(--brand-300);
+  --choco-200: var(--brand-200);
+  --choco-100: var(--brand-100);
+  --cream-50:  var(--paper-50);
+  --cream-100: var(--paper-100);
+  --cream-200: var(--paper-200);
+  --cream-300: var(--paper-300);
+  --cream-400: var(--paper-400);
+  --caramel-600: var(--accent-600);
+  --caramel-500: var(--accent-500);
+  --caramel-400: var(--accent-400);
+  --gold-500:    var(--highlight);
+  --berry-600:   var(--sale-strong);
+  --berry-500:   var(--sale);
+}

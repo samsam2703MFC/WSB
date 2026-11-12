@@ -203,7 +203,7 @@ $css = <<<'CSS'
   .secnav a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px;
       border: 1px solid var(--border-default); background: var(--surface-card); text-decoration: none;
       font-size: 13px; color: var(--text-body); min-height: 34px; }
-  .secnav a.on { background: var(--brand); border-color: var(--brand); color: var(--cream-50); }
+  .secnav a.on { background: var(--brand); border-color: var(--brand); color: var(--paper-50); }
   .secnav a i { font-style: normal; font-family: var(--font-mono); font-size: 11px; opacity: .7; }
   .secnav a.gap i { color: var(--danger); opacity: 1; font-weight: 700; }
   .secnav a.on i { opacity: .85; }

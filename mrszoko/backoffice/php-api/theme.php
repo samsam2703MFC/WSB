@@ -31,51 +31,71 @@ declare(strict_types=1);
 const WSM_THEME_PREFIX = 'theme.';
 
 /**
- * LA BASE ET LE DÉFAUT. La base, c'est ce que tokens.css déclare (Mulish) :
- * ce que la page porte quand le thème n'imprime rien, et ce que la console
- * garde. Depuis l'habit « Apple » (fin octobre 2026), le défaut de la
- * boutique EST la base : Mulish partout, titres en gras serré, papier blanc.
- * Lora et Playfair Display — le défaut de début octobre — restent dans la
- * liste pour qui préfère l'habit précédent ; « Przywróć domyślne » ramène
- * à Mulish.
+ * LA BASE ET LE DÉFAUT VIENNENT DU DESIGN SYSTEM DE LA BOUTIQUE (ds.php →
+ * ds.json, clé « wyglad »). La base, c'est ce que tokens.css déclare : ce que
+ * la page porte quand le thème n'imprime rien. Chez Szoko, Mulish partout,
+ * papier blanc, marque chocolat ; chez MyCobotBuddy, Inter et Archivo, marque
+ * marine. « Przywróć domyślne » ramène au design system de la boutique, pas
+ * à celui d'une autre.
  */
-const WSM_THEME_FONT_BAZA = 'mulish';
+function wsm_theme_font_baza(): string {
+    return (string) wsm_ds()['wyglad']['font_body'];
+}
+
+/**
+ * Les boutons de la boutique sont-ils de la couleur d'ACCENT (texte foncé
+ * dessus, MyCobotBuddy) plutôt que de la couleur de marque (texte blanc,
+ * Szoko) ? ds.json → wyglad.przyciski = « akcent ». Ça change ce que l'écran
+ * dit de l'accent, et la couleur qu'il a le droit d'être.
+ */
+function wsm_theme_przyciski_akcent(): bool {
+    return ((string) (wsm_ds()['wyglad']['przyciski'] ?? 'marka')) === 'akcent';
+}
+
+/** La famille des titres que tokens.css déclare (--font-display). */
+function wsm_theme_font_head_baza(): string {
+    return (string) (wsm_ds()['wyglad']['font_head_baza'] ?? wsm_theme_font_baza());
+}
 
 /**
  * Les familles proposées : clé → [nom, pile CSS, étiquette lue par l'équipe].
- * Toutes HÉBERGÉES ICI (tools/fetch-fonts.sh), jamais chez Google : un
- * @font-face inutilisé ne coûte rien au visiteur, seule la famille choisie
- * est téléchargée.
+ * Celles que le design system de la boutique déclare (ds.json → « polices »)
+ * et HÉBERGE (ses fichiers de police, jamais chez Google) : un @font-face
+ * inutilisé ne coûte rien au visiteur, seule la famille choisie est
+ * téléchargée — et on ne propose jamais une famille dont les fichiers ne
+ * sont pas là.
  */
 function wsm_theme_fonts(): array {
-    return [
-        'mulish'   => ['Mulish',           "'Mulish', system-ui, sans-serif",    'Mulish — domyślna: czysta, nowoczesna (styl Apple)'],
-        'nunito'   => ['Nunito',           "'Nunito', system-ui, sans-serif",    'Nunito — zaokrąglona, przyjazna'],
-        'jost'     => ['Jost',             "'Jost', system-ui, sans-serif",      'Jost — geometryczna, nowoczesna'],
-        'lora'     => ['Lora',             "'Lora', Georgia, serif",             'Lora — szeryfowa, klasyczna (poprzedni tekst)'],
-        'playfair' => ['Playfair Display', "'Playfair Display', Georgia, serif", 'Playfair Display — szeryfowa, elegancka (poprzednie nagłówki)'],
-    ];
+    $out = [];
+    foreach ((array) wsm_ds()['polices'] as $k => $f) {
+        if (is_array($f) && count($f) >= 3) $out[(string) $k] = [(string) $f[0], (string) $f[1], (string) $f[2]];
+    }
+    return $out;
 }
 
 /**
  * Les réglages : clé → [étiquette, type, défaut, options, aide].
- * Les défauts sont ceux de l'habit en vigueur (couleurs du design system,
- * Mulish, papier blanc) : un thème vide, c'est la boutique telle qu'elle
- * est aujourd'hui.
+ * Les défauts sont ceux du design system de la boutique : un thème vide,
+ * c'est la boutique telle que son design system la dessine.
  */
 function wsm_theme_fields(): array {
     $fonts = [];
     foreach (wsm_theme_fonts() as $k => $f) $fonts[$k] = $f[2];
+    $w = wsm_ds()['wyglad'];
+    $head = (string) $w['font_head'];
     return [
-        'font_body'  => ['Czcionka tekstu', 'select', 'mulish', $fonts,
+        'font_body'  => ['Czcionka tekstu', 'select', (string) $w['font_body'], $fonts,
                          'Cały tekst sklepu: opisy, ceny, przyciski, stopka.'],
-        'font_head'  => ['Czcionka nagłówków', 'select', 'same', ['same' => 'Taka sama jak tekst (domyślnie)'] + $fonts,
+        'font_head'  => ['Czcionka nagłówków', 'select', $head,
+                         ['same' => 'Taka sama jak tekst' . ($head === 'same' ? ' (domyślnie)' : '')] + $fonts,
                          'Druga rodzina tylko wtedy, gdy ma KONTRASTOWAĆ — dwie podobne wyglądają jak pomyłka, nie jak zamysł.'],
-        'brand'      => ['Kolor marki', 'color', '#41281A', [],
+        'brand'      => ['Kolor marki', 'color', strtoupper((string) $w['brand']), [],
                          'Nagłówek strony głównej, stopka, ceny. Z niego wyliczają się jaśniejsze i ciemniejsze odcienie. Musi być ciemny — niesie jasny tekst.'],
-        'accent'     => ['Kolor akcentu', 'color', '#C68A3C', [],
-                         'Nadtytuły, paski postępu rabatu, odznaki — a w ciemniejszym odcieniu linki. Przyciski mają kolor marki. Nie może być pastelowy.'],
-        'bg'         => ['Tło strony', 'color', '#FFFFFF', [],
+        'accent'     => ['Kolor akcentu', 'color', strtoupper((string) $w['accent']), [],
+                         wsm_theme_przyciski_akcent()
+                           ? 'Przyciski, nadtytuły, paski postępu rabatu, odznaki. Przyciski niosą ciemny napis — akcent musi być dość jasny.'
+                           : 'Nadtytuły, paski postępu rabatu, odznaki — a w ciemniejszym odcieniu linki. Przyciski mają kolor marki. Nie może być pastelowy.'],
+        'bg'         => ['Tło strony', 'color', strtoupper((string) $w['bg']), [],
                          'Papier pod wszystkim — domyślnie biały, jak w makiecie „styl Apple”. Pasy i panele biorą z niego lekko ciepły odcień. Musi być jasny — tekst zostaje ciemny.'],
         'radius'     => ['Kształt narożników', 'select', 'lagodne',
                          ['ostre' => 'Ostre', 'lagodne' => 'Łagodne (obecne)', 'okragle' => 'Okrągłe'],
@@ -126,7 +146,12 @@ function wsm_theme_valide(string $key, $v, ?string &$why = null): ?string {
     // chaque couleur porte comme texte décide de ce qu'elle a le droit d'être.
     if ($key === 'brand' && $lum > 0.25)  { $why = 'Kolor marki musi być ciemny — niesie jasny tekst w nagłówku i stopce'; return null; }
     if ($key === 'bg' && $lum < 0.6)      { $why = 'Tło musi być jasne — ciemne tło zrobiłoby tekst nieczytelnym'; return null; }
-    if ($key === 'accent' && $lum > 0.45)  { $why = 'Kolor akcentu niesie biały napis na przyciskach — nie może być pastelowy'; return null; }
+    // Ce que l'accent porte dépend de la marque : chez Szoko les boutons sont
+    // de la couleur de marque et l'accent porte du blanc (badges) ; chez
+    // MyCobotBuddy les boutons SONT l'accent, avec un texte foncé dessus.
+    if ($key === 'accent' && wsm_theme_przyciski_akcent()) {
+        if ($lum < 0.25) { $why = 'Kolor akcentu niesie ciemny napis na przyciskach — musi być dość jasny'; return null; }
+    } elseif ($key === 'accent' && $lum > 0.45) { $why = 'Kolor akcentu niesie biały napis na przyciskach — nie może być pastelowy'; return null; }
     return $v;
 }
 
@@ -214,41 +239,44 @@ function wsm_theme_css(array $t): string {
 
     // Les polices se comparent à la BASE (ce que tokens.css déclare), pas au
     // défaut du thème : un défaut qui n'est pas la base doit être imprimé.
-    $baza = $fonts[WSM_THEME_FONT_BAZA];
+    // Le texte et les titres ont chacun leur base : chez Szoko la même
+    // famille, chez MyCobotBuddy Inter pour le texte et Archivo pour les titres.
+    $baza = $fonts[wsm_theme_font_baza()] ?? reset($fonts);
+    $bazaHead = $fonts[wsm_theme_font_head_baza()] ?? $baza;
     $body = $fonts[$t['font_body']] ?? $baza;
     $head = $t['font_head'] === 'same' ? $body : ($fonts[$t['font_head']] ?? $body);
     if ($body !== $baza) $vars['--font-sans'] = $body[1];
-    if ($head !== $baza) $vars['--font-display'] = $head[1];
+    if ($head !== $bazaHead) $vars['--font-display'] = $head[1];
 
     if (strcasecmp($t['brand'], $d['brand']) !== 0) {
         $b = $t['brand'];
-        $vars['--choco-700'] = $b;
-        $vars['--choco-800'] = $mix($b, 'black', 74);
-        $vars['--choco-900'] = $mix($b, 'black', 56);
-        $vars['--choco-950'] = $mix($b, 'black', 44);
-        $vars['--choco-600'] = $mix($b, 'white', 80);
-        $vars['--choco-500'] = $mix($b, 'white', 62);
-        $vars['--choco-400'] = $mix($b, 'white', 46);
-        $vars['--choco-300'] = $mix($b, 'white', 30);
-        $vars['--choco-200'] = $mix($b, 'white', 18);
-        $vars['--choco-100'] = $mix($b, 'white', 9);
+        $vars['--brand-700'] = $b;
+        $vars['--brand-800'] = $mix($b, 'black', 74);
+        $vars['--brand-900'] = $mix($b, 'black', 56);
+        $vars['--brand-950'] = $mix($b, 'black', 44);
+        $vars['--brand-600'] = $mix($b, 'white', 80);
+        $vars['--brand-500'] = $mix($b, 'white', 62);
+        $vars['--brand-400'] = $mix($b, 'white', 46);
+        $vars['--brand-300'] = $mix($b, 'white', 30);
+        $vars['--brand-200'] = $mix($b, 'white', 18);
+        $vars['--brand-100'] = $mix($b, 'white', 9);
     }
     if (strcasecmp($t['accent'], $d['accent']) !== 0) {
         $a = $t['accent'];
-        $vars['--caramel-500'] = $a;
-        $vars['--caramel-600'] = $mix($a, 'black', 84);
-        $vars['--caramel-400'] = $mix($a, 'white', 78);
+        $vars['--accent-500'] = $a;
+        $vars['--accent-600'] = $mix($a, 'black', 84);
+        $vars['--accent-400'] = $mix($a, 'white', 78);
     }
     if (strcasecmp($t['bg'], $d['bg']) !== 0) {
         $g = $t['bg'];
         // Le papier de l'habit « Apple » (shop.css) et ses panneaux suivent.
         $vars['--paper']      = $g;
-        $vars['--paper-soft'] = $mix($g, 'var(--choco-700)', 94);
-        $vars['--cream-50']  = $g;
-        $vars['--cream-100'] = $mix($g, 'var(--choco-700)', 95);
-        $vars['--cream-200'] = $mix($g, 'var(--choco-700)', 90);
-        $vars['--cream-300'] = $mix($g, 'var(--choco-700)', 80);
-        $vars['--cream-400'] = $mix($g, 'var(--choco-700)', 68);
+        $vars['--paper-soft'] = $mix($g, 'var(--brand-700)', 94);
+        $vars['--paper-50']  = $g;
+        $vars['--paper-100'] = $mix($g, 'var(--brand-700)', 95);
+        $vars['--paper-200'] = $mix($g, 'var(--brand-700)', 90);
+        $vars['--paper-300'] = $mix($g, 'var(--brand-700)', 80);
+        $vars['--paper-400'] = $mix($g, 'var(--brand-700)', 68);
     }
     if ($t['radius'] === 'ostre') {
         $vars += ['--radius-xs' => '2px', '--radius-sm' => '3px', '--radius-md' => '5px', '--radius-lg' => '8px',

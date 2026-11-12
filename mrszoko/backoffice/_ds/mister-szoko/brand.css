@@ -8,7 +8,7 @@
    (mrszoko/design-system/tokens/). Aucune valeur de marque n'est
    réécrite en dur ici — ce fichier ne fait que faire correspondre les
    jetons de la console (--color-*, --font-ui…) à ceux du design system
-   (--brand, --accent, --cream-*…). Pour faire évoluer la marque :
+   (--brand, --accent, --paper-*…). Pour faire évoluer la marque :
    modifier le design system, recopier tokens/, la console suit.
 
    Note : les jetons homonymes (--font-display, --radius-sm/md/lg,
@@ -44,11 +44,11 @@
   --color-border-secondary:     var(--border-default);
   --color-border-tertiary:      var(--border-subtle);
 
-  --color-on-abricot:           var(--choco-600);
-  --color-collection-border:    var(--caramel-600);
-  --color-collection-fill:      var(--gold-500);
-  --color-collection-icon:      var(--choco-800);
-  --color-popup:                var(--choco-600);
+  --color-on-abricot:           var(--brand-600);
+  --color-collection-border:    var(--accent-600);
+  --color-collection-fill:      var(--highlight);
+  --color-collection-icon:      var(--brand-800);
+  --color-popup:                var(--brand-600);
 
   /* Sémantiques réchauffées (aucun bleu ni rouge pur), exposées à la page */
   --color-success:      var(--success);
@@ -56,7 +56,7 @@
   --color-danger:       var(--danger);
   --color-danger-bg:    #FBEAE5;
   --color-warning:      var(--warning);
-  --color-warning-bg:   var(--cream-100);
+  --color-warning-bg:   var(--paper-100);
   --color-info:         var(--info);
   --color-info-bg:      #E8EBEF;
 

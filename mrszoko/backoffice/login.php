@@ -95,9 +95,17 @@ $titre = 'Logowanie — Konsola ' . wsm_brand_name();
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title><?= lg_h($titre) ?></title>
-<link rel="icon" href="img/logo.png">
+<?php
+// Le logo et les couleurs de la boutique, comme dans la console (console.php) :
+// le logo déposé dans Ustawienia, sinon celui du design system.
+$lgLogo = trim((string) (wsm_config()['shop']['logo_image'] ?? ''));
+$lgLogo = ($lgLogo === '' || preg_match('/^x{2,}$/i', $lgLogo)) ? '../shop/' . wsm_ds_logo_path()
+        : (str_starts_with($lgLogo, 'media/') ? '../shop/' . $lgLogo : $lgLogo);
+?>
+<link rel="icon" href="<?= lg_h($lgLogo) ?>">
 <link rel="stylesheet" href="_ds/mister-szoko/global.css">
 <link rel="stylesheet" href="_ds/mister-szoko/brand.css">
+<link rel="stylesheet" href="../shop/<?= lg_h(wsm_ds_path('colors.css')) ?>">
 <style>
   /* La page tient dans son propre style : elle doit s'afficher même si la
      feuille de la console manque, parce que c'est la seule page depuis
@@ -138,7 +146,7 @@ $titre = 'Logowanie — Konsola ' . wsm_brand_name();
 <body>
   <div class="box">
     <div class="mark">
-      <img src="img/logo.png" alt="">
+      <img src="<?= lg_h($lgLogo) ?>" alt="">
       <span><b>Konsola <?= lg_h(wsm_brand_name()) ?></b><span>Zaplecze sklepu</span></span>
     </div>
 

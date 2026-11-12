@@ -233,7 +233,7 @@ function wsm_seed(PDO $pdo): void {
     $driverId = [];
     foreach ([
         ['Marek Kowalski', 'BXL-Centre · Renault chłodnia', 'var(--brand)', 'Renault Master chłodnia', 'Bruxelles-Centre'],
-        ['Julien Dubois', 'Południe · Iveco Daily', 'var(--berry-600)', 'Iveco Daily', 'Południe'],
+        ['Julien Dubois', 'Południe · Iveco Daily', 'var(--sale-strong)', 'Iveco Daily', 'Południe'],
         ['Sofie Peeters', 'Wschód · Renault Kangoo', 'var(--success)', 'Renault Kangoo', 'Wschód'],
     ] as $d) {
         $driverId[$d[0]] = $ins('wsm_drivers', ['nom' => $d[0], 'info' => $d[1], 'color' => $d[2],
@@ -354,7 +354,7 @@ function wsm_seed_landing(PDO $pdo): void {
         VALUES (?,?,?,?,?,?,?,?,?,?)');
     foreach ($doc['products'] ?? [] as $p) {
         $pi->execute([$p['id'], $p['sort_order'] ?? 0,
-            $p['swatch_from'] ?? '--choco-900', $p['swatch_to'] ?? '--choco-700',
+            $p['swatch_from'] ?? '--brand-900', $p['swatch_to'] ?? '--brand-700',
             $p['fluidity'] ?? 3, $p['active'] ?? 1,
             $p['price_from_pln'] ?? null, $p['price_perkg_pln'] ?? null,
             $p['price_from_eur'] ?? null, $p['price_perkg_eur'] ?? null]);
@@ -416,7 +416,7 @@ function wsm_seed_shop(PDO $pdo): void {
         $shop = [
             'slug' => $p['slug'] ?? $p['id'], 'shop_visible' => 1, 'stock' => $p['stock'] ?? 0,
             'image_url' => $p['image_url'] ?? '',
-            'swatch_from' => $p['swatch_from'] ?? '--choco-500', 'swatch_to' => $p['swatch_to'] ?? '--choco-800',
+            'swatch_from' => $p['swatch_from'] ?? '--brand-500', 'swatch_to' => $p['swatch_to'] ?? '--brand-800',
             'origin' => $p['origin'] ?? '', 'cocoa' => $p['cocoa'] ?? '',
             'unit_label' => $p['unit_label'] ?? '', 'badge' => $p['badge'] ?? '',
             'sku' => $p['sku'] ?? '', 'ean' => $p['ean'] ?? '',

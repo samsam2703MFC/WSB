@@ -1,0 +1,27 @@
+{
+  "nom": "MyCobotBuddy",
+  "logo": "assets/logo.svg",
+  "theme_color": "#0A1C33",
+  "fichiers": ["tokens/colors.css", "tokens/typography.css", "tokens/spacing.css", "tokens/radius.css", "tokens/shadow.css", "tokens/motion.css", "tokens/fonts.css"],
+  "polices": {
+    "inter":   ["Inter",   "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif", "Inter — domyślna dla tekstu: czytelna, techniczna"],
+    "archivo": ["Archivo", "'Archivo', 'Inter', system-ui, sans-serif",                 "Archivo — domyślna dla nagłówków: zwarta, inżynierska"]
+  },
+  "wyglad": {
+    "font_body": "inter",
+    "font_head": "archivo",
+    "font_head_baza": "archivo",
+    "brand": "#0A1C33",
+    "accent": "#02C9A0",
+    "bg": "#F6F9F8",
+    "przyciski": "akcent"
+  },
+  "email": {
+    "tlo": "#F6F9F8",
+    "karta": "#FFFFFF",
+    "tekst": "#0A1C33",
+    "cichy": "#5C6B7A",
+    "akcent": "#05666F",
+    "linia": "#C8D7D4"
+  }
+}

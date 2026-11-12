@@ -193,7 +193,7 @@ $css = <<<CSS
   .poz .field { margin: 0; } .poz-pola { display: grid; gap: 6px; }
   @media (min-width: 900px) { .poz-pola.z-obrazem { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
   .media-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 8px; }
-  .media-pick figure { margin: 0; text-align: center; } .media-pick img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--cream-200); }
+  .media-pick figure { margin: 0; text-align: center; } .media-pick img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--paper-200); }
   .media-pick figcaption { font-size: 11px; line-height: 1.3; overflow-wrap: anywhere; margin-top: 4px; }
   .str-foto { display: block; max-width: 100%; max-height: 180px; border-radius: 10px; margin-bottom: 8px; }
   .podglad { width: 100%; height: 64vh; border: 1px solid var(--border-subtle); border-radius: 12px; background: #fff; }

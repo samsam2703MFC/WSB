@@ -107,26 +107,26 @@ console_head('Posty Facebook i Instagram', $me, <<<'CSS'
   .galeria-filtr { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
   .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; max-height: 360px; overflow: auto; padding: 2px; }
   .galeria label { position: relative; display: block; border-radius: 10px; overflow: hidden; border: 2px solid transparent; cursor: pointer; aspect-ratio: 1; background: var(--surface-raised); }
-  .galeria label:has(input:checked) { border-color: var(--brand, var(--choco-700)); }
+  .galeria label:has(input:checked) { border-color: var(--brand, var(--brand-700)); }
   .galeria img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .galeria input { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; accent-color: var(--choco-700); }
-  .galeria .nr { position: absolute; right: 6px; top: 6px; background: var(--choco-700); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 7px; display: none; }
+  .galeria input { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; accent-color: var(--brand-700); }
+  .galeria .nr { position: absolute; right: 6px; top: 6px; background: var(--brand-700); color: #fff; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 7px; display: none; }
   .galeria label:has(input:checked) .nr { display: block; }
   .tel { background: #fff; border: 1px solid var(--border-default); border-radius: 28px; padding: 14px; box-shadow: var(--shadow-sm); color: #111; }
   .tel .naglowek { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 14px; margin-bottom: 10px; }
-  .tel .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--choco-700); }
+  .tel .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--brand-700); }
   .tel .foto { aspect-ratio: 4 / 5; background: #f2f2f2 center / cover no-repeat; border-radius: 6px; display: grid; place-items: center; color: #999; font-size: 13px; }
   .tel .opis { font-size: 14px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 10px; max-height: 280px; overflow: auto; }
   .war { border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
   .war p { margin: 0 0 8px; white-space: pre-wrap; font-size: 14px; }
-  .ai { background: color-mix(in srgb, var(--caramel-500) 8%, var(--surface-card)); }
+  .ai { background: color-mix(in srgb, var(--accent-500) 8%, var(--surface-card)); }
   .mini { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; display: block; }
   .kal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
   .kal .dz { min-height: 108px; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 6px; background: var(--surface-card); font-size: 13px; }
   .kal .dz.inny { background: transparent; border-style: dashed; opacity: .55; }
-  .kal .dz.dzis { outline: 2px solid var(--caramel-500); }
+  .kal .dz.dzis { outline: 2px solid var(--accent-500); }
   .kal .nr { font-weight: 700; color: var(--text-strong); }
-  .kal .okazja { display: block; color: var(--berry-600, #8E2A45); font-weight: 600; font-size: 12px; margin: 2px 0; }
+  .kal .okazja { display: block; color: var(--sale-strong, #8E2A45); font-weight: 600; font-size: 12px; margin: 2px 0; }
   .kal .p { display: flex; gap: 6px; align-items: center; margin-top: 4px; text-decoration: none; color: var(--text-body); }
   .kal .p img { width: 26px; height: 26px; object-fit: cover; border-radius: 5px; }
   .kal .tyg { font-size: 12px; font-weight: 700; color: var(--text-muted); text-align: center; text-transform: uppercase; }

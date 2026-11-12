@@ -90,19 +90,15 @@ cp mrszoko/backoffice/*.php mrszoko/backoffice/console.css site/backoffice/
 cp -r mrszoko/landing/. site/landing/
 
 mkdir -p site/shop
-rsync -a --exclude 'router.php' --exclude 'serve.sh' mrszoko/shop/. site/shop/
+rsync -a --exclude 'router.php' --exclude 'serve.sh' --exclude '/ds' mrszoko/shop/. site/shop/
 cp mrszoko/shop/.htaccess site/shop/.htaccess
 mkdir -p site/shop/media && cp mrszoko/shop/media/.htaccess site/shop/media/.htaccess
 cp mrszoko/.htaccess site/.htaccess
 
-# Les jetons du design system, régénérés en UN fichier depuis la source.
-{
-  echo "/* Généré au déploiement depuis design-system/tokens/*.css — ne pas éditer. */"
-  for f in colors typography spacing radius shadow motion fonts; do
-    echo ""; echo "/* ---- $f ---- */"
-    grep -v "^@import" "mrszoko/design-system/tokens/$f.css"
-  done
-} > site/shop/tokens.css
+# Les design systems des boutiques (design-systems/<slug>/), compilés en UN
+# fichier chacun et CONTRÔLÉS : un jeton du contrat oublié, ou un nom hors
+# contrat dans le code, arrête le déploiement ici, avant le site.
+php tools/build-ds.php site/shop/ds || { echo "  design systems refusés"; exit 1; }
 
 cat > site/index.html <<'HTML'
 <!DOCTYPE html>
@@ -129,8 +125,8 @@ php -r '
 '
 test -s site/backoffice/login.php || { echo "  login.php absent : personne ne pourrait entrer"; exit 1; }
 grep -q 'login.php' site/backoffice/index.html || { echo "  index.html ne renvoie pas vers login.php"; exit 1; }
-test -s site/shop/tokens.css && grep -q -- '--choco-700' site/shop/tokens.css \
-  || { echo "  tokens.css régénéré vide ou incomplet"; exit 1; }
+test -s site/shop/ds/szoko/tokens.css && grep -q -- '--brand-700' site/shop/ds/szoko/tokens.css \
+  || { echo "  ds/szoko/tokens.css compilé vide ou incomplet"; exit 1; }
 # Les trois pièces des boutons de statut doivent partir ENSEMBLE : deux sur
 # trois, et l'écran répond 200 avec des pastilles qu'aucun pouce n'atteint.
 grep -q 'wsm_order_etapy' site/backoffice/api/invoice.php \
@@ -177,7 +173,7 @@ echo "  dwa widoki zamówień (lista + tablica) : obecne"
 # revenue une fois déjà par une régénération de fonts.css. Si son @font-face
 # reparaît, le site sert deux sans humanistes qui se ressemblent — le décalage
 # qu'on vient de retirer — et trois fichiers de police en plus.
-grep -q "Plus Jakarta Sans'" site/shop/tokens.css \
+grep -q "Plus Jakarta Sans'" site/shop/ds/szoko/tokens.css \
   && { echo "  Plus Jakarta Sans est revenue dans tokens.css — la marque n'a qu'une famille de texte"; exit 1; }
 grep -q "font-family: 'Plus Jakarta Sans'" site/backoffice/_ds/mister-szoko/tokens/fonts.css \
   && { echo "  Plus Jakarta Sans est revenue dans la console"; exit 1; }
@@ -257,9 +253,9 @@ echo "  slajdy, progi rabatowe, koszyk z przewoznikami (pliki + schemat) : obecn
 [ -f site/backoffice/wyglad.php ] && [ -f site/backoffice/api/theme.php ] \
   && grep -q 'theme_head()' site/shop/layout.php \
   && grep -q 'wsm_theme_head' site/shop/lib.php \
-  && grep -q "font-family: 'Lora'" site/shop/tokens.css \
-  && ls site/shop/fonts/lora-normal-*-latin-ext.woff2 site/shop/fonts/nunito-normal-*-latin-ext.woff2 \
-        site/shop/fonts/jost-normal-*-latin-ext.woff2 site/shop/fonts/playfair-display-normal-*-latin-ext.woff2 >/dev/null 2>&1 \
+  && grep -q "font-family: 'Lora'" site/shop/ds/szoko/tokens.css \
+  && ls site/shop/ds/szoko/fonts/lora-normal-*-latin-ext.woff2 site/shop/ds/szoko/fonts/nunito-normal-*-latin-ext.woff2 \
+        site/shop/ds/szoko/fonts/jost-normal-*-latin-ext.woff2 site/shop/ds/szoko/fonts/playfair-display-normal-*-latin-ext.woff2 >/dev/null 2>&1 \
   || { echo "  ecran Wyglad ou polices au choix incomplets dans l'assemblage"; exit 1; }
 echo "  wyglad sklepu (ekran + theme.php + witryna + czcionki) : obecne"
 grep -q 'wsm_crm_achats' site/backoffice/api/crm.php \

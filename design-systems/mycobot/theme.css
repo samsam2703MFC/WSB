@@ -1,0 +1,75 @@
+/* MyCobotBuddy — retouches de composants (spécification §6 et §7).
+   La boutique les imprime APRÈS shop.css : ce fichier ne change pas la
+   structure des pages, il change la façon dont les composants communs
+   s'habillent pour cette marque. Les couleurs viennent toujours des jetons —
+   Wygląd continue donc de s'appliquer par-dessus. */
+
+/* ---- Titres : Archivo 600, approche −0,01em -------------------------------- */
+h1, h2, h3, .tytul-2, .section-head h2, .card h3, .promise h2,
+.hero:not(.sek) h1, .hero:not(.sek) .slajd-h {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-display);
+}
+.hero:not(.sek) h1, .hero:not(.sek) .slajd-h {
+  font-size: clamp(2rem, 5vw, var(--text-4xl));
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ---- Sur-titres : 12 px, capitales, approche 0,1em, teal ; émeraude sur fond sombre */
+.eyebrow, .hero:not(.sek) .eyebrow, .eyebrow.accent, .product-buy .eyebrow, .kontakt-txt .eyebrow, .card-meta {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--teal-500);
+}
+.pro .eyebrow, .blok--ciemny .eyebrow, .foot-nl .eyebrow { color: var(--emerald-400); }
+
+/* ---- Boutons : rayon 10 px, 12 × 24 px ; UNE seule couleur d'action ------- */
+.btn { border-radius: var(--radius-md); padding: 12px 24px; letter-spacing: 0; }
+.btn--sm { padding: 8px 16px; }
+.btn--lg { padding: 14px 28px; }
+.btn--block { border-radius: var(--radius-md); }
+/* Secondaire : transparent, bordure 1 px, survol bordure marine. */
+.btn--ghost { background: transparent; border: 1px solid var(--border-default); color: var(--text-strong); }
+.btn--ghost:hover { background: transparent; border-color: var(--navy-800); }
+/* Sur une bande marine, le bouton reste le bouton d'action — jamais blanc. */
+.pro .btn--accent { background: var(--action); color: var(--on-action); }
+.pro .btn--accent:hover { background: var(--action-hover); }
+
+/* ---- Cartes : blanc, bordure 1 px, rayon 16 px, ombre carte ---------------
+   Survol = changement de bordure, JAMAIS d'agrandissement. */
+.card, .promise {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.card { transition: border-color var(--dur-base) var(--ease-standard); }
+.card:hover { transform: none; box-shadow: var(--shadow-card); border-color: var(--navy-800); }
+.card-media { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.kontakt-karta, .summary, .checkout-form fieldset { border-radius: var(--radius-lg); }
+.pro { border-radius: var(--radius-2xl); }
+
+/* ---- Pastilles des rayons : pilules -------------------------------------- */
+.rayons a { border-radius: var(--radius-pill); }
+
+/* ---- Badges : pilule, fond teinté ---------------------------------------- */
+.badge { border-radius: var(--radius-pill); background: var(--emerald-50); color: var(--emerald-800); }
+
+/* ---- Progression : piste neutre, remplissage au dégradé signature -------- */
+.prog-pasek i, .prog-pasek--dostawa i { background: var(--gradient-brand); }
+
+/* ---- Focus : contour cyan 2 px, décalé de 2 px --------------------------- */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--cyan-400);
+  outline-offset: 2px;
+}
+
+/* ---- Filet signature sous l'en-tête collant (3 px, dégradé) -------------- */
+.site-head { border-bottom: 0; }
+.site-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+                    background: var(--gradient-brand); pointer-events: none; }

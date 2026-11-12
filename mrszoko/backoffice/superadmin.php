@@ -673,7 +673,7 @@ console_head('Superadmin', $me, <<<'CSS'
   .chart .fill { display: block; width: 68%; min-height: 2px; border-radius: 3px 3px 0 0;
                  background: var(--brand); }
   .chart .fill.ok    { background: var(--success); }
-  .chart .fill.wait  { background: var(--caramel-400); }
+  .chart .fill.wait  { background: var(--accent-400); }
   /* Un mois pas encore facturable n'est pas un impayé : il se lit comme une
      estimation, hachuré, et non comme une somme qu'on attend. */
   .chart .fill.draft { background: repeating-linear-gradient(45deg,
@@ -842,7 +842,7 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Superadmin' => null]);
     <?= barres($serie) ?>
     <p class="legend">
       <span><i style="background:var(--success)"></i>Opłacone</span>
-      <span><i style="background:var(--caramel-400)"></i>Wystawione</span>
+      <span><i style="background:var(--accent-400)"></i>Wystawione</span>
       <span><i style="background:var(--border-default)"></i>Jeszcze niewystawione</span>
     </p>
 

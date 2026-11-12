@@ -22,10 +22,13 @@ dans le HTML initial et échoue s'il en manque.
 
 Trois décisions vont dans le même sens :
 
-- **`tokens.css` est assemblé, pas importé.** Une chaîne de `@import` oblige le
+- **Les jetons sont compilés, pas importés.** Une chaîne de `@import` oblige le
   navigateur à télécharger une feuille pour découvrir la suivante — quatre
   allers-retours avant le premier caractère à l'écran. Le fichier est régénéré
-  au déploiement depuis `design-system/tokens/`, il ne peut donc pas diverger.
+  au déploiement par `tools/build-ds.php` depuis le design system de la boutique
+  (`design-systems/<slug>/` → `ds/<slug>/tokens.css`) ; il ne peut donc pas
+  diverger. La boutique charge celui que sa configuration désigne
+  (`design_system`, défaut `szoko`) — voir `../../design-systems/README.md`.
 - **La police est demandée par un `<link>`**, précédé de deux `preconnect`, au
   lieu d'être cachée au fond d'une feuille de style.
 - **`shop.js` est en `defer` et n'est que du confort.** Sans lui, tout marche :

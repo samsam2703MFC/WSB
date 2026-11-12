@@ -8,13 +8,13 @@
 #  personne ne sait d'où il venait. Ce script est ce moyen.
 #
 #  Usage :  tools/fetch-fonts.sh
-#  Effet  :  réécrit design-system/fonts/*.woff2 et design-system/tokens/fonts.css
+#  Effet  :  réécrit design-systems/szoko/fonts/*.woff2 et design-systems/szoko/tokens/fonts.css
 #            puis recopie le tout vers la boutique, la landing et la console.
 # ============================================================================
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-DS="mrszoko/design-system"
+DS="design-systems/szoko"
 UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 # Les trois familles que typography.css utilise réellement. DM Serif Display a
 # été retirée de la marque : ne pas la remettre sans changer typography.css.

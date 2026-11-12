@@ -5,5 +5,9 @@
 set -e
 cd "$(dirname "$0")"
 PORT="${1:-8091}"
+# Les design systems sont COMPILÉS (jetons, polices, logo) dans ds/<slug>/ :
+# sans cette étape, la page n'aurait aucun style. WSM_DESIGN_SYSTEM choisit
+# celui de la boutique (défaut : szoko), comme config.local.php en production.
+php ../../tools/build-ds.php ds >/dev/null
 echo "Sklep Mister Szoko → http://localhost:${PORT}/"
 exec php -S "localhost:${PORT}" router.php

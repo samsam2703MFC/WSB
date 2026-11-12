@@ -208,7 +208,7 @@ if ($home === false || $home === '') {
        substr_count($h, '/media/abcdefabcdefabcdefabcdef.webp') >= 2 && str_contains($h, 'rel="icon" href="/media/abcdefabcdefabcdefabcdef.webp"'));
     $pdo->prepare("DELETE FROM wsm_settings WHERE cle = 'logo_image'")->execute();
     $h = $get();
-    ok('sans logo déposé, le logo d\'origine du dépôt', str_contains($h, 'assets/logo.png') && !str_contains($h, 'assets/logo.svg'));
+    ok('sans logo déposé, le logo du design system (Szoko : celui d\'origine)', str_contains($h, 'ds/szoko/logo.png') && !str_contains($h, 'logo.svg'));
 }
 
 // ---- Remise en place ----------------------------------------------------------------------

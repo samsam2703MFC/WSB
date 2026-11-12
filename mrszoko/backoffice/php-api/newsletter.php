@@ -183,7 +183,10 @@ function wsm_nl_zl(int $grosze): string {
  */
 function wsm_nl_render(PDO $pdo, array $nl, string $lang, array $dest, string $code, array &$manques = []): array {
     $lang = wsm_mkt_lang($lang);
-    $K = WSM_NL_KOLORY;
+    // Les couleurs de l'e-mail : celles du design system de la boutique s'il
+    // en donne (ds.json → « email »), sinon la palette d'origine. Un client
+    // de messagerie ne lit pas les variables CSS : il faut des #RRGGBB.
+    $K = array_replace(WSM_NL_KOLORY, array_intersect_key((array) (wsm_ds()['email'] ?? []), WSM_NL_KOLORY));
     $tr = $lang !== 'pl' ? (array) ($nl['tlumaczenia'][$lang] ?? []) : [];
     $T = function (string $pl, ?string $traduit, string $quoi) use ($lang, &$manques): string {
         if ($lang === 'pl' || trim($pl) === '') return $pl;
@@ -281,7 +284,7 @@ function wsm_nl_render(PDO $pdo, array $nl, string $lang, array $dest, string $c
     $pourquoi = str_replace('{sklep}', wsm_brand_name(), wsm_mkt_t($pdo, $lang, 'nl.footer_why',
         'Ta wiadomość przychodzi do Ciebie z powodu zapisu do newslettera {sklep} lub wcześniejszych zakupów w naszym sklepie.'));
     $partir = wsm_mkt_t($pdo, $lang, 'nl.footer_unsub', 'Wypisz się jednym kliknięciem');
-    $logo = wsm_nl_abs(wsm_shop_base_url() . '/assets/logo.png');
+    $logo = wsm_nl_abs(wsm_shop_base_url() . '/' . wsm_ds_logo_path());
 
     $html = '<!doctype html><html lang="' . $lang . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
           . '<title>' . htmlspecialchars($temat, ENT_QUOTES, 'UTF-8') . '</title></head>'

@@ -130,7 +130,7 @@ $stany = ['teraz' => ['on', 'widoczny teraz'], 'plan' => ['plan', 'zaplanowany']
 $css = <<<CSS
   .sl table td { vertical-align: middle; }
   .sl .strzalki form, .sl .inline-form { display: inline; } .sl .strzalki button { min-width: 36px; }
-  .sl .mini { width: 120px; aspect-ratio: 16 / 7; object-fit: cover; border-radius: 8px; background: var(--choco-800, #2e160c); display: block; }
+  .sl .mini { width: 120px; aspect-ratio: 16 / 7; object-fit: cover; border-radius: 8px; background: var(--brand-800, #2e160c); display: block; }
   .sl .mini--pusty { display: flex; align-items: center; justify-content: center; color: #f4e3c8; font-size: 11px; }
   .sl .bdg { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; white-space: nowrap; }
   .sl .bdg.on { background: #e3f1e3; color: #2f5d2f; } .sl .bdg.off { background: var(--surface-sunken); color: var(--text-muted); }

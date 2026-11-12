@@ -178,11 +178,27 @@ if (!function_exists('img_src')) {
     }
 }
 
-/** Le logo de la console et des documents : celui déposé pour la boutique, sinon celui d'origine. */
+/**
+ * Le logo de la console et des documents, au-dessus du rail : celui déposé
+ * pour la boutique (Ustawienia → Sklep), sinon celui de son design system.
+ * La console est la MÊME pour toutes les boutiques — le logo et les couleurs
+ * sont les deux seules choses qui changent de l'une à l'autre.
+ */
 function console_logo_src(): string {
     $l = trim((string) (wsm_config()['shop']['logo_image'] ?? ''));
-    if ($l === '' || preg_match('/^x{2,}$/i', $l)) return 'img/logo.png';
+    if ($l === '' || preg_match('/^x{2,}$/i', $l)) return '../shop/' . wsm_ds_logo_path();
     return img_src($l);
+}
+
+/**
+ * Les couleurs du design system de la boutique, posées APRÈS brand.css : la
+ * console garde sa structure, ses polices et ses espacements communs, et
+ * prend la palette de la marque. Suffixée d'une empreinte, comme console.css.
+ */
+function console_ds_colors_href(): string {
+    $rel = '../shop/' . wsm_ds_path('colors.css');
+    $f = __DIR__ . '/' . $rel;
+    return $rel . (is_file($f) ? '?v=' . substr(md5((string) filemtime($f) . filesize($f)), 0, 8) : '');
 }
 
 function console_api_dir(): string {
@@ -514,6 +530,7 @@ function console_head(string $title, array $me, string $extraCss = '', string $b
 <link rel="icon" href="<?= h(console_logo_src()) ?>">
 <link rel="stylesheet" href="_ds/mister-szoko/global.css">
 <link rel="stylesheet" href="_ds/mister-szoko/brand.css">
+<link rel="stylesheet" href="<?= h(console_ds_colors_href()) ?>">
 <link rel="stylesheet" href="<?= h(console_asset('console.css')) ?>">
 <?php if ($extraCss !== ''): ?><style><?= $extraCss ?></style><?php endif; ?>
 </head>

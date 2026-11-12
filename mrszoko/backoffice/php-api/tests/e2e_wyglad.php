@@ -59,20 +59,21 @@ ok('au défaut, la feuille est VIDE : la base fait foi, aucun octet pour rien', 
 ok('la balise est imprimée, pour qu\'un contrôle la trouve — et elle dit le défaut',
    str_contains(wsm_theme_head($pdo), '<style id="motyw">/* wygląd domyślny */</style>'));
 ok('la BASE du design system reste Mulish — la console porte le même habit',
-   WSM_THEME_FONT_BAZA === 'mulish' && str_contains($lire('mrszoko/design-system/tokens/typography.css'), "'Mulish'"));
+   wsm_theme_font_baza() === 'mulish' && wsm_theme_font_head_baza() === 'mulish'
+   && str_contains($lire('design-systems/szoko/tokens/typography.css'), "'Mulish'"));
 wsm_theme_save($pdo, ['font_body' => 'lora', 'font_head' => 'playfair'], 'test');
 ok('l\'ancien habit reste à un clic : Lora et Playfair Display — la feuille porte cette paire, et RIEN d\'autre',
    wsm_theme_css(wsm_theme_get($pdo, true)) === ":root{--font-sans:'Lora', Georgia, serif;--font-display:'Playfair Display', Georgia, serif;}",
    wsm_theme_css(wsm_theme_get($pdo, true)));
 wsm_theme_reset($pdo);
 $t = wsm_theme_get($pdo, true);
-$colors = $lire('mrszoko/design-system/tokens/colors.css');
+$colors = $lire('design-systems/szoko/tokens/colors.css');
 ok('la marque et l\'accent par défaut sont CEUX de colors.css — un thème vide est la boutique d\'aujourd\'hui',
    str_contains($colors, $t['brand']) && str_contains($colors, $t['accent']), [$t['brand'], $t['accent']]);
-// Le papier, lui, n'est plus la crème du design system : la boutique le pose
-// en blanc (shop.css, --paper) et le défaut du thème le dit.
-ok('… et le papier par défaut est le blanc que shop.css pose', $t['bg'] === '#FFFFFF'
-   && str_contains($lire('mrszoko/shop/shop.css'), '--paper: #FFFFFF'));
+// Le papier, lui, n'est plus la crème du design system : il est posé en
+// blanc (design system, --paper) et le défaut du thème le dit.
+ok('… et le papier par défaut est le blanc que le design system pose', $t['bg'] === '#FFFFFF'
+   && preg_match('/--paper:\s*#FFFFFF;/', $colors) === 1);
 
 // ---- 2. Refus ----------------------------------------------------------------------------
 echo "\n-- zapis: poprawne wchodzi, nieczytelne odpada i jest nazwane --\n";
@@ -110,12 +111,12 @@ wsm_theme_save($pdo, ['accent' => '#1F5F8B'], 'test');
 echo "\n-- arkusz: jetony przeliczone, nie wpisane na sztywno --\n";
 $t = wsm_theme_get($pdo, true);
 $css = wsm_theme_css($t);
-ok(':root redéfinit l\'accent', str_contains($css, '--caramel-500:#1F5F8B'), $css);
+ok(':root redéfinit l\'accent', str_contains($css, '--accent-500:#1F5F8B'), $css);
 ok('… et ses nuances se calculent dans le navigateur',
-   str_contains($css, '--caramel-600:color-mix(in srgb, #1F5F8B 84%, black)')
-   && str_contains($css, '--caramel-400:color-mix(in srgb, #1F5F8B 78%, white)'));
-ok('la marque, inchangée, n\'est pas touchée', !str_contains($css, '--choco-700'));
-ok('le papier, inchangé, non plus', !str_contains($css, '--cream-50'));
+   str_contains($css, '--accent-600:color-mix(in srgb, #1F5F8B 84%, black)')
+   && str_contains($css, '--accent-400:color-mix(in srgb, #1F5F8B 78%, white)'));
+ok('la marque, inchangée, n\'est pas touchée', !str_contains($css, '--brand-700'));
+ok('le papier, inchangé, non plus', !str_contains($css, '--paper-50'));
 ok('« taka sama jak tekst » : la police change le corps ET les titres',
    str_contains($css, "--font-sans:'Nunito', system-ui, sans-serif;")
    && str_contains($css, "--font-display:'Nunito', system-ui, sans-serif;"));
@@ -130,10 +131,10 @@ ok('une famille de titres distincte, le corps reste', str_contains($css, "--font
 wsm_theme_save($pdo, ['brand' => '#2A1A3E', 'bg' => '#F2F7F2', 'radius' => 'okragle'], 'test');
 $css = wsm_theme_css(wsm_theme_get($pdo, true));
 ok('la marque redéfinit toute la gamme de bruns, du plus sombre au plus clair',
-   str_contains($css, '--choco-700:#2A1A3E') && str_contains($css, '--choco-950:color-mix(in srgb, #2A1A3E 44%, black)')
-   && str_contains($css, '--choco-100:color-mix(in srgb, #2A1A3E 9%, white)'));
+   str_contains($css, '--brand-700:#2A1A3E') && str_contains($css, '--brand-950:color-mix(in srgb, #2A1A3E 44%, black)')
+   && str_contains($css, '--brand-100:color-mix(in srgb, #2A1A3E 9%, white)'));
 ok('le papier redéfinit les crèmes, teintées par la marque',
-   str_contains($css, '--cream-50:#F2F7F2') && str_contains($css, '--cream-300:color-mix(in srgb, #F2F7F2 80%, var(--choco-700))'));
+   str_contains($css, '--paper-50:#F2F7F2') && str_contains($css, '--paper-300:color-mix(in srgb, #F2F7F2 80%, var(--brand-700))'));
 ok('coins « okragle » : les boutons restent en pilule', str_contains($css, '--radius-lg:26px') && !str_contains($css, '--radius-pill'));
 ok('une valeur rangée en base qui ne passe plus la validation retombe au défaut',
    (function () use ($pdo) {
@@ -144,14 +145,20 @@ ok('une valeur rangée en base qui ne passe plus la validation retombe au défau
 
 // ---- 4. Les polices sont vraiment là -----------------------------------------------------
 echo "\n-- czcionki do wyboru naprawdę są na serwerze --\n";
-$fontsCss = $lire('mrszoko/design-system/tokens/fonts.css');
-$tokens   = $lire('mrszoko/shop/tokens.css');
+// La feuille que la boutique charge est COMPILÉE (tools/build-ds.php) : on la
+// compile ici, comme le déploiement, et on lit ce qui sortirait.
+$dsTmp = sys_get_temp_dir() . '/wsm-ds-wyglad-' . getmypid();
+shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg("$racine/tools/build-ds.php") . ' ' . escapeshellarg($dsTmp) . ' 2>&1');
+register_shutdown_function(fn() => shell_exec('rm -rf ' . escapeshellarg($dsTmp)));
+$fontsCss = $lire('design-systems/szoko/tokens/fonts.css');
+$tokens   = (string) @file_get_contents("$dsTmp/szoko/tokens.css");
+ok('la compilation des design systems a produit tokens.css', $tokens !== '');
 foreach (wsm_theme_fonts() as $k => $f) {
     $slug = strtolower(str_replace(' ', '-', $f[0]));
     ok("$f[0] : @font-face déclaré dans le design system", str_contains($fontsCss, "font-family: '$f[0]'"));
     ok("… et dans tokens.css, la feuille que la boutique charge", str_contains($tokens, "font-family: '$f[0]'"));
     ok("… avec ses fichiers livrés à la boutique (latin-ext : le polonais)",
-       glob("$racine/mrszoko/shop/fonts/$slug-normal-*-latin-ext.woff2") !== []);
+       glob("$dsTmp/szoko/fonts/$slug-normal-*-latin-ext.woff2") !== []);
     ok("… et à la console — les échantillons de Wygląd sont réels",
        glob("$racine/mrszoko/backoffice/_ds/mister-szoko/tokens/fonts/$slug-normal-*-latin-ext.woff2") !== []);
 }
@@ -207,7 +214,7 @@ if ($home === false || $home === '') {
     wsm_layout_reset($pdo, 'home');
     wsm_layout_toggle($pdo, 'home', 'pro'); wsm_layout_toggle($pdo, 'home', 'obietnice');
     $h1 = (string) @file_get_contents($base . '/?t=' . time(), false, $ctx);
-    ok('la page servie porte l\'accent', str_contains($h1, '--caramel-500:#1F5F8B'));
+    ok('la page servie porte l\'accent', str_contains($h1, '--accent-500:#1F5F8B'));
     ok('le bloc B2B est caché — et la page le dit', !str_contains($h1, 'id="pro"') && str_contains($h1, 'sekcja pro: ukryta'));
     ok('les promesses aussi', !preg_match('/class="promise[ "]/', $h1) && str_contains($h1, 'obietnice: ukryte'));
     ok('le catalogue, lui, est toujours là', str_contains($h1, 'id="katalog"'));
@@ -216,7 +223,7 @@ if ($home === false || $home === '') {
     if ($ukladAvant) $pdo->prepare("INSERT INTO wsm_settings (cle, val, secret, updated_at, updated_by) VALUES ('layout.home', ?, 0, ?, 'test')")->execute([$ukladAvant, date('Y-m-d H:i:s')]);
     $h0 = (string) @file_get_contents($base . '/?t=' . (time() + 1), false, $ctx);
     ok('après Przywróć, tout revient', str_contains($h0, 'id="pro"') && preg_match('/class="promise[ "]/', $h0) === 1
-       && str_contains($h0, '/* wygląd domyślny */') && !str_contains($h0, '--caramel-500:#1F5F8B'));
+       && str_contains($h0, '/* wygląd domyślny */') && !str_contains($h0, '--accent-500:#1F5F8B'));
 }
 
 // ---- Remise en place ----------------------------------------------------------------------

@@ -301,9 +301,9 @@ function theme_values(): array {
  */
 function logo_src(): string {
     $l = trim((string) (wsm_config()['shop']['logo_image'] ?? ''));
-    // Sans logo déposé : le logo historique de la maison (Mister Szoko),
-    // que l'équipe a voulu retrouver pour Szoko Shop.
-    if ($l === '' || preg_match('/^x{2,}$/i', $l)) return u('assets/logo.png');
+    // Sans logo déposé : celui du design system de la boutique (chez Szoko,
+    // le logo historique de la maison, que l'équipe a voulu retrouver).
+    if ($l === '' || preg_match('/^x{2,}$/i', $l)) return u(wsm_ds_logo_path());
     return media_src($l);
 }
 
@@ -814,8 +814,8 @@ function product_visual(array $p, string $class, string $sizes = ''): string {
         return '<img class="' . e($class) . '" src="' . e(media_src((string) $p['image'])) . '" alt="' . e($p['name'])
              . '" loading="lazy" decoding="async"' . ($sizes ? ' sizes="' . e($sizes) . '"' : '') . '>';
     }
-    $style = 'background:radial-gradient(120% 120% at 30% 20%, var(' . e($p['from'] ?: '--choco-500')
-           . '), var(' . e($p['to'] ?: '--choco-800') . '))';
+    $style = 'background:radial-gradient(120% 120% at 30% 20%, var(' . e(wsm_ds_teinte($p['from'] ?: '--brand-500'))
+           . '), var(' . e(wsm_ds_teinte($p['to'] ?: '--brand-800')) . '))';
     $mark = $p['cocoa'] !== '' ? $p['cocoa'] : ($p['unit'] ?? '');
     return '<div class="' . e($class) . ' visual" style="' . $style . '" role="img" aria-label="' . e($p['name']) . '">'
          . ($mark !== '' ? '<span class="visual-mark">' . e($mark) . '</span>' : '') . '</div>';

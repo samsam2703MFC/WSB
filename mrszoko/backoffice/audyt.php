@@ -273,7 +273,7 @@ console_head('Audyt', $me, <<<'CSS'
   .chart .pct .plot { display: flex; align-items: flex-end; justify-content: center; }
   .chart .pct .fill { width: 72%; }
   .chart .seg { position: absolute; display: block; width: 34%; border-radius: 3px; }
-  .chart .seg.ma { left: 8%;  background: var(--caramel-400); }
+  .chart .seg.ma { left: 8%;  background: var(--accent-400); }
   .chart .seg.mb { left: 47%; background: var(--brand); }
   .chart .zero { position: absolute; left: 0; right: 0; height: 1px; background: var(--border-default); }
   .chart .pct { position: relative; }
@@ -467,7 +467,7 @@ $mult = number_format((float) $wyc['multiple'], 1, ',', ' ');
         ['label' => $prev['label_curr'] . ' (progn.)', 'a' => (int) $prev['forecast']['margin'], 'b' => (int) $prev['forecast']['result']],
       ], fn($v) => pln((int) $v)) ?>
   <p class="legend">
-    <span><i style="background:var(--caramel-400)"></i>Marża brutto</span>
+    <span><i style="background:var(--accent-400)"></i>Marża brutto</span>
     <span><i style="background:var(--brand)"></i>Wynik po kosztach dostawy</span>
   </p>
   <?php if ($prev['prev']['result'] != 0): ?>
@@ -487,7 +487,7 @@ $mult = number_format((float) $wyc['multiple'], 1, ',', ' ');
     <?= graph_paire(array_map(fn($m) => ['label' => $m['label'], 'a' => $m['margin'], 'b' => $m['result']], $marge),
                     fn($v) => pln((int) $v)) ?>
     <p class="legend">
-      <span><i style="background:var(--caramel-400)"></i>Marża brutto</span>
+      <span><i style="background:var(--accent-400)"></i>Marża brutto</span>
       <span><i style="background:var(--brand)"></i>Po kosztach dostawy</span>
     </p>
   </div>
@@ -521,7 +521,7 @@ $mult = number_format((float) $wyc['multiple'], 1, ',', ' ');
     <p class="why">Wszystkie zamówienia poza anulowanymi, także te czekające na płatność:
       tu mierzymy zainteresowanie, nie kasę.</p>
     <?= graph_bars(array_map(fn($m) => ['label' => $m['label'], 'v' => $m['orders']], $mois),
-                   fn($v) => (int) $v . ' szt.', 'var(--caramel-400)') ?>
+                   fn($v) => (int) $v . ' szt.', 'var(--accent-400)') ?>
   </div>
 
   <div class="panel<?= chart_wide(count($clients)) ?>">
@@ -536,7 +536,7 @@ $mult = number_format((float) $wyc['multiple'], 1, ',', ' ');
     <h2>Zamówienia dzień po dniu — 30 dni</h2>
     <p class="why">Rytm bieżący. Dziura w tym wykresie to dzień, w którym nikt nie kupił.</p>
     <?= graph_bars(array_map(fn($d) => ['label' => $d['label'], 'v' => $d['n']], $jours),
-                   fn($v) => (int) $v . ' szt.', 'var(--choco-500)') ?>
+                   fn($v) => (int) $v . ' szt.', 'var(--brand-500)') ?>
   </div>
 </div>
 
