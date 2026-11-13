@@ -118,6 +118,10 @@ CRON
 dire "pare-feu"
 if command -v ufw >/dev/null && [ "$SYSTEMD" = 1 ]; then
   ufw allow OpenSSH >/dev/null; ufw allow 'Apache Full' >/dev/null
+  # Le port SSH réel, s'il n'est pas 22 : ne jamais fermer la porte derrière soi.
+  for p in $( (sshd -T 2>/dev/null || true) | awk '$1=="port"{print $2}'); do
+    ufw allow "$p"/tcp >/dev/null
+  done
   ufw --force enable >/dev/null && echo "  SSH, HTTP et HTTPS ouverts ; le reste fermé"
 else
   echo "  ufw non activé (pas de systemd ici) — à faire à la main si besoin"

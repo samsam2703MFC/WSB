@@ -16,6 +16,12 @@ name: Nouveau serveur (wsm)
 #                      est sur le serveur, posée par serveur/installer.sh --cle)
 # Variable facultative : NOWY_SERWER_PORT (22 par défaut).
 #
+# OU, à défaut, les secrets de l'ancien déploiement SSH_HOST / SSH_USER /
+# SSH_PASSWORD (+ variable SSH_PORT) : GitHub se connecte alors avec ce compte
+# et lance serveur/amorcer.sh, qui installe le serveur s'il est VIERGE et crée
+# la boutique « sandbox » (sandbox.<ip>.sslip.io) au premier passage.
+# Variable facultative WSM_EMAIL : l'e-mail administrateur (consoles, Let's Encrypt).
+#
 # wsm-deploy ne peut lancer QUE wsm, et seulement version / deployer / valider /
 # liste / sante / retour : une clé volée ne crée ni ne supprime rien.
 
@@ -44,22 +50,68 @@ concurrency:
 jobs:
   wsm:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
+      - uses: actions/checkout@v4
+
       - name: Le serveur est-il configuré ?
         id: pret
         env:
           HOST: ${{ secrets.NOWY_SERWER_HOST }}
           KLUCZ: ${{ secrets.NOWY_SERWER_KLUCZ }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         run: |
-          if [ -z "$HOST" ] || [ -z "$KLUCZ" ]; then
-            echo "Secrets NOWY_SERWER_HOST / NOWY_SERWER_KLUCZ absents : rien à faire (voir serveur/README.md)."
-            echo "ok=0" >> "$GITHUB_OUTPUT"
+          if [ -n "$HOST" ] && [ -n "$KLUCZ" ]; then
+            echo "Accès par clé (wsm-deploy)."; echo "mode=cle" >> "$GITHUB_OUTPUT"
+          elif [ -n "$SSH_HOST" ] && [ -n "$SSH_PASSWORD" ]; then
+            echo "Accès par mot de passe (SSH_HOST / SSH_USER / SSH_PASSWORD)."; echo "mode=mdp" >> "$GITHUB_OUTPUT"
           else
-            echo "ok=1" >> "$GITHUB_OUTPUT"
+            echo "Aucun accès au serveur dans les secrets : rien à faire (voir serveur/README.md)."
+            echo "mode=" >> "$GITHUB_OUTPUT"
           fi
 
+      # ── Accès par mot de passe : amorcer.sh fait tout, en root (installation
+      #    si le serveur est vierge, version, sandbox, déploiement).
+      - name: Exécuter (mot de passe)
+        if: steps.pret.outputs.mode == 'mdp'
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          HOST: ${{ secrets.SSH_HOST }}
+          USR: ${{ secrets.SSH_USER }}
+          PORT: ${{ vars.SSH_PORT || '22' }}
+          EMAIL: ${{ vars.WSM_EMAIL || 'admin@example.pl' }}
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ inputs.action }}
+          BOUTIQUE: ${{ inputs.boutique }}
+          SHA: ${{ github.sha }}
+          BRANCHE: ${{ github.ref_name }}
+        run: |
+          sudo apt-get install -y -qq sshpass >/dev/null
+          USR="${USR:-root}"
+          O=(-p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -o ServerAliveInterval=30)
+          IP=$(getent ahostsv4 "$HOST" | awk 'NR==1{print $1}')
+          if [ "$EVENT" = push ]; then A=push; else A="${ACTION:-liste}"; fi
+          if [ "$A" = deployer ] || [ "$A" = retour ]; then
+            [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide"; exit 1; }
+          fi
+          sshpass -e scp -P "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            serveur/amorcer.sh serveur/installer.sh "$USR@$HOST:/tmp/"
+          # root : directement ; sinon sudo, le mot de passe sur l'entrée standard.
+          ARGS="--branche '$BRANCHE' --sha '$SHA' --email '$EMAIL' --ip '$IP' --action '$A' --boutique '$BOUTIQUE'"
+          printf '%s\n' "$SSHPASS" | sshpass -e ssh "${O[@]}" "$USR@$HOST" \
+            "if [ \$(id -u) = 0 ]; then bash /tmp/amorcer.sh $ARGS </dev/null; else sudo -S -p '' bash /tmp/amorcer.sh $ARGS; fi"
+          if [ "$A" = push ]; then
+            URL="http://sandbox.${IP//./-}.sslip.io/shop/"
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL" || true)
+            echo "Sandbox : $URL → HTTP $code"
+            echo "### Sandbox : $URL (HTTP $code)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # ── Accès par clé : wsm-deploy ne peut lancer QUE wsm (version, deployer,
+      #    valider, liste, sante, retour).
       - name: Clé SSH
-        if: steps.pret.outputs.ok == '1'
+        if: steps.pret.outputs.mode == 'cle'
         env:
           KLUCZ: ${{ secrets.NOWY_SERWER_KLUCZ }}
           HOST: ${{ secrets.NOWY_SERWER_HOST }}
@@ -69,8 +121,8 @@ jobs:
           printf '%s\n' "$KLUCZ" > ~/.ssh/wsm && chmod 600 ~/.ssh/wsm
           ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Exécuter
-        if: steps.pret.outputs.ok == '1'
+      - name: Exécuter (clé)
+        if: steps.pret.outputs.mode == 'cle'
         env:
           HOST: ${{ secrets.NOWY_SERWER_HOST }}
           PORT: ${{ vars.NOWY_SERWER_PORT || '22' }}
