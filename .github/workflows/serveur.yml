@@ -1,0 +1,96 @@
+name: Nouveau serveur (wsm)
+
+# Le NOUVEAU serveur multi-boutiques (serveur/README.md). L'ancien serveur
+# garde son propre déploiement (deploy.yml) tant qu'il tourne.
+#
+#   push sur main  → nouvelle version du code, déployée sur la boutique « sandbox »
+#   Actions → « Nouveau serveur (wsm) » → Run workflow :
+#       valider    → la version de la sandbox passe sur TOUTES les boutiques
+#       deployer   → une boutique précise (champ « boutique »)
+#       retour     → une boutique revient à sa version précédente
+#       liste      → l'état du serveur
+#
+# Secrets (Settings → Secrets and variables → Actions) :
+#   NOWY_SERWER_HOST   adresse IP ou nom du serveur
+#   NOWY_SERWER_KLUCZ  clé SSH PRIVÉE de l'utilisateur wsm-deploy (sa moitié publique
+#                      est sur le serveur, posée par serveur/installer.sh --cle)
+# Variable facultative : NOWY_SERWER_PORT (22 par défaut).
+#
+# wsm-deploy ne peut lancer QUE wsm, et seulement version / deployer / valider /
+# liste / sante / retour : une clé volée ne crée ni ne supprime rien.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Que faire"
+        type: choice
+        options: [valider, deployer, retour, liste]
+        default: liste
+      boutique:
+        description: "Boutique (pour deployer / retour)"
+        required: false
+        default: ""
+
+concurrency:
+  group: nouveau-serveur
+  cancel-in-progress: false
+
+jobs:
+  wsm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Le serveur est-il configuré ?
+        id: pret
+        env:
+          HOST: ${{ secrets.NOWY_SERWER_HOST }}
+          KLUCZ: ${{ secrets.NOWY_SERWER_KLUCZ }}
+        run: |
+          if [ -z "$HOST" ] || [ -z "$KLUCZ" ]; then
+            echo "Secrets NOWY_SERWER_HOST / NOWY_SERWER_KLUCZ absents : rien à faire (voir serveur/README.md)."
+            echo "ok=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Clé SSH
+        if: steps.pret.outputs.ok == '1'
+        env:
+          KLUCZ: ${{ secrets.NOWY_SERWER_KLUCZ }}
+          HOST: ${{ secrets.NOWY_SERWER_HOST }}
+          PORT: ${{ vars.NOWY_SERWER_PORT || '22' }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$KLUCZ" > ~/.ssh/wsm && chmod 600 ~/.ssh/wsm
+          ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Exécuter
+        if: steps.pret.outputs.ok == '1'
+        env:
+          HOST: ${{ secrets.NOWY_SERWER_HOST }}
+          PORT: ${{ vars.NOWY_SERWER_PORT || '22' }}
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ inputs.action }}
+          BOUTIQUE: ${{ inputs.boutique }}
+          SHA: ${{ github.sha }}
+        run: |
+          s() { ssh -i ~/.ssh/wsm -p "$PORT" -o BatchMode=yes "wsm-deploy@$HOST" "$@"; }
+          if [ "$EVENT" = push ]; then
+            s sudo /usr/local/sbin/wsm version "$SHA"
+            if s sudo /usr/local/sbin/wsm liste | awk '{print $1}' | grep -qx sandbox; then
+              s sudo /usr/local/sbin/wsm deployer sandbox
+            else
+              echo "Pas de boutique « sandbox » : version construite, rien déployé."
+            fi
+            exit 0
+          fi
+          case "$ACTION" in
+            valider)  s sudo /usr/local/sbin/wsm valider ;;
+            deployer) [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide"; exit 1; }
+                      s sudo /usr/local/sbin/wsm deployer "$BOUTIQUE" ;;
+            retour)   [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide"; exit 1; }
+                      s sudo /usr/local/sbin/wsm retour "$BOUTIQUE" ;;
+            *)        s sudo /usr/local/sbin/wsm liste ;;
+          esac

@@ -1,0 +1,115 @@
+/* Poszła w las — couleurs.
+   Source : « Poszła w las · Ola flora — design system » (fourni le 12/11/2026).
+
+   UNE couleur de champ, posée à plat, bord à bord : la sauge #CDCB9A (échantillonnée
+   sur le logo — la marque n'a pas de nuancier, la spécification le dit). UNE encre :
+   l'olive #465803, partagée avec Ola flora. Le reste est une teinte du champ ou un
+   neutre chaud. AUCUN dégradé, aucun bleu, aucun violet, aucun gris froid. Les
+   sections alternent papier, sauge et encre inversée.
+
+   L'échelle --brand-* est l'olive, éclaircie vers le blanc et assombrie vers le noir
+   (calculée, la marque n'en fournit pas). Contrastes vérifiés : olive 7,2:1 sur le
+   papier et 4,7:1 sur la sauge ; texte secondaire 8:1 et 5,3:1.
+
+   Les noms à gauche sont ceux du CONTRAT (generique/design-contract.json). */
+:root {
+  /* ================= La marque (spécification) ========================= */
+  --pwl-olive: #465803;   /* l'encre — logo, titres, boutons */
+  --pwl-sage:  #CDCB9A;   /* le champ — bandes pleine largeur */
+  --pwl-paper: #F5F4EC;   /* le papier */
+  --pwl-cream: #FBFAF4;   /* surfaces de carte, un cran au-dessus du papier */
+  /* Ola flora — même système, champ rose ; posés ici pour qui fera sa boutique. */
+  --of-pink:      #F1ACC0;
+  --of-raspberry: #730216;
+
+  /* ================= Contrat : échelle de marque (olive) =============== */
+  --brand-950: #1B2101;
+  --brand-900: #273002;   /* bandes d'encre inversée, pied de page */
+  --brand-800: #354202;
+  --brand-700: var(--pwl-olive);
+  --brand-600: #677630;
+  --brand-500: #859159;
+  --brand-400: #A3AC81;
+  --brand-300: #C0C6A9;
+  --brand-200: #DADECD;
+  --brand-100: #EDEEE6;
+
+  /* ================= Contrat : papier (vers la sauge) =================== */
+  --paper-50:  var(--pwl-paper);
+  --paper-100: #EBEAD8;
+  --paper-200: #E1E0C3;
+  --paper-300: var(--pwl-sage);
+  --paper-400: #ABAE74;
+
+  --ink-900: var(--brand-900);
+  --ink-700: var(--brand-800);
+  --ink-500: #4A4C33;          /* texte secondaire — encre pleine, jamais un gris transparent */
+  --ink-300: var(--paper-400);
+  --white:   #FFFFFF;
+
+  /* ================= Contrat : accent ===================================
+     Poszła w las n'a pas de seconde couleur : l'accent EST l'encre. La sauge
+     sert d'accent sur l'encre inversée (8,4:1 sur --brand-900). */
+  --accent-600: var(--pwl-olive);
+  --accent-500: var(--pwl-olive);
+  --accent-400: var(--pwl-sage);
+  --highlight:  var(--pwl-sage);
+
+  /* ================= Contrat : états — sourds, terreux ==================
+     Olive pour le succès, ocre pour l'avertissement, brique pour l'erreur.
+     Dans les écrans de service seulement, jamais dans la vitrine. */
+  --success: #5B7A2A;
+  --warning: #A86F12;
+  --danger:  #9A3B2A;
+  --info:    var(--ink-500);
+  --sale:    var(--danger);
+
+  /* ================= Contrat : rôles ==================================== */
+  --bg-page:        var(--pwl-paper);
+  --bg-page-alt:    var(--paper-100);
+  --surface-card:   var(--pwl-cream);
+  --surface-raised: var(--pwl-cream);
+  --surface-sunken: var(--paper-100);
+
+  --text-strong:    var(--pwl-olive);   /* titres : l'encre du logo */
+  --text-body:      var(--brand-800);
+  --text-muted:     var(--ink-500);
+  --text-on-accent: var(--pwl-paper);
+
+  /* Le bord de la maison est un trait d'encre de 2 px, pas une ombre. */
+  --border-subtle:  var(--paper-200);
+  --border-default: var(--pwl-olive);
+  --border-strong:  var(--brand-900);
+
+  --accent:         var(--accent-500);
+  --accent-hover:   var(--brand-800);
+  --accent-quiet:   var(--paper-100);
+
+  --brand:          var(--brand-700);
+  --brand-hover:    var(--brand-800);   /* le survol ASSOMBRIT, il n'éclaircit jamais */
+  --brand-quiet:    var(--brand-100);
+  --on-brand:       var(--pwl-paper);
+
+  --action:         var(--brand);
+  --action-hover:   var(--brand-hover);
+  --on-action:      var(--pwl-paper);
+
+  --focus-ring:     var(--pwl-olive);
+  --price:          var(--pwl-olive);
+
+  /* ================= Contrat : surfaces de la boutique ================== */
+  --paper:         var(--pwl-paper);
+  --paper-soft:    var(--pwl-sage);     /* LE champ : les bandes pleine largeur */
+  --hairline:      var(--paper-200);
+  --hairline-soft: var(--paper-200);
+  --field-line:    var(--pwl-olive);    /* champs : bord d'encre de 2 px (theme.css) */
+  --chip:          var(--paper-100);
+  --track:         var(--paper-200);
+  --track-strong:  var(--paper-400);
+  --link:          var(--pwl-olive);
+  --link-hover:    var(--brand-900);
+
+  /* Ombres teintées olive, et rares ; voiles d'encre chaude (modales seulement). */
+  --shadow-tint: 70, 88, 3;
+  --scrim-tint:  27, 33, 1;
+}

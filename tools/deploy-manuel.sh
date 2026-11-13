@@ -69,7 +69,7 @@ distant() { sshpass -e ssh $SSHOPT "$SSH_USER@$SSH_HOST" "$@"; }
 echo "══ 1/5 · assemblage ═══════════════════════════════════════════════════"
 rm -rf site && mkdir -p site/backoffice site/landing
 
-BO=mrszoko/backoffice
+BO=generique/backoffice
 cp -r "$BO"/_ds site/backoffice/
 mkdir -p site/backoffice/img && cp "$BO"/img/logo.png site/backoffice/img/
 cat > site/backoffice/index.html <<'HTML'
@@ -85,17 +85,17 @@ rsync -a --exclude 'data' --exclude '*.sqlite' "$BO"/php-api/ site/backoffice/ap
 # TOUT le PHP du répertoire, pas une liste blanche : sept écrans livrés ont
 # déjà été oubliés d'une liste tenue à la main, et sont restés morts en
 # production pendant des semaines.
-cp mrszoko/backoffice/*.php mrszoko/backoffice/console.css site/backoffice/
+cp generique/backoffice/*.php generique/backoffice/console.css site/backoffice/
 
-cp -r mrszoko/landing/. site/landing/
+cp -r generique/landing/. site/landing/
 
 mkdir -p site/shop
-rsync -a --exclude 'router.php' --exclude 'serve.sh' --exclude '/ds' mrszoko/shop/. site/shop/
-cp mrszoko/shop/.htaccess site/shop/.htaccess
-mkdir -p site/shop/media && cp mrszoko/shop/media/.htaccess site/shop/media/.htaccess
-cp mrszoko/.htaccess site/.htaccess
+rsync -a --exclude 'router.php' --exclude 'serve.sh' --exclude '/ds' generique/shop/. site/shop/
+cp generique/shop/.htaccess site/shop/.htaccess
+mkdir -p site/shop/media && cp generique/shop/media/.htaccess site/shop/media/.htaccess
+cp generique/.htaccess site/.htaccess
 
-# Les design systems des boutiques (design-systems/<slug>/), compilés en UN
+# Les design systems des boutiques (webshops/<slug>/design-system/), compilés en UN
 # fichier chacun et CONTRÔLÉS : un jeton du contrat oublié, ou un nom hors
 # contrat dans le code, arrête le déploiement ici, avant le site.
 php tools/build-ds.php site/shop/ds || { echo "  design systems refusés"; exit 1; }
@@ -113,7 +113,7 @@ echo "══ 2/5 · contrôles AVANT envoi ════════════�
 # Le rail est la seule source de vérité de ce qui doit exister. Un écran
 # ajouté au menu et oublié à la copie casse ICI, pas devant un client.
 php -r '
-  require_once "mrszoko/backoffice/console.php";
+  require_once "generique/backoffice/console.php";
   $manque = [];
   foreach (console_sections(["role" => "Centrala"]) as $items) {
     foreach (array_keys($items) as $f) {

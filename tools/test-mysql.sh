@@ -29,7 +29,7 @@
 set -u
 cd "$(dirname "$0")/.."
 RACINE=$(pwd)
-API=$RACINE/mrszoko/backoffice/php-api
+API=$RACINE/generique/backoffice/php-api
 ADMIN=${MYSQL_ADMIN:-mysql}
 OUT=${TMPDIR:-/tmp}/wsm-test-mysql
 mkdir -p "$OUT"
@@ -67,7 +67,7 @@ echo "== 4. serveurs sur MySQL"
 # « exec » : le PID retenu est celui de PHP, pas d'un sous-shell — sinon
 # l'arrêt final laissait les serveurs tourner et occuper les ports.
 PIDS=()
-(cd "$RACINE" && exec php -d opcache.enable=0 -S localhost:8091 -t mrszoko/shop mrszoko/shop/router.php > "$OUT/shop.log" 2>&1) & PIDS+=($!)
+(cd "$RACINE" && exec php -d opcache.enable=0 -S localhost:8091 -t generique/shop generique/shop/router.php > "$OUT/shop.log" 2>&1) & PIDS+=($!)
 (cd "$RACINE" && exec php -d opcache.enable=0 -S localhost:8093 -t mrszoko > "$OUT/root.log" 2>&1) & PIDS+=($!)
 (cd "$API" && exec php -S localhost:8090 index.php > "$OUT/api.log" 2>&1) & PIDS+=($!)
 trap 'kill "${PIDS[@]}" 2>/dev/null' EXIT

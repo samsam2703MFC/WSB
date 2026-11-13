@@ -42,7 +42,7 @@ se règlent par boutique dans le Siège.
 - Nom de marque en base (`wsm_brand_name()`), logo/images/clés réglables dans
   Ustawienia, secrets dans un `config.local.php` propre à l'installation.
 - **La commission automatique existe déjà** : `wsm_stripe_fee()`
-  (`mrszoko/backoffice/php-api/stripe.php`) calcule taux × base (+ TVA) et
+  (`generique/backoffice/php-api/stripe.php`) calcule taux × base (+ TVA) et
   l'envoie en `application_fee_amount` à chaque paiement. Le taux vit dans
   `platform.php`, lisible et modifiable par le seul superadmin.
 - Couplé à « mrszoko » : le déploiement (`deploy.yml`, ~70 × `/mrszoko`), le
@@ -179,7 +179,7 @@ commission, design system (existant ou nouveau à partir de `_neutre`).
 
 ## L'assistant de démarrage — FAIT (côté console)
 
-Livré : écran **Start sklepu** (`mrszoko/backoffice/start.php`, moteur
+Livré : écran **Start sklepu** (`generique/backoffice/start.php`, moteur
 `php-api/start.php`, test `tests/e2e_start.php`), juste sous le Pulpit, qui
 résume aussi l'avancement. Reste au Siège : afficher l'avancement de chaque
 boutique.
@@ -238,7 +238,7 @@ la nouvelle base, le retour arrière reste possible) ; une boutique peut être
 
 | Phase | Contenu | Fini quand |
 | --- | --- | --- |
-| **0a. Contrat de design — FAIT** | `contract.json` (125 jetons), code sans nom propre à Szoko, `design-systems/szoko/` + `design-systems/mycobot/`, compilation + contrôle dans les 3 déploiements, console aux couleurs de la boutique | Szoko identique au pixel près (34 captures, boutique + console, 2 largeurs) ; MyCobotBuddy habille tout le site et la console sans toucher au code |
+| **0a. Contrat de design — FAIT** | `contract.json` (125 jetons), code sans nom propre à Szoko, `webshops/szoko/design-system/` + `webshops/mycobot/design-system/`, compilation + contrôle dans les 3 déploiements, console aux couleurs de la boutique | Szoko identique au pixel près (34 captures, boutique + console, 2 largeurs) ; MyCobotBuddy habille tout le site et la console sans toucher au code |
 | **0b. Code générique** | chemin de base, nom de base et domaine en config, contenu « boutique vierge », `.htaccess` sans `/mrszoko` | une 2e boutique tourne sur le même serveur, montée à la main |
 | **1. Versions + ligne de commande** | `releases/ shops/`, `wsm-shop create/upgrade/rollback/backup/freeze`, Szoko migrée dans ce schéma | tout se fait en une commande |
 | **2. Siège v1** | registre, taux, tableau de bord, journal, « Nouvelle boutique » via l'agent, avancement de l'assistant (fait côté console) visible par boutique, **langues et transporteurs par pays** | mycobotpartner créée depuis l'écran, guidée jusqu'à l'ouverture |

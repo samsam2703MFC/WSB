@@ -42,7 +42,7 @@ jobs:
           rm -rf site && mkdir -p site/backoffice site/landing
 
           # -- Back-office → /mrszoko/backoffice --------------------------------
-          BO=mrszoko/backoffice
+          BO=generique/backoffice
           # LA CONSOLE DE FRANCHISE EXPORTÉE N'EST PLUS DÉPLOYÉE.
           #
           # Elle pesait 1,2 Mo de React plus six fichiers de script, et une
@@ -72,23 +72,23 @@ jobs:
           rsync -a --exclude 'data' --exclude '*.sqlite' "$BO"/php-api/ site/backoffice/api/
 
           # -- Landing → /mrszoko/landing ---------------------------------------
-          cp -r mrszoko/landing/. site/landing/
+          cp -r generique/landing/. site/landing/
 
           # -- Boutique → /mrszoko/shop -----------------------------------------
-          # Rendue par PHP depuis la base (voir mrszoko/shop/index.php). On ne
+          # Rendue par PHP depuis la base (voir generique/shop/index.php). On ne
           # copie pas les outils de développement : router.php et serve.sh ne
           # servent qu'au serveur intégré de PHP, qui n'existe pas ici.
           mkdir -p site/shop
-          rsync -a --exclude 'router.php' --exclude 'serve.sh' --exclude '/ds' mrszoko/shop/. site/shop/
-          cp mrszoko/shop/.htaccess site/shop/.htaccess
+          rsync -a --exclude 'router.php' --exclude 'serve.sh' --exclude '/ds' generique/shop/. site/shop/
+          cp generique/shop/.htaccess site/shop/.htaccess
 
-          # LES DESIGN SYSTEMS DES BOUTIQUES (design-systems/<slug>/), compilés
+          # LES DESIGN SYSTEMS DES BOUTIQUES (webshops/<slug>/design-system/), compilés
           # en un seul fichier chacun — la page n'a pas à découvrir six feuilles
           # en cascade avant d'afficher un texte — et CONTRÔLÉS : un jeton du
           # contrat oublié par une marque, ou un nom hors contrat dans le code
           # (--choco-700…), arrête le déploiement ICI, avant le serveur. La
           # boutique charge celui de sa configuration (design_system, défaut
-          # szoko) : voir mrszoko/backoffice/php-api/ds.php.
+          # szoko) : voir generique/backoffice/php-api/ds.php.
           php tools/build-ds.php site/shop/ds
           test -s site/shop/ds/szoko/tokens.css && grep -q -- '--brand-700' site/shop/ds/szoko/tokens.css \
             || { echo "ds/szoko/tokens.css compilé vide ou incomplet"; exit 1; }
@@ -109,7 +109,7 @@ jobs:
           # On copie donc TOUT le PHP de ce répertoire. Les sous-répertoires
           # (php-api/) sont traités plus haut par leur propre rsync ; le glob
           # ne descend pas.
-          cp mrszoko/backoffice/*.php mrszoko/backoffice/console.css site/backoffice/
+          cp generique/backoffice/*.php generique/backoffice/console.css site/backoffice/
 
           # ET ON VÉRIFIE QUE LE RAIL NE MÈNE NULLE PART DE VIDE. Le menu est
           # la seule source de vérité de ce qui doit exister : chaque entrée
@@ -117,7 +117,7 @@ jobs:
           # au rail et oublié à la copie casse ici, au build, et pas devant un
           # client trois semaines plus tard.
           php -r '
-            require_once "mrszoko/backoffice/console.php";
+            require_once "generique/backoffice/console.php";
             $manque = [];
             foreach (console_sections(["role" => "Centrala"]) as $items) {
               foreach (array_keys($items) as $f) {
@@ -143,10 +143,10 @@ jobs:
           # son .htaccess : rsync tourne sans --delete, donc les photos déjà
           # présentes sur le serveur survivent au déploiement.
           mkdir -p site/shop/media
-          cp mrszoko/shop/media/.htaccess site/shop/media/.htaccess
+          cp generique/shop/media/.htaccess site/shop/media/.htaccess
 
           # -- En-têtes de sécurité à la racine du site --------------------------
-          cp mrszoko/.htaccess site/.htaccess
+          cp generique/.htaccess site/.htaccess
 
           # -- /mrszoko/ → la boutique, qui EST désormais le site public --------
           # La page de marque et la boutique n'en font plus qu'une : /landing

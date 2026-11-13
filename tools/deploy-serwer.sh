@@ -72,7 +72,7 @@ cd "$TRAVAIL/depot"
 echo "  $(git log -1 --format='%h %s' | cut -c1-72)"
 
 echo "══ 2/6 · assemblage ═══════════════════════════════════════════════════"
-BO=mrszoko/backoffice
+BO=generique/backoffice
 rm -rf site && mkdir -p site/backoffice site/landing site/shop/media
 cp -r "$BO"/_ds site/backoffice/
 mkdir -p site/backoffice/img && cp "$BO"/img/logo.png site/backoffice/img/
@@ -92,17 +92,17 @@ mkdir -p site/backoffice/api
 # TOUT le PHP du répertoire, jamais une liste blanche : sept écrans livrés ont
 # déjà été oubliés d'une liste tenue à la main et sont restés morts des
 # semaines en production.
-cp mrszoko/backoffice/*.php mrszoko/backoffice/console.css site/backoffice/
+cp generique/backoffice/*.php generique/backoffice/console.css site/backoffice/
 
-cp -r mrszoko/landing/. site/landing/
+cp -r generique/landing/. site/landing/
 
-( cd mrszoko/shop && tar -cf - --exclude=router.php --exclude=serve.sh --exclude=./ds . ) \
+( cd generique/shop && tar -cf - --exclude=router.php --exclude=serve.sh --exclude=./ds . ) \
   | ( cd site/shop && tar -xf - )
-cp mrszoko/shop/.htaccess site/shop/.htaccess
-cp mrszoko/shop/media/.htaccess site/shop/media/.htaccess
-cp mrszoko/.htaccess site/.htaccess
+cp generique/shop/.htaccess site/shop/.htaccess
+cp generique/shop/media/.htaccess site/shop/media/.htaccess
+cp generique/.htaccess site/.htaccess
 
-# Les design systems des boutiques (design-systems/<slug>/), compilés en UN
+# Les design systems des boutiques (webshops/<slug>/design-system/), compilés en UN
 # fichier chacun et CONTRÔLÉS : un jeton du contrat oublié, ou un nom hors
 # contrat dans le code, arrête le déploiement ici, avant le site.
 php tools/build-ds.php site/shop/ds || { echo "  design systems refusés"; exit 1; }
@@ -120,7 +120,7 @@ echo "══ 3/6 · contrôles AVANT de toucher au site ════════
 # Le rail est la seule source de vérité de ce qui doit exister. Un écran ajouté
 # au menu et oublié à la copie casse ICI, pas devant un client.
 php -r '
-  require_once "mrszoko/backoffice/console.php";
+  require_once "generique/backoffice/console.php";
   $manque = [];
   foreach (console_sections(["role" => "Centrala"]) as $items) {
     foreach (array_keys($items) as $f) {

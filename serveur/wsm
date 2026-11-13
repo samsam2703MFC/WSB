@@ -1,0 +1,330 @@
+#!/usr/bin/env bash
+# =============================================================================
+#  wsm — les boutiques du serveur, en une commande.
+#
+#    wsm liste                               les boutiques, leur version, leur état
+#    wsm version [branche|commit]            construit une version du code (git → releases/)
+#    wsm creer <boutique> <domaine> [--webshop <dossier>] [--email <admin>] [--alias a,b]
+#                                            une boutique neuve : base, configuration,
+#                                            site Apache, catalogue, compte administrateur
+#    wsm deployer <boutique…> | --toutes [--version <nom>]
+#                                            passe à une version (par défaut la dernière) ;
+#                                            sauvegarde avant, vérifie après, revient si ça casse
+#    wsm valider                             la version de « sandbox » → toutes les boutiques
+#    wsm retour <boutique>                   revient à la version précédente
+#    wsm sante <boutique>                    la boutique et sa console répondent-elles ?
+#    wsm sauvegarde <boutique> | --toutes    copie de la base dans sauvegardes/ (14 gardées)
+#    wsm importer-base <boutique> <dump.sql[.gz]>   remplace la base (après sauvegarde)
+#    wsm https <boutique>                    certificat Let's Encrypt (le DNS doit pointer ici)
+#    wsm apache <boutique>                   réécrit son site Apache depuis le modèle
+#
+#  OÙ SONT LES CHOSES (WSM_RACINE, par défaut /srv/webshops) :
+#    depot/                      le dépôt GitHub (lecture seule pour nous)
+#    releases/<version>/site/    une version du code, partagée par les boutiques
+#    boutiques/<b>/current       → la version qu'utilise la boutique
+#    boutiques/<b>/config.php    SES secrets (base, jeton) — root:www-data 640
+#    boutiques/<b>/media/        ses photos          boutiques/<b>/data/  ses données
+#    sauvegardes/<b>/            ses bases sauvegardées
+#
+#  RIEN DE SECRET NE PASSE PAR GITHUB. Les mots de passe sont tirés au sort
+#  ici, écrits ici, et ne sortent du serveur que dans le terminal de celui qui
+#  crée la boutique.
+# =============================================================================
+set -euo pipefail
+
+RACINE="${WSM_RACINE:-/srv/webshops}"
+[ -f "$RACINE/wsm.conf" ] && . "$RACINE/wsm.conf"
+DEPOT_URL="${DEPOT_URL:-https://github.com/samsam2703MFC/webshop-mrszoko-backoffice.git}"
+BRANCHE="${BRANCHE:-main}"
+EMAIL_ADMIN="${EMAIL_ADMIN:-}"
+SUPERADMIN_EMAILS="${SUPERADMIN_EMAILS:-}"
+DEPOT="$RACINE/depot"
+REL="$RACINE/releases"
+BOUT="$RACINE/boutiques"
+SAV="$RACINE/sauvegardes"
+APACHE_SITES="${WSM_APACHE_SITES:-/etc/apache2/sites-available}"
+WEB_USER="${WSM_WEB_USER:-www-data}"
+GARDER_VERSIONS="${GARDER_VERSIONS:-8}"
+
+dire()   { printf '  %s\n' "$*"; }
+titre()  { printf '\n== %s\n' "$*"; }
+mourir() { printf '\nERREUR : %s\n' "$*" >&2; exit 1; }
+racine_seulement() { [ "$(id -u)" = 0 ] || mourir "à lancer en root (sudo wsm …)"; }
+
+nom_valide() { [[ "$1" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || mourir "nom de boutique « $1 » : minuscules, chiffres, tirets (2 à 31 signes)"; }
+existe()     { [ -d "$BOUT/$1" ] || mourir "pas de boutique « $1 » (wsm liste)"; }
+meta()       { grep -E "^$2=" "$BOUT/$1/boutique.conf" 2>/dev/null | head -1 | cut -d= -f2-; }
+base_de()    { echo "ws_${1//-/_}"; }
+version_de() { basename "$(dirname "$(readlink -f "$BOUT/$1/current")")"; }
+
+recharger_apache() {
+  apache2ctl configtest >/dev/null 2>&1 || { apache2ctl configtest; mourir "configuration Apache invalide — rien n'a été rechargé"; }
+  if command -v systemctl >/dev/null && systemctl is-active --quiet apache2 2>/dev/null; then systemctl reload apache2
+  else apache2ctl graceful 2>/dev/null || apache2ctl start; fi
+}
+
+# php avec la configuration, les données et les photos d'UNE boutique.
+php_boutique() {
+  local b="$1"; shift
+  WSM_CONFIG_FILE="$BOUT/$b/config.php" WSM_DATA_DIR="$BOUT/$b/data" WSM_MEDIA_DIR="$BOUT/$b/media" \
+    php "$BOUT/$b/current/backoffice/api/migrate.php" "$@"
+}
+
+# Le fichier d'un webshop, lu dans la version qu'utilise la boutique.
+webshop_json() { # <webshop> <clé>
+  php -r '$j = json_decode((string) @file_get_contents($argv[1]), true) ?: []; $v = $j[$argv[2]] ?? "";
+          echo is_array($v) ? implode(",", $v) : $v;' "$DEPOT/webshops/$1/boutique.json" "$2"
+}
+
+# ---------------------------------------------------------------------------
+cmd_version() {
+  racine_seulement
+  local ref="${1:-$BRANCHE}"
+  titre "version du code ($ref)"
+  if [ ! -d "$DEPOT/.git" ]; then git clone --quiet "$DEPOT_URL" "$DEPOT"; fi
+  git -C "$DEPOT" fetch --quiet --prune origin "+refs/heads/*:refs/remotes/origin/*" 2>/dev/null || git -C "$DEPOT" fetch --quiet origin
+  local cible; cible=$(git -C "$DEPOT" rev-parse --verify --quiet "origin/$ref" || git -C "$DEPOT" rev-parse --verify --quiet "$ref") \
+    || mourir "ni branche ni commit « $ref » dans le dépôt"
+  git -C "$DEPOT" checkout --quiet --force --detach "$cible"
+  local nom; nom="$(date +%Y%m%d-%H%M%S)-$(git -C "$DEPOT" rev-parse --short HEAD)"
+  bash "$DEPOT/serveur/assembler.sh" "$DEPOT" "$REL/$nom/site" >/dev/null || { rm -rf "${REL:?}/$nom"; mourir "assemblage refusé — version non créée"; }
+  git -C "$DEPOT" log -1 --format='%h %s' > "$REL/$nom/COMMIT"
+  ln -sfn "$nom" "$REL/derniere"
+  # wsm lui-même suit le dépôt : une version apporte aussi ses outils.
+  install -m 0755 "$DEPOT/serveur/wsm" /usr/local/sbin/wsm.nouveau && mv -f /usr/local/sbin/wsm.nouveau /usr/local/sbin/wsm
+  # Ménage : on garde les GARDER_VERSIONS dernières, et toute version encore utilisée.
+  local utilisees; utilisees=$(for b in "$BOUT"/*/; do [ -L "$b/current" ] && basename "$(dirname "$(readlink -f "$b/current")")"; [ -f "$b/poprzednia" ] && cat "$b/poprzednia"; done 2>/dev/null | sort -u)
+  ls -1 "$REL" | grep -E '^[0-9]{8}-' | sort | head -n -"$GARDER_VERSIONS" | while read -r v; do
+    grep -qx "$v" <<<"$utilisees" || rm -rf "${REL:?}/$v"
+  done
+  dire "version $nom — $(cat "$REL/$nom/COMMIT")"
+  echo "$nom" > "$REL/derniere.nom"
+}
+
+# ---------------------------------------------------------------------------
+cmd_creer() {
+  racine_seulement
+  local b="${1:-}" dom="${2:-}"; shift 2 || mourir "usage : wsm creer <boutique> <domaine> [--webshop <dossier>] [--email <admin>] [--alias a,b]"
+  local ws="$b" mail="$EMAIL_ADMIN" alias=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --webshop) ws="$2"; shift 2;; --email) mail="$2"; shift 2;; --alias) alias="$2"; shift 2;;
+    *) mourir "option inconnue : $1";; esac; done
+  nom_valide "$b"
+  [[ "$dom" =~ ^[a-z0-9.-]+\.[a-z]{2,}$ ]] || mourir "domaine « $dom » invalide (ex. sklep.example.pl)"
+  [ -n "$mail" ] || mourir "e-mail de l'administrateur : --email vous@example.pl (ou EMAIL_ADMIN dans $RACINE/wsm.conf)"
+  [ -L "$REL/derniere" ] || mourir "aucune version du code : lancer d'abord « wsm version »"
+  [ -f "$DEPOT/webshops/$ws/boutique.json" ] || mourir "webshops/$ws/boutique.json absent du dépôt — dossiers : $(ls "$DEPOT/webshops" | tr '\n' ' ')"
+  [ -e "$BOUT/$b" ] && mourir "la boutique « $b » existe déjà"
+
+  local nomB ds kat base mdp jeton dir="$BOUT/$b"
+  nomB=$(webshop_json "$ws" nom); ds=$(webshop_json "$ws" design_system); kat=$(webshop_json "$ws" katalog)
+  [ -n "$alias" ] || alias=$(webshop_json "$ws" alias)
+  base=$(base_de "$b"); mdp=$(openssl rand -hex 18); jeton=$(openssl rand -hex 24)
+  titre "boutique $b — $nomB ($dom), design « $ds »"
+
+  dire "base de données $base"
+  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS \`$base\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                   CREATE USER IF NOT EXISTS '$base'@'localhost' IDENTIFIED BY '$mdp';
+                   ALTER USER '$base'@'localhost' IDENTIFIED BY '$mdp';
+                   GRANT ALL PRIVILEGES ON \`$base\`.* TO '$base'@'localhost'; FLUSH PRIVILEGES;"
+
+  dire "dossiers et configuration (secrets : ici seulement)"
+  mkdir -p "$dir/media" "$dir/data/zakupy"
+  cp "$DEPOT/generique/shop/media/.htaccess" "$dir/media/.htaccess"
+  umask 027
+  cat > "$dir/config.php" <<PHP
+<?php
+// Configuration de la boutique « $b » — écrite par wsm le $(date '+%Y-%m-%d'). SECRETS : ne jamais
+// copier ce fichier dans le dépôt. Les clés des intégrations (Stripe, InPost,
+// poste, KSeF…) se saisissent dans la console, Integracje.
+return [
+    'engine' => 'mysql',
+    'mysql'  => ['host' => 'localhost', 'port' => '3306', 'name' => '$base', 'user' => '$base', 'pass' => '$mdp'],
+    'admin_token'       => '$jeton',
+    'design_system'     => '$ds',
+    'superadmin_emails' => '$SUPERADMIN_EMAILS',
+];
+PHP
+  umask 022
+  chown -R root:"$WEB_USER" "$dir"; chmod 640 "$dir/config.php"
+  chown -R "$WEB_USER":"$WEB_USER" "$dir/media" "$dir/data"
+  printf 'DOMAINE=%s\nALIAS=%s\nWEBSHOP=%s\nBASE=%s\nCREEE=%s\n' "$dom" "$alias" "$ws" "$base" "$(date '+%F %T')" > "$dir/boutique.conf"
+  ln -sfn "$(readlink -f "$REL/derniere")/site" "$dir/current"
+
+  dire "schéma, libellés, et boutique vierge (sans le chocolat de Szoko)"
+  php_boutique "$b" >/dev/null
+  if [ "$ws" != "szoko" ]; then php_boutique "$b" --boutique-vierge "$nomB" | sed 's/^/  /'; fi
+  if [ -n "$kat" ]; then
+    dire "catalogue webshops/$ws/$kat"
+    php_boutique "$b" --import-katalog "$DEPOT/webshops/$ws/$kat" | sed 's/^/  /'
+    chown -R "$WEB_USER":"$WEB_USER" "$dir/media"
+  fi
+
+  dire "compte administrateur $mail"
+  local pa; pa=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)
+  php_boutique "$b" --set-password "$mail" "$pa" Administrator "Administrator" >/dev/null
+  ( umask 077; printf 'Boutique : %s\nConsole  : https://%s/backoffice/\nE-mail   : %s\nMot de passe : %s\n' "$b" "$dom" "$mail" "$pa" > "$dir/ADMIN.txt" )
+
+  cmd_apache "$b"
+  cmd_sante "$b" || mourir "la boutique ne répond pas — voir /var/log/apache2/wsm-$b-error.log"
+
+  titre "boutique « $b » prête"
+  dire "Console : http://$dom/backoffice/  (https dès que le certificat est posé : wsm https $b)"
+  dire "Compte  : $mail"
+  dire "Mot de passe (affiché UNE fois, aussi dans $dir/ADMIN.txt, lisible par root seul) : $pa"
+  if getent hosts "$dom" >/dev/null 2>&1; then dire "Le DNS de $dom répond : lancez « wsm https $b »."
+  else dire "Le DNS de $dom ne pointe pas encore ici : faites pointer le domaine, puis « wsm https $b »."; fi
+}
+
+# ---------------------------------------------------------------------------
+cmd_apache() {
+  racine_seulement
+  local b="$1"; existe "$b"
+  local dom alias lignes=""; dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
+  [ -n "$alias" ] && lignes="ServerAlias ${alias//,/ }"
+  sed -e "s#__DOMAINE__#$dom#g" -e "s#__ALIAS__#$lignes#g" -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#$b#g" \
+      "$DEPOT/serveur/apache-boutique.conf" > "$APACHE_SITES/wsm-$b.conf"
+  a2ensite -q "wsm-$b" >/dev/null
+  recharger_apache
+  dire "site Apache wsm-$b ($dom${alias:+, $alias})"
+}
+
+# ---------------------------------------------------------------------------
+cmd_sante() {
+  local b="$1"; existe "$b"
+  local dom ds code html ok=0; dom=$(meta "$b" DOMAINE)
+  ds=$(php -r '$c = @include $argv[1]; echo is_array($c) ? ($c["design_system"] ?? "") : "";' "$BOUT/$b/config.php" 2>/dev/null || true)
+  # X-Forwarded-Proto : la boutique exige le https ; en local, on dit qu'on l'est.
+  html=$(curl -s --max-time 20 -H "Host: $dom" -H "X-Forwarded-Proto: https" "http://127.0.0.1/shop/" || true)
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -H "Host: $dom" -H "X-Forwarded-Proto: https" "http://127.0.0.1/shop/" || true)
+  if [ "$code" = 200 ] && grep -q "ds/${ds:-szoko}/tokens.css" <<<"$html"; then dire "boutique   : 200, design « ${ds:-szoko} »"; else dire "boutique   : $code — NE RÉPOND PAS"; ok=1; fi
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -H "Host: $dom" -H "X-Forwarded-Proto: https" "http://127.0.0.1/backoffice/login.php" || true)
+  if [ "$code" = 200 ]; then dire "console    : 200"; else dire "console    : $code — NE RÉPOND PAS"; ok=1; fi
+  return $ok
+}
+
+# ---------------------------------------------------------------------------
+cmd_sauvegarde() {
+  racine_seulement
+  if [ "${1:-}" = "--toutes" ]; then for d in "$BOUT"/*/; do [ -f "$d/boutique.conf" ] && cmd_sauvegarde "$(basename "$d")"; done; return; fi
+  local b="$1"; existe "$b"
+  local base f; base=$(meta "$b" BASE); mkdir -p "$SAV/$b"
+  f="$SAV/$b/$(date +%Y%m%d-%H%M%S).sql.gz"
+  mysqldump -uroot --single-transaction --routines --default-character-set=utf8mb4 "$base" | gzip -9 > "$f"
+  chmod 600 "$f"
+  ls -1t "$SAV/$b"/*.sql.gz 2>/dev/null | tail -n +15 | xargs -r rm -f
+  dire "sauvegarde $b → $f ($(du -h "$f" | cut -f1))"
+}
+
+# ---------------------------------------------------------------------------
+basculer() { # <boutique> <dossier-site>
+  local b="$1" cible="$2" tmp="$BOUT/$1/current.nouveau"
+  ln -sfn "$cible" "$tmp" && mv -Tf "$tmp" "$BOUT/$b/current"
+}
+
+cmd_deployer() {
+  racine_seulement
+  local version="" liste=()
+  while [ $# -gt 0 ]; do case "$1" in
+    --version) version="$2"; shift 2;;
+    --toutes) for d in "$BOUT"/*/; do [ -f "$d/boutique.conf" ] && liste+=("$(basename "$d")"); done; shift;;
+    *) liste+=("$1"); shift;; esac; done
+  [ ${#liste[@]} -gt 0 ] || mourir "usage : wsm deployer <boutique…> | --toutes [--version <nom>]"
+  [ -n "$version" ] || version=$(basename "$(readlink -f "$REL/derniere")")
+  [ -d "$REL/$version/site" ] || mourir "pas de version « $version » (ls $REL)"
+  # La sandbox passe la première : si la version casse, elle casse là.
+  if printf '%s\n' "${liste[@]}" | grep -qx sandbox; then liste=(sandbox $(printf '%s\n' "${liste[@]}" | grep -vx sandbox)); fi
+  for b in "${liste[@]}"; do
+    existe "$b"
+    titre "$b : $(version_de "$b") → $version"
+    if [ "$(version_de "$b")" = "$version" ]; then dire "déjà à jour"; continue; fi
+    cmd_sauvegarde "$b"
+    local avant; avant=$(version_de "$b")
+    basculer "$b" "$REL/$version/site"
+    echo "$avant" > "$BOUT/$b/poprzednia"
+    # Le schéma suit le code : colonnes ajoutées, libellés nouveaux. Toujours
+    # ADDITIF — l'ancienne version tourne encore sur la nouvelle base, c'est
+    # ce qui rend le retour possible.
+    if ! php_boutique "$b" >/dev/null || ! php_boutique "$b" --sync-content >/dev/null; then
+      basculer "$b" "$REL/$avant/site"; recharger_apache
+      mourir "$b : mise à jour du schéma refusée — revenue à $avant (sauvegarde dans $SAV/$b)"
+    fi
+    recharger_apache
+    if ! cmd_sante "$b"; then
+      basculer "$b" "$REL/$avant/site"; recharger_apache
+      mourir "$b : ne répond plus avec $version — revenue à $avant. Les boutiques suivantes n'ont PAS été touchées."
+    fi
+  done
+}
+
+cmd_valider() {
+  racine_seulement
+  [ -d "$BOUT/sandbox" ] || mourir "pas de boutique « sandbox » : wsm creer sandbox <domaine> --webshop szoko"
+  local v; v=$(version_de sandbox)
+  titre "validation : $(cat "$REL/$v/COMMIT" 2>/dev/null || echo "$v") → toutes les boutiques"
+  cmd_deployer --toutes --version "$v"
+}
+
+cmd_retour() {
+  racine_seulement
+  local b="$1"; existe "$b"
+  [ -f "$BOUT/$b/poprzednia" ] || mourir "$b : pas de version précédente connue"
+  local p; p=$(cat "$BOUT/$b/poprzednia")
+  [ -d "$REL/$p/site" ] || mourir "la version $p n'existe plus"
+  local maintenant; maintenant=$(version_de "$b")
+  basculer "$b" "$REL/$p/site"; echo "$maintenant" > "$BOUT/$b/poprzednia"
+  recharger_apache
+  dire "$b : revenue à $p ($(cat "$REL/$p/COMMIT" 2>/dev/null))"
+  cmd_sante "$b" || true
+}
+
+cmd_importer_base() {
+  racine_seulement
+  local b="$1" f="$2"; existe "$b"; [ -f "$f" ] || mourir "fichier $f introuvable"
+  cmd_sauvegarde "$b"
+  local base; base=$(meta "$b" BASE)
+  titre "import de $f dans $base"
+  if [[ "$f" == *.gz ]]; then gunzip -c "$f"; else cat "$f"; fi | mysql -uroot --default-character-set=utf8mb4 "$base"
+  php_boutique "$b" >/dev/null   # colonnes et tables du code actuel
+  dire "base importée ; les photos (media/) se copient à part : rsync -a <ancien>/shop/media/ $BOUT/$b/media/"
+}
+
+cmd_https() {
+  racine_seulement
+  local b="$1"; existe "$b"
+  local dom alias args=(); dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
+  command -v certbot >/dev/null || mourir "certbot absent (apt install certbot python3-certbot-apache)"
+  [ -n "$EMAIL_ADMIN" ] || mourir "EMAIL_ADMIN vide dans $RACINE/wsm.conf (adresse pour Let's Encrypt)"
+  args=(-d "$dom"); for a in ${alias//,/ }; do args+=(-d "$a"); done
+  certbot --apache --non-interactive --agree-tos --redirect -m "$EMAIL_ADMIN" "${args[@]}"
+}
+
+cmd_liste() {
+  printf '%-16s %-30s %-14s %-26s %s\n' BOUTIQUE DOMAINE WEBSHOP VERSION COMMIT
+  for d in "$BOUT"/*/; do
+    [ -f "$d/boutique.conf" ] || continue
+    local b; b=$(basename "$d")
+    local v; v=$(version_de "$b")
+    printf '%-16s %-30s %-14s %-26s %s\n' "$b" "$(meta "$b" DOMAINE)" "$(meta "$b" WEBSHOP)" "$v" "$(cat "$REL/$v/COMMIT" 2>/dev/null | cut -c1-50)"
+  done
+  [ -L "$REL/derniere" ] && printf '\ndernière version construite : %s (%s)\n' "$(basename "$(readlink -f "$REL/derniere")")" "$(cat "$REL/derniere/COMMIT" 2>/dev/null)"
+}
+
+aide() { sed -n '3,20p' "$0" | sed 's/^#  \{0,1\}//'; }
+
+cmd="${1:-aide}"; shift || true
+case "$cmd" in
+  liste) cmd_liste;;
+  version|release) cmd_version "$@";;
+  creer) cmd_creer "$@";;
+  deployer) cmd_deployer "$@";;
+  valider) cmd_valider;;
+  retour) cmd_retour "${1:?usage : wsm retour <boutique>}";;
+  sante) cmd_sante "${1:?usage : wsm sante <boutique>}";;
+  sauvegarde) cmd_sauvegarde "${1:?usage : wsm sauvegarde <boutique>|--toutes}";;
+  importer-base) cmd_importer_base "${1:?usage : wsm importer-base <boutique> <dump>}" "${2:?usage : wsm importer-base <boutique> <dump>}";;
+  https) cmd_https "${1:?usage : wsm https <boutique>}";;
+  apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
+  aide|-h|--help) aide;;
+  *) aide; exit 2;;
+esac

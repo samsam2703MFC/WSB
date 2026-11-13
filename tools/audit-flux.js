@@ -27,7 +27,7 @@
 //      besoin.
 //
 //  Usage :
-//    cp -r mrszoko/backoffice/php-api/data <site>/backoffice/api/data
+//    cp -r generique/backoffice/php-api/data <site>/backoffice/api/data
 //    php -S localhost:8093 -t <site déployé>   (php-api renommé en api)
 //    node tools/audit-flux.js <cookie-de-session> <chemin-sqlite>
 // ============================================================================
@@ -73,7 +73,7 @@ const DESTRUCTIF = /usuń|usun|skasuj|wyłącz|wylacz|dezaktyw|delete|remove|anu
   const ECRANS = execFileSync('php', ['-r',
     `require_once $argv[1]; foreach (console_sections(["role"=>"Centrala"]) as $i)
        foreach (array_keys($i) as $f) echo $f, "\\n";`,
-    '--', `${__dirname}/../mrszoko/backoffice/console.php`], { encoding: 'utf8' })
+    '--', `${__dirname}/../generique/backoffice/console.php`], { encoding: 'utf8' })
     .trim().split('\n');
 
   for (const e of ECRANS) {

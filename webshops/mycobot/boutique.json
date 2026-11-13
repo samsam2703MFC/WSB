@@ -1,0 +1,10 @@
+{
+  "_opis": "Fiche de la boutique pour le serveur (serveur/wsm). AUCUN secret ici : ce dépôt est public. Les mots de passe et les clés sont générés sur le serveur ou saisis dans la console.",
+  "domaine_info": "« xxxx » = pas encore choisi ; on peut aussi le donner à la création : wsm creer <boutique> <domaine>",
+  "nom": "MyCobotBuddy",
+  "design_system": "mycobot",
+  "domaine": "xxxx",
+  "alias": [],
+  "langue": "pl",
+  "katalog": "katalog/katalog.json"
+}

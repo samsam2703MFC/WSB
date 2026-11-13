@@ -7,8 +7,8 @@
 //                                          system dans <dossier>/<slug>/
 //
 //  UNE BOUTIQUE = UN DESIGN SYSTEM, UN SEUL CODE. Le code (boutique, console)
-//  n'emploie que les jetons de design-systems/contract.json ; chaque design
-//  system (design-systems/<slug>/) leur donne sa valeur. La boutique lit
+//  n'emploie que les jetons de generique/design-contract.json ; chaque design
+//  system (webshops/<slug>/design-system/) leur donne sa valeur. La boutique lit
 //  ensuite celui que sa configuration désigne (design_system = '<slug>').
 //
 //  CE QUI EST REFUSÉ, ET POURQUOI C'EST BLOQUANT :
@@ -38,7 +38,8 @@
 declare(strict_types=1);
 
 $RACINE  = dirname(__DIR__);
-$DS_DIR  = $RACINE . '/design-systems';
+$DS_DIR  = $RACINE . '/webshops';      // webshops/<slug>/design-system/
+$CONTRAT = $RACINE . '/generique/design-contract.json';
 $args    = array_slice($argv, 1);
 $checkOnly = in_array('--check', $args, true);
 $sortie  = null;
@@ -54,10 +55,10 @@ const ANCIENS = '/^--(choco|cream|caramel|gold|berry)-\d+$/';
 /** Les fichiers de code qui consomment des jetons. */
 function fichiers_code(string $r): array {
     $f = array_merge(
-        glob("$r/mrszoko/shop/*.css"), glob("$r/mrszoko/shop/*.php"), glob("$r/mrszoko/shop/*.js"),
-        glob("$r/mrszoko/backoffice/*.php"), glob("$r/mrszoko/backoffice/*.css"),
-        glob("$r/mrszoko/backoffice/_ds/mister-szoko/*.css"),
-        glob("$r/mrszoko/backoffice/php-api/*.php"),
+        glob("$r/generique/shop/*.css"), glob("$r/generique/shop/*.php"), glob("$r/generique/shop/*.js"),
+        glob("$r/generique/backoffice/*.php"), glob("$r/generique/backoffice/*.css"),
+        glob("$r/generique/backoffice/_ds/mister-szoko/*.css"),
+        glob("$r/generique/backoffice/php-api/*.php"),
     );
     return array_values(array_filter($f, fn($x) => basename($x) !== 'tokens.css'));
 }
@@ -85,9 +86,9 @@ function references(string $s): array {
 }
 
 // ---- Le contrat --------------------------------------------------------------
-$contrat = json_decode((string) file_get_contents("$DS_DIR/contract.json"), true);
+$contrat = json_decode((string) file_get_contents($CONTRAT), true);
 if (!is_array($contrat) || empty($contrat['groupes'])) {
-    fwrite(STDERR, "design-systems/contract.json illisible\n");
+    fwrite(STDERR, "generique/design-contract.json illisible\n");
     exit(1);
 }
 $jetons = [];   // nom → [groupe, defaut|null]
@@ -100,10 +101,10 @@ $err = function (string $ou, string $quoi) use (&$erreurs) { $erreurs[] = "$ou :
 
 // ---- Les design systems ---------------------------------------------------------
 $systemes = [];
-foreach (glob("$DS_DIR/*/ds.json") as $man) {
+foreach (glob("$DS_DIR/*/design-system/ds.json") as $man) {
     $dir  = dirname($man);
-    $slug = basename($dir);
-    if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $slug)) { $err("design-systems/$slug", 'nom de dossier invalide (minuscules, chiffres, tirets)'); continue; }
+    $slug = basename(dirname($dir));
+    if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $slug)) { $err("webshops/$slug/design-system", 'nom de dossier invalide (minuscules, chiffres, tirets)'); continue; }
     $ds = json_decode((string) file_get_contents($man), true);
     if (!is_array($ds)) { $err("$slug/ds.json", 'JSON illisible'); continue; }
 
@@ -157,7 +158,7 @@ foreach (glob("$DS_DIR/*/ds.json") as $man) {
         foreach (array_unique($m[1]) as $u) {
             // Compilées, toutes les feuilles vivent à la racine de ds/<slug>/ :
             // un chemin relatif se lit donc depuis la racine du design system.
-            if (!is_file("$dir/$u")) $err("$slug/$f", "url($u) : fichier absent (attendu : design-systems/$slug/$u)");
+            if (!is_file("$dir/$u")) $err("$slug/$f", "url($u) : fichier absent (attendu : webshops/$slug/design-system/$u)");
         }
     }
     foreach ($refs as [$f, $nom, $secours, $ligne]) {
@@ -165,7 +166,7 @@ foreach (glob("$DS_DIR/*/ds.json") as $man) {
     }
     $systemes[$slug] = compact('dir', 'ds', 'css', 'defs', 'theme');
 }
-if (!isset($systemes['szoko'])) $err('design-systems', 'le design system « szoko » (défaut de la configuration) est absent');
+if (!isset($systemes['szoko'])) $err('webshops', 'le design system « szoko » (défaut de la configuration) est absent');
 
 // ---- Le code ----------------------------------------------------------------
 $code = fichiers_code($RACINE);
@@ -178,7 +179,7 @@ foreach ($code as $f) {
         $nRefs++;
         if (preg_match(ANCIENS, $nom)) { $err("$rel:$ligne", "ancien nom de marque $nom — employer le nom du contrat"); continue; }
         if ($secours || isset($jetons[$nom]) || isset($defsCode[$nom])) continue;
-        $err("$rel:$ligne", "var($nom) hors contrat : l'ajouter à design-systems/contract.json, ou le définir dans le code");
+        $err("$rel:$ligne", "var($nom) hors contrat : l'ajouter à generique/design-contract.json, ou le définir dans le code");
     }
 }
 
@@ -212,7 +213,7 @@ $copier = function (string $de, string $vers) use (&$copier): void {
 foreach ($systemes as $slug => $s) {
     $out = rtrim($sortie, '/') . "/$slug";
     @mkdir($out, 0775, true);
-    $tete = "/* Généré par tools/build-ds.php depuis design-systems/$slug — ne pas éditer. */\n";
+    $tete = "/* Généré par tools/build-ds.php depuis webshops/$slug/design-system — ne pas éditer. */\n";
 
     $tokens = $tete . $defauts($s['defs']);
     foreach ($s['css'] as $f => $txt) $tokens .= "\n/* ---- $f ---- */\n" . trim($txt) . "\n";

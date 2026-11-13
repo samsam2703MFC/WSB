@@ -26,7 +26,7 @@
 // ============================================================================
 declare(strict_types=1);
 
-$API = dirname(__DIR__) . '/mrszoko/backoffice/php-api';
+$API = dirname(__DIR__) . '/generique/backoffice/php-api';
 $MD  = in_array('--md', $argv, true);
 $SANS_TESTS = in_array('--sans-tests', $argv, true);
 

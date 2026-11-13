@@ -1,23 +1,29 @@
-# webshop-mrszoko-backoffice
+# Plateforme de webshops — un code, plusieurs boutiques
 
-**Mister Szoko** — mono-repo of the brand's web presence, deployed standalone
-under **`/mrszoko`** on the server (`http://185.180.206.46/mrszoko`).
+Szoko Shop, MyCobotBuddy, Poszła w las… partagent le même code ; chacune a
+son dossier, son design system, son catalogue et son domaine.
 
-| URL | Content | Source |
-| --- | --- | --- |
-| `/mrszoko/` | redirect → landing | generated at deploy |
-| `/mrszoko/landing` | Mister Szoko landing page | [`mrszoko/landing/`](mrszoko/landing/) |
-| `/mrszoko/backoffice` | Console marque · Siège (franchisor back-office) | [`mrszoko/backoffice/`](mrszoko/backoffice/) |
-| `/mrszoko/backoffice/api` | PHP API (`webshop_mrszoko` DB, `wsm_` tables) | [`mrszoko/backoffice/php-api/`](mrszoko/backoffice/php-api/) |
+```
+generique/       le code commun : vitrine (shop/), console (backoffice/), API PHP
+webshops/        une boutique par dossier — boutique.json, design-system/, katalog/
+  szoko/  mycobot/  poszla-w-las/
+serveur/         le nouveau serveur multi-boutiques : installer.sh, wsm, mode d'emploi
+tools/           compilation des design systems, audits, ancien déploiement
+docs/            le plan
+```
 
-- **Design system** (imported Claude Design handoff: tokens, components,
-  prototypes) — [`design-systems/szoko/`](design-systems/szoko/)
-- **Design systems des boutiques** — un code, une marque par boutique :
-  [`design-systems/`](design-systems/) (contrat de jetons, Szoko, MyCobotBuddy)
-- **Deploy** (SSH/rsync on push to `main`, with on-server verification) —
-  [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+- **Mettre en ligne sur le nouveau serveur** → [`serveur/README.md`](serveur/README.md)
+- **Ajouter une boutique** → [`webshops/README.md`](webshops/README.md)
+- **Design systems** (contrat de jetons) → [`webshops/DESIGN-SYSTEMS.md`](webshops/DESIGN-SYSTEMS.md)
+- **Le plan** → [`docs/PLAN-multi-boutiques.md`](docs/PLAN-multi-boutiques.md)
 
-Start with [`mrszoko/README.md`](mrszoko/README.md).
+### L'ancien serveur (Szoko seul, jusqu'au déménagement)
+
+Déployé sous **`/mrszoko`** (`http://185.180.206.46/mrszoko`) par
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) à chaque push
+sur `main` ; les adresses `/mrszoko/…` ne changent pas.
+
+Start with [`generique/README.md`](generique/README.md).
 
 ## Vérifier
 
@@ -26,7 +32,7 @@ que les autres ne voient pas.
 
 | Outil | Ce qu'il prouve | Ce qu'il ne voit PAS |
 | --- | --- | --- |
-| `php tests/e2e_*.php` (depuis `mrszoko/backoffice/php-api/`) | les **règles** — TVA, remises, numérotation, idempotence | qu'un écran s'affiche ou qu'un bouton marche |
+| `php tests/e2e_*.php` (depuis `generique/backoffice/php-api/`) | les **règles** — TVA, remises, numérotation, idempotence | qu'un écran s'affiche ou qu'un bouton marche |
 | `node tools/audit-ui.js <session>` | les **écrans** — 500, débordement, cible tactile, champ sans étiquette, padding, à deux largeurs | ce qui se passe quand on clique |
 | `node tools/audit-flux.js <session> <sqlite>` | les **gestes** — chaque flux mesuré par son effet EN BASE, pas par son bandeau | ce que le serveur de production, lui, fera |
 | `php tools/rapport.php` | l'**état réel** — ce qui bloque, ce qui gêne, et ce qui n'a pas pu être vérifié | rien de tout ce qui précède |
@@ -36,7 +42,7 @@ renommé en `api`) et, surtout, une base **peuplée** :
 
 ```bash
 # arbre au format déployé, servi sur 8093, avec les données de développement
-cp -r mrszoko/backoffice/php-api/data <site>/backoffice/api/data
+cp -r generique/backoffice/php-api/data <site>/backoffice/api/data
 php -S localhost:8093 -t <site>
 ```
 

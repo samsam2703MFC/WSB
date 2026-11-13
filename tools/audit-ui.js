@@ -29,7 +29,7 @@
 //  données de développement (php-api/data), sinon le vert ne prouve rien.
 //
 //  Usage :
-//    cp -r mrszoko/backoffice/php-api/data <site déployé>/backoffice/api/data
+//    cp -r generique/backoffice/php-api/data <site déployé>/backoffice/api/data
 //    php -S localhost:8093 -t <site déployé>   (php-api renommé en api)
 //    node tools/audit-ui.js <cookie-de-session>
 // ============================================================================
