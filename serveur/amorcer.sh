@@ -74,6 +74,18 @@ if [ ! -x /usr/local/sbin/wsm ]; then
 fi
 
 W=/usr/local/sbin/wsm
+# Ports 80/443 tenus par autre chose (ici Traefik, dans Docker) : Apache ne
+# doit SURTOUT PAS démarrer au boot avant lui — il prendrait le port 80 et
+# couperait les sites existants. On le désactive et on s'arrête.
+if ss -ltnpH 2>/dev/null | awk '$4 ~ /:(80|443)$/' | grep -qv apache2; then
+  systemctl disable --now apache2 >/dev/null 2>&1 || true
+  echo
+  echo "ARRÊT : les ports 80/443 appartiennent déjà à un autre service (Traefik / Docker)."
+  echo "  Apache est désactivé au démarrage (il ne gênera pas ce service)."
+  echo "  apache2 au démarrage : $(systemctl is-enabled apache2 2>/dev/null || true), état : $(systemctl is-active apache2 2>/dev/null || true)"
+  echo "  Rien n'a été créé ni déployé : les boutiques doivent passer derrière ce service."
+  exit 1
+fi
 # Apache doit tourner : sinon on ne crée ni ne déploie rien, on montre pourquoi.
 if [ "$ACTION" != liste ] && ! systemctl is-active --quiet apache2; then
   systemctl start apache2 2>/dev/null || true
