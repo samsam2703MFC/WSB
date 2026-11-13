@@ -19,7 +19,7 @@
 #  mettre à jour.
 #
 #  Usage, en root sur le serveur :
-#      curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/webshop-mrszoko-backoffice/main/tools/deploy-serwer.sh | bash
+#      curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/WSB/main/tools/deploy-serwer.sh | bash
 #  ou, si le fichier est déjà là :
 #      bash deploy-serwer.sh
 #
@@ -38,7 +38,7 @@ for a in "$@"; do case "$a" in --haslo|--hasło) HASLO=1 ;; esac; done
 
 DEPLOY_DIR="${DEPLOY_DIR:-/var/www/html/mrszoko}"
 ADM_EMAIL="${ADM_EMAIL:-admin@misterszoko.com}"
-DEPOT="${DEPOT:-https://github.com/samsam2703MFC/webshop-mrszoko-backoffice.git}"
+DEPOT="${DEPOT:-https://github.com/samsam2703MFC/WSB.git}"
 BRANCHE="${BRANCHE:-main}"
 TRAVAIL="$(mktemp -d /tmp/wsm-deploy.XXXXXX)"
 # Le ménage est un piège, PAS une politesse : sans lui, un échec en cours de

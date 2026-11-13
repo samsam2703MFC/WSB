@@ -28,7 +28,7 @@
 #     le commit trop tôt.
 #
 #  Installation, une seule fois, en root sur le serveur :
-#      bash <(curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/webshop-mrszoko-backoffice/main/tools/auto-deploy.sh) --install
+#      bash <(curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/WSB/main/tools/auto-deploy.sh) --install
 #
 #  Ensuite : `git push` → en ligne dans la minute. Sans runner, sans rien
 #  lancer à la main.
@@ -39,9 +39,9 @@
 # =============================================================================
 set -euo pipefail
 
-DEPOT="${DEPOT:-https://github.com/samsam2703MFC/webshop-mrszoko-backoffice.git}"
+DEPOT="${DEPOT:-https://github.com/samsam2703MFC/WSB.git}"
 BRANCHE="${BRANCHE:-main}"
-BRUT="${BRUT:-https://raw.githubusercontent.com/samsam2703MFC/webshop-mrszoko-backoffice/main/tools}"
+BRUT="${BRUT:-https://raw.githubusercontent.com/samsam2703MFC/WSB/main/tools}"
 ETAT="${ETAT:-/var/lib/wsm-deploy}"
 JOURNAL="${JOURNAL:-/var/log/wsm-deploy.log}"
 CIBLE="${CIBLE:-/usr/local/sbin/wsm-deploy}"

@@ -30,6 +30,19 @@ echo "  système   : ${PRETTY_NAME:-?} ($(uname -m)), $(nproc) cœurs, $(free -m
 echo "  apache    : $(command -v apache2 >/dev/null && echo installé || echo absent)  nginx : $(command -v nginx >/dev/null && echo PRÉSENT || echo absent)"
 echo "  wsm       : $([ -x /usr/local/sbin/wsm ] && echo installé || echo absent)"
 
+# Lecture seule : qui écoute, quels conteneurs, l'état d'Apache et du pare-feu.
+etat() {
+  echo "  ports ouverts (TCP) :"
+  ss -ltnpH 2>/dev/null | awk '{p=$4; sub(/.*:/,"",p); u=$6; sub(/^users:\(\("/,"",u); sub(/".*/,"",u); print "    " p "  " u}' | sort -n -u
+  if command -v docker >/dev/null; then
+    echo "  conteneurs Docker :"
+    docker ps --format '    {{.Names}}  {{.Image}}  {{.Ports}}' 2>/dev/null || echo "    (illisibles)"
+  fi
+  echo "  apache2   : $(systemctl is-active apache2 2>/dev/null || true)"
+  journalctl -u apache2 -n 12 --no-pager 2>/dev/null | sed 's/^/    /' || true
+  echo "  pare-feu  :"; ufw status 2>/dev/null | sed 's/^/    /' || true
+}
+
 if [ ! -x /usr/local/sbin/wsm ]; then
   # Un serveur vierge, ou rien.
   OCCUPE=""
@@ -43,7 +56,11 @@ if [ ! -x /usr/local/sbin/wsm ]; then
     [ -n "$autres" ] && OCCUPE="$OCCUPE /var/www : $(echo $autres);"
     [ -d /var/www/html ] && [ -n "$(ls -A /var/www/html | grep -vx index.html || true)" ] && OCCUPE="$OCCUPE /var/www/html non vide;"
   fi
+  command -v docker >/dev/null && [ -n "$(docker ps -q 2>/dev/null)" ] && OCCUPE="$OCCUPE conteneurs Docker actifs;"
+  web=$(ss -ltnpH 2>/dev/null | awk '$4 ~ /:(80|443)$/' | grep -v apache2 || true)
+  [ -n "$web" ] && OCCUPE="$OCCUPE ports 80/443 déjà pris;"
   if [ -n "$OCCUPE" ]; then
+    etat
     echo
     echo "ARRÊT : ce serveur sert déjà quelque chose ($OCCUPE)."
     echo "Rien n'a été installé. Si c'est bien le nouveau serveur, lancer à la main :"
@@ -57,6 +74,13 @@ if [ ! -x /usr/local/sbin/wsm ]; then
 fi
 
 W=/usr/local/sbin/wsm
+# Apache doit tourner : sinon on ne crée ni ne déploie rien, on montre pourquoi.
+if [ "$ACTION" != liste ] && ! systemctl is-active --quiet apache2; then
+  systemctl start apache2 2>/dev/null || true
+  if ! systemctl is-active --quiet apache2; then
+    echo; echo "ARRÊT : Apache ne démarre pas — rien n'a été créé ni déployé."; etat; exit 1
+  fi
+fi
 case "$ACTION" in
   push)
     "$W" version "${SHA:-$BRANCHE}"
@@ -79,7 +103,7 @@ case "$ACTION" in
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;
   retour)   "$W" retour "$BOUTIQUE" ;;
-  liste)    : ;;
+  liste)    etat ;;
   *) echo "action inconnue : $ACTION" >&2; exit 2;;
 esac
 echo

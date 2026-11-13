@@ -33,7 +33,7 @@ GitHub à l'étape 3, et nulle part ailleurs.
 Ubuntu 22.04 ou 24.04, connecté en root (ou avec `sudo`) :
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/webshop-mrszoko-backoffice/main/serveur/installer.sh -o installer.sh
+curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/WSB/main/serveur/installer.sh -o installer.sh
 ```
 
 ```bash

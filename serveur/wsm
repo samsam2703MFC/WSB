@@ -34,7 +34,7 @@ set -euo pipefail
 
 RACINE="${WSM_RACINE:-/srv/webshops}"
 [ -f "$RACINE/wsm.conf" ] && . "$RACINE/wsm.conf"
-DEPOT_URL="${DEPOT_URL:-https://github.com/samsam2703MFC/webshop-mrszoko-backoffice.git}"
+DEPOT_URL="${DEPOT_URL:-https://github.com/samsam2703MFC/WSB.git}"
 BRANCHE="${BRANCHE:-main}"
 EMAIL_ADMIN="${EMAIL_ADMIN:-}"
 SUPERADMIN_EMAILS="${SUPERADMIN_EMAILS:-}"

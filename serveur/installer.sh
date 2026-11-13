@@ -3,7 +3,7 @@
 #  installer.sh — prépare un serveur NEUF (Ubuntu 22.04 / 24.04) pour héberger
 #  toutes les boutiques. À lancer UNE fois, en root :
 #
-#    curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/webshop-mrszoko-backoffice/main/serveur/installer.sh \
+#    curl -fsSL https://raw.githubusercontent.com/samsam2703MFC/WSB/main/serveur/installer.sh \
 #      | sudo bash -s -- --email vous@example.pl --cle "ssh-ed25519 AAAA… github-deploy"
 #
 #  Options :
@@ -22,7 +22,7 @@
 # =============================================================================
 set -euo pipefail
 
-EMAIL=""; CLE=""; BRANCHE="main"; DEPOT_URL="https://github.com/samsam2703MFC/webshop-mrszoko-backoffice.git"
+EMAIL=""; CLE=""; BRANCHE="main"; DEPOT_URL="https://github.com/samsam2703MFC/WSB.git"
 while [ $# -gt 0 ]; do case "$1" in
   --email) EMAIL="$2"; shift 2;; --cle) CLE="$2"; shift 2;;
   --branche) BRANCHE="$2"; shift 2;; --depot) DEPOT_URL="$2"; shift 2;;
