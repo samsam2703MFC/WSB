@@ -26,11 +26,10 @@ name: Nouveau serveur (wsm)
 # liste / sante / retour : une clé volée ne crée ni ne supprime rien.
 
 on:
-  push:
-    # main : le flux normal. La branche de travail : le temps de mettre le
-    # nouveau serveur en route sans passer par main (qui déploie aussi
-    # l'ancien serveur) — à retirer une fois la branche fusionnée.
-    branches: [main, claude/wizardly-cori-jqdkt7]
+  # PAS DE DÉCLENCHEMENT AUTOMATIQUE pour l'instant : le serveur visé fait déjà
+  # tourner Traefik (Docker) sur 80/443 ; les boutiques y passeront en
+  # conteneur. Jusque-là, chaque push entrerait en root pour rien.
+  # Rétablir ensuite :  push: branches: [main]
   workflow_dispatch:
     inputs:
       action:

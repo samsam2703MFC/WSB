@@ -53,6 +53,11 @@ HTML
 ( cd "$G/backoffice/php-api" && tar -cf - --exclude=./data --exclude='*.sqlite' --exclude=./config.local.php . ) \
   | ( cd "$SITE/backoffice/api" && tar -xf - )
 
+# -- siege/ : le superadmin BuddyCorp. Présent dans chaque version, mais il ne
+#    répond (sinon 404) que sur le site du siège : lui seul a, dans sa
+#    configuration, la clé maîtresse et la liste des téléphones.
+cp -r "$G/siege" "$SITE/siege"
+
 # -- landing/ : l'ancienne page d'accueil, qui ne fait plus que rediriger —
 #    mais son content_seed.json nourrit le jeu de départ (seed.php le lit en
 #    ../../landing depuis l'API) : sans lui, une base neuve ne se crée pas.

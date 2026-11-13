@@ -280,7 +280,38 @@ function wsm_settings_all(PDO $pdo): array {
     }
     $out = [];
     foreach ($rows as $r) $out[(string) $r['cle']] = (string) $r['val'];
-    return $out;
+    return wsm_settings_centrala($out);
+}
+
+/**
+ * BOUTIQUE RELIÉE À LA CENTRALE (centrala.php) : ses clés d'intégration
+ * viennent de la table de BuddyCorp, et d'elle seule. Une copie locale
+ * restée dans wsm_settings est ignorée — sinon une clé retirée au siège
+ * continuerait de servir ici.
+ */
+function wsm_settings_centrala(array $vals): array {
+    require_once __DIR__ . '/centrala.php';
+    if (!wsb_actif()) return $vals;
+    $central = wsb_klucze();
+    foreach (wsm_settings_klucze_fields() as $k => $d) {
+        unset($vals[$k]);
+        $v = (string) ($central[$k] ?? '');
+        if ($v === '') continue;
+        // Une clé PEM se colle au siège ; la configuration attend un FICHIER.
+        if ($d[4] === 'pem' && str_contains($v, '-----BEGIN')) {
+            $f = wsm_data_dir() . '/centrala-' . sha1($v) . '.pem';
+            if (!is_file($f)) { @mkdir(dirname($f), 0770, true); @file_put_contents($f, $v); @chmod($f, 0640); }
+            $v = $f;
+        }
+        $vals[$k] = $v;
+    }
+    return $vals;
+}
+
+/** Cette clé est-elle tenue par la centrale (donc non modifiable ici) ? */
+function wsm_setting_centralna(string $key): bool {
+    require_once __DIR__ . '/centrala.php';
+    return wsb_actif() && array_key_exists($key, wsm_settings_klucze_fields());
 }
 
 /** La valeur actuellement en vigueur pour un chemin de configuration. */
@@ -386,6 +417,11 @@ function wsm_settings_save(PDO $pdo, array $post, string $actor = '', array &$re
               // décocher ne changerait rien, et « rien » serait impossible.
               || (str_starts_with($type, 'multi:') && !empty($post[$formKey . '__multi']));
         if (!$poste) continue;
+        if (wsm_setting_centralna($key)) {
+            $v0 = trim((string) ($post[$formKey] ?? ''));
+            if ($v0 !== '' && !str_starts_with($v0, '•')) $refus[$key] = 'zarządzane centralnie przez BuddyCorp';
+            continue;
+        }
         if (str_starts_with($type, 'multi:')) {
             // Les codes connus, dans l'ordre du dictionnaire ; aucun = « brak ».
             $permis = array_map(fn($o) => explode(':', $o, 2)[0], explode('|', substr($type, 6)));
@@ -537,8 +573,11 @@ function wsm_settings_view(PDO $pdo): array {
         $effective = wsm_config_at($path);
         $set = is_bool($effective) ? true : (is_int($effective) ? $effective !== 0 : !wsm_setting_blank((string) $effective));
 
+        $centr = wsm_setting_centralna($key);
+        if ($centr) $set = !wsm_setting_blank($db);          // la centrale seule fait foi
         $source = 'brak';
-        if (getenv($env) !== false)                      $source = 'serwer';
+        if ($centr)                                      $source = $set ? 'centrala' : 'brak';
+        elseif (getenv($env) !== false)                  $source = 'serwer';
         elseif (!wsm_setting_blank($db))                 $source = 'baza';
         elseif (str_starts_with($type, 'select:'))       $source = 'domyślne';
         elseif ($set)                                    $source = 'serwer';
@@ -556,7 +595,7 @@ function wsm_settings_view(PDO $pdo): array {
             'group' => $grp, 'label' => $label, 'type' => $type, 'help' => $help,
             'env' => $env, 'show' => $show, 'set' => $set, 'source' => $source,
             'form' => str_replace('.', '__', $key),
-            'locked' => getenv($env) !== false,
+            'locked' => getenv($env) !== false || $centr,
         ];
     }
     return $out;
