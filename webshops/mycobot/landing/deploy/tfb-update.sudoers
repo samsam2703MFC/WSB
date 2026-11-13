@@ -1,0 +1,15 @@
+# Le compte qui fait tourner le back-office peut redémarrer SON service, et rien
+# d'autre. C'est le seul privilège dont la mise à jour a besoin.
+#
+#   sudo cp deploy/tfb-update.sudoers /etc/sudoers.d/tfb-update
+#   sudo chmod 440 /etc/sudoers.d/tfb-update
+#   sudo visudo -cf /etc/sudoers.d/tfb-update     # doit répondre "parsed OK"
+#
+# Comme pour la sync : la commande est écrite en entier, jamais de joker.
+# `systemctl *` reviendrait à donner le droit d'arrêter n'importe quel service.
+
+tfb ALL=(root) NOPASSWD: /bin/systemctl restart tfb-landing.service
+
+# Et, si vous déclenchez depuis GitHub (§11.3), le compte de déploiement lance la
+# mise à jour — sans pouvoir toucher au service directement.
+deploy ALL=(root) NOPASSWD: /bin/systemctl start --no-block tfb-update.service

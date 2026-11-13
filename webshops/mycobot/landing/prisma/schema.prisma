@@ -1,0 +1,226 @@
+// The Franchise Buddy — landing + back-office content schema.
+// Table names, columns and constraints follow uploads/prompt_technique_tfb.md §2
+// verbatim: snake_case, `tfb_` prefix, created_at / updated_at timestamps.
+//
+// Translatable copy is never a direct column — it goes through tfb_translations.
+// Media is never a blob — the filesystem holds the file, the DB holds the path.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// §2.1 — the 8 active locales. 'fr' is is_default and the fallback for every
+/// missing translation; 'ar' is is_rtl.
+model Language {
+  id        Int     @id @default(autoincrement())
+  code      String  @unique @db.VarChar(5)
+  name      String  @db.VarChar(50)
+  isRtl     Boolean @default(false) @map("is_rtl")
+  isActive  Boolean @default(true) @map("is_active")
+  isDefault Boolean @default(false) @map("is_default")
+  sortOrder Int     @default(0) @map("sort_order")
+
+  translations Translation[]
+
+  @@map("tfb_languages")
+}
+
+/// §2.2 — generic i18n store. Every string rendered on the landing is a row here.
+model Translation {
+  id           Int    @id @default(autoincrement())
+  entityType   String @map("entity_type") @db.VarChar(50)
+  entityId     Int    @map("entity_id")
+  field        String @db.VarChar(50)
+  languageCode String @map("language_code") @db.VarChar(5)
+  value        String @db.Text
+
+  language Language @relation(fields: [languageCode], references: [code], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([entityType, entityId, field, languageCode], map: "uq_translation_scope")
+  @@index([entityType, entityId])
+  @@index([languageCode])
+  @@map("tfb_translations")
+}
+
+/// §2.3 — enseignes shown in the trust strip.
+model Brand {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(120)
+  slug       String   @unique @db.VarChar(120)
+  logoPath   String?  @map("logo_path") @db.VarChar(255)
+  websiteUrl String?  @map("website_url") @db.VarChar(255)
+  isActive   Boolean  @default(true) @map("is_active")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  sections      Section[]
+  subscriptions Subscription[]
+
+  @@map("tfb_brands")
+}
+
+/// §2.4 — landing sections: which ones render, and in what order.
+/// `config` holds display parameters only; never copy.
+model Section {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique @db.VarChar(80)
+  type      String   @db.VarChar(50)
+  brandId   Int?     @map("brand_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  config    Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+  @@index([brandId])
+  @@map("tfb_sections")
+}
+
+/// §2.5 — modules, written by the morning routine when a new feature ships.
+/// name / description / bullets / metric all live in tfb_translations.
+model Module {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique @db.VarChar(80)
+  slug        String   @unique @db.VarChar(120)
+  redirectUrl String?  @map("redirect_url") @db.VarChar(255)
+  repo        String?  @db.VarChar(150)
+  moduleGroup String?  @map("module_group") @db.VarChar(80)
+  /// Icon file stem in public/icons — one glyph per module.
+  icon        String?  @db.VarChar(60)
+  isActive    Boolean  @default(true) @map("is_active")
+  isNew       Boolean  @default(true) @map("is_new")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  screenshots ModuleScreenshot[]
+  features    ModuleFeature[]
+
+  @@map("tfb_modules")
+}
+
+/// One documented function of a module — what the app actually does, one row per
+/// feature. The copy (name, description) is in tfb_translations under
+/// entity_type = 'feature'; `key` is what the repo's .tfb/module.json calls it,
+/// so a sync run matches on (module_id, key) and never duplicates.
+model ModuleFeature {
+  id        Int      @id @default(autoincrement())
+  moduleId  Int      @map("module_id")
+  key       String   @db.VarChar(80)
+  /// Icon file stem in public/icons.
+  icon      String?  @db.VarChar(60)
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  module      Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  screenshots ModuleScreenshot[]
+
+  @@unique([moduleId, key], map: "uq_module_feature_key")
+  @@index([moduleId])
+  @@map("tfb_module_features")
+}
+
+/// §2.6 — one row per carousel frame. `file_path` is a relative server path.
+model ModuleScreenshot {
+  id        Int      @id @default(autoincrement())
+  moduleId  Int      @map("module_id")
+  /// The function this frame illustrates. NULL = a general shot of the module,
+  /// which is what the hero carousel shows.
+  featureId Int?     @map("feature_id")
+  filePath  String   @map("file_path") @db.VarChar(255)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  module  Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  feature ModuleFeature? @relation(fields: [featureId], references: [id], onDelete: SetNull)
+
+  @@index([moduleId])
+  @@index([featureId])
+  @@map("tfb_module_screenshots")
+}
+
+/// §2.7 — plans. `amount` is in cents; NULL means "sur devis" (talk to sales).
+model Plan {
+  id            Int      @id @default(autoincrement())
+  key           String   @unique @db.VarChar(80)
+  stripePriceId String?  @map("stripe_price_id") @db.VarChar(120)
+  amount        Int?
+  currency      String   @default("EUR") @db.VarChar(3)
+  interval      String   @db.VarChar(20)
+  isActive      Boolean  @default(true) @map("is_active")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+
+  @@map("tfb_plans")
+}
+
+/// §2.8 — subscriptions, kept in sync by the Stripe webhook.
+model Subscription {
+  id                   Int       @id @default(autoincrement())
+  brandId              Int?      @map("brand_id")
+  email                String    @db.VarChar(150)
+  stripeCustomerId     String?   @map("stripe_customer_id") @db.VarChar(120)
+  stripeSubscriptionId String?   @unique @map("stripe_subscription_id") @db.VarChar(120)
+  planId               Int       @map("plan_id")
+  status               String    @db.VarChar(30)
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  plan  Plan   @relation(fields: [planId], references: [id])
+
+  @@index([brandId])
+  @@index([planId])
+  @@map("tfb_subscriptions")
+}
+
+/// §2.9 — contact form submissions. status: new | read | archived.
+model ContactMessage {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(120)
+  email        String   @db.VarChar(150)
+  company      String?  @db.VarChar(150)
+  message      String   @db.Text
+  languageCode String?  @map("language_code") @db.VarChar(5)
+  status       String   @default("new") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([status])
+  @@map("tfb_contact_messages")
+}
+
+/// §2.10 — back-office accounts. role: superadmin | admin.
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         String   @default("admin") @db.VarChar(30)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("tfb_admin_users")
+}
+
+/// §2.11 — global key/value settings.
+model Setting {
+  key   String @id @db.VarChar(120)
+  value Json
+
+  @@map("tfb_settings")
+}

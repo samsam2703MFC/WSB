@@ -1,0 +1,55 @@
+# Le service qui fait tourner l'application. Pour une PREMIÈRE installation
+# seulement.
+#
+#   ⚠ VÉRIFIEZ D'ABORD QU'IL N'EXISTE PAS DÉJÀ :
+#       systemctl status tfb-landing
+#     S'il tourne, ne copiez pas ce fichier — vous écraseriez une unité qui
+#     fonctionne, avec des chemins qui ne sont pas les vôtres. Passez directement
+#     à tfb-update.service, qui redémarre le service existant.
+#
+# docs/DEPLOIEMENT-BASE.md §7 lance `npm start` à la main : bon pour vérifier,
+# insuffisant pour un serveur, où rien ne relance l'application au reboot.
+#
+#   sudo cp deploy/tfb-landing.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tfb-landing
+#
+# Vérifier :  systemctl status tfb-landing && journalctl -u tfb-landing -n 50
+
+[Unit]
+Description=TFB — landing et back office (Next.js)
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Le même utilisateur que la sync : il doit pouvoir lire le dépôt et écrire
+# dans STORAGE_PATH, puisque les téléversements du back-office y atterrissent.
+User=tfb
+WorkingDirectory=/srv/tfb-landing
+
+# DATABASE_URL, ADMIN_SESSION_SECRET, STORAGE_PATH et le reste. Le fichier
+# contient un mot de passe et une clé de session : chmod 600, propriétaire root.
+EnvironmentFile=/etc/tfb/landing.env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start
+
+# Un plantage doit se réparer tout seul, mais pas en boucle : au-delà de 5 essais
+# en 2 minutes, le service reste arrêté pour que la panne se voie.
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=120
+
+# L'application n'écrit que dans STORAGE_PATH et dans son propre .next.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/tfb-landing/.next /srv/tfb-storage
+
+[Install]
+WantedBy=multi-user.target

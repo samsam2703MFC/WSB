@@ -1,0 +1,22 @@
+/* TFB — webfonts.
+   SUBSTITUTION NOTE: no font binaries were supplied. Families are chosen for the
+   script coverage the product requires (FR/EN/NL/DE/PL Latin, UK/RU Cyrillic, AR Arabic):
+     · Manrope           — display/headings. Latin + Cyrillic.
+     · IBM Plex Sans     — UI and body. Latin + Cyrillic + Greek.
+     · IBM Plex Sans Arabic — the Arabic face for both display and body under [dir="rtl"].
+     · IBM Plex Mono     — figures, IDs, code and DB keys.
+   Swap the src urls for self-hosted files when the brand supplies binaries. */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+:root {
+  --font-display: "Manrope", "IBM Plex Sans", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "Noto Naskh Arabic", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* Arabic locale: one family carries both display and body. */
+[dir="rtl"] {
+  --font-display: "IBM Plex Sans Arabic", "Manrope", sans-serif;
+  --font-sans: "IBM Plex Sans Arabic", "IBM Plex Sans", sans-serif;
+}

@@ -1,0 +1,17 @@
+# Modèle de ~deploy/.ssh/authorized_keys sur le serveur de la landing.
+#
+# Tout est sur UNE seule ligne, options puis clé publique. Collez ici la clé
+# PUBLIQUE générée à l'étape §9.3 (le .pub), pas la privée.
+#
+#   sudo -u deploy mkdir -p ~deploy/.ssh && sudo -u deploy chmod 700 ~deploy/.ssh
+#   sudo -u deploy nano ~deploy/.ssh/authorized_keys
+#   sudo -u deploy chmod 600 ~deploy/.ssh/authorized_keys
+#
+# Ce que chaque option retire à la clé :
+#   command=…              elle n'exécute que ce script, quoi qu'on lui demande
+#   restrict               coupe tout le reste (tunnels, agent, X11, pty) d'un coup
+#
+# `restrict` existe depuis OpenSSH 7.2. Sur plus ancien, remplacez-le par :
+#   no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty,no-user-rc
+
+command="/usr/local/bin/tfb-sync-trigger",restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI_REMPLACEZ_MOI_PAR_VOTRE_CLE_PUBLIQUE tfb-sync@github-actions

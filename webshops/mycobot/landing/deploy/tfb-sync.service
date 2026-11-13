@@ -1,0 +1,43 @@
+# Synchronise les fiches modules des dépôts vers la base de la landing.
+#
+# Tourne SUR LE SERVEUR, et pas dans GitHub Actions : la sync copie les captures
+# dans STORAGE_PATH, qui doit être le disque que l'application sert réellement.
+#
+#   sudo cp deploy/tfb-sync.service deploy/tfb-sync.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now tfb-sync.timer
+#
+# Un passage à la demande, sans attendre le minuteur :
+#   sudo systemctl start tfb-sync.service && journalctl -u tfb-sync -n 40 --no-pager
+
+[Unit]
+Description=TFB — synchronise les modules depuis les dépôts
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# À adapter : l'utilisateur qui fait tourner la landing et possède STORAGE_PATH.
+User=www-data
+WorkingDirectory=/var/www/landing_tfb
+
+# DATABASE_URL, STORAGE_PATH et, pour des dépôts privés, GITHUB_TOKEN.
+# Le fichier contient un mot de passe : chmod 600, propriétaire root.
+EnvironmentFile=/etc/tfb/landing.env
+
+ExecStart=/usr/bin/npm run sync:modules
+
+# La sync est idempotente : un échec est réessayé au prochain déclenchement,
+# rien ne se répare en insistant tout de suite.
+TimeoutStartSec=600
+
+# Elle n'écrit que dans STORAGE_PATH et ne lit que le dépôt applicatif.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/tfb-storage
+
+[Install]
+WantedBy=multi-user.target

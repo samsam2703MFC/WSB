@@ -1,0 +1,86 @@
+/* Base palette — sampled from the brand mark (#7B4488) and anchored in deep navy ink. */
+:root {
+  /* Plum — primary brand family */
+  --plum-50: #f6eff8;
+  --plum-100: #ebdcef;
+  --plum-200: #d6bade;
+  --plum-300: #bc94c8;
+  --plum-400: #9c66ae;
+  --plum-500: #7b4488;
+  --plum-600: #683972;
+  --plum-700: #532d5b;
+  --plum-800: #3e2245;
+  --plum-900: #29162e;
+
+  /* Navy — structural, serious counterweight */
+  --navy-50: #f1f4fb;
+  --navy-100: #e1e7f5;
+  --navy-200: #c2cde9;
+  --navy-300: #97a8d3;
+  --navy-400: #6478b4;
+  --navy-500: #3b4e92;
+  --navy-600: #2a3a72;
+  --navy-700: #1e2b57;
+  --navy-800: #141d3e;
+  --navy-900: #0c1329;
+
+  /* Slate — cool neutrals */
+  --slate-0: #ffffff;
+  --slate-25: #fafbfd;
+  --slate-50: #f5f6f9;
+  --slate-100: #edeef3;
+  --slate-200: #dddfe8;
+  --slate-300: #c3c7d5;
+  --slate-400: #9aa0b4;
+  --slate-500: #737a92;
+  --slate-600: #565d73;
+  --slate-700: #3f4558;
+  --slate-800: #2a2f3d;
+  --slate-900: #171a24;
+
+  /* Teal — analytics / positive-momentum accent */
+  --teal-100: #d7f2f0;
+  --teal-300: #74d2cc;
+  --teal-500: #159e96;
+  --teal-700: #0c6a66;
+
+  /* Ember — the warm "food" accent. Landing CTAs, "Nouveau" badges, highlight rules.
+     Text on ember-500 must be navy ink, never white (AA). */
+  --ember-50: #fef4e8;
+  --ember-100: #fde7cb;
+  --ember-300: #f7be79;
+  --ember-500: #f0912a;
+  --ember-600: #de7f18;
+  --ember-700: #b4540a;
+  --ember-900: #6e3204;
+
+  /* Semantic families */
+  --green-100: #dbf1e6;
+  --green-500: #157f5a;
+  --green-700: #0e5c41;
+  --amber-100: #fceed6;
+  --amber-500: #b77500;
+  --amber-700: #8a5900;
+  --red-100: #fbe0e4;
+  --red-500: #c0304a;
+  --red-700: #931f35;
+  --blue-100: #dee8fd;
+  --blue-500: #2a5fd0;
+  --blue-700: #1c419a;
+
+  /* Alphas — for veils, overlays, hairlines on dark */
+  --alpha-ink-04: rgba(12, 19, 41, 0.04);
+  --alpha-ink-08: rgba(12, 19, 41, 0.08);
+  --alpha-ink-16: rgba(12, 19, 41, 0.16);
+  --alpha-ink-64: rgba(12, 19, 41, 0.64);
+  --alpha-white-08: rgba(255, 255, 255, 0.08);
+  --alpha-white-16: rgba(255, 255, 255, 0.16);
+  --alpha-white-64: rgba(255, 255, 255, 0.64);
+
+  /* Gradients — used sparingly: dark headers, brand CTAs, image protection */
+  --gradient-ink: linear-gradient(155deg, #1e2b57 0%, #0c1329 62%); /* @kind other */
+  --gradient-plum: linear-gradient(138deg, #8a4c99 0%, #532d5b 100%); /* @kind other */
+  --gradient-plum-navy: linear-gradient(140deg, #7b4488 0%, #2a3a72 100%); /* @kind other */
+  --gradient-veil: linear-gradient(180deg, rgba(12, 19, 41, 0) 0%, rgba(12, 19, 41, 0.78) 100%); /* @kind other */
+  --gradient-ember: linear-gradient(138deg, #f7be79 0%, #f0912a 100%); /* @kind other */
+}

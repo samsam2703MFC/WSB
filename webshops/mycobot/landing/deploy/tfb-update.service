@@ -1,0 +1,36 @@
+# Met le code du back-office à jour puis redémarre son service.
+#
+#   sudo cp deploy/tfb-update.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#
+# À la demande :
+#   sudo systemctl start tfb-update.service && journalctl -u tfb-update -f
+
+[Unit]
+Description=TFB — met le code du back-office à jour et redémarre son service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+
+# Le compte qui possède le dépôt, et pas root : `npm ci` en root laisserait des
+# fichiers que ce compte ne pourrait plus réécrire à la mise à jour suivante.
+# Le seul geste privilégié est le redémarrage, autorisé par tfb-update.sudoers.
+User=tfb
+WorkingDirectory=/srv/tfb-landing
+
+# À adapter si votre installation diffère. Ces valeurs sont celles d'un serveur
+# où le back-office vit dans /srv/tfb-landing sous le service tfb-landing.
+Environment=TFB_APP_DIR=/srv/tfb-landing
+Environment=TFB_APP_SERVICE=tfb-landing.service
+Environment=TFB_BRANCH=feat/landing-and-back-office
+Environment=TFB_HEALTH_URL=http://127.0.0.1:3000/api/languages
+
+ExecStart=/usr/local/bin/tfb-update
+
+# Une installation de dépendances plus un build : large, mais borné.
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=multi-user.target

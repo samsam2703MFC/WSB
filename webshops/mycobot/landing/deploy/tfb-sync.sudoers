@@ -1,0 +1,11 @@
+# Le compte de déploiement peut démarrer la sync, et rien d'autre.
+#
+#   sudo cp deploy/tfb-sync.sudoers /etc/sudoers.d/tfb-sync
+#   sudo chmod 440 /etc/sudoers.d/tfb-sync
+#   sudo visudo -cf /etc/sudoers.d/tfb-sync     # doit répondre "parsed OK"
+#
+# La commande est écrite en entier, options comprises : sudoers compare la ligne
+# de commande littéralement, donc `systemctl start autre.service` est refusé.
+# N'ajoutez jamais de joker ici — `systemctl *` donnerait le droit de tout arrêter.
+
+deploy ALL=(root) NOPASSWD: /bin/systemctl start --no-block tfb-sync.service

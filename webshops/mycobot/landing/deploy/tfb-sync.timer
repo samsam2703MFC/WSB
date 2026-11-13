@@ -1,0 +1,26 @@
+# Déclenche tfb-sync.service toutes les 10 minutes.
+#
+# La landing rend ses pages en ISR avec `revalidate = 60` : une fois la base
+# écrite, la page se rafraîchit d'elle-même en moins d'une minute. Le délai réel
+# entre un `git push` dans un dépôt module et l'affichage en ligne est donc
+# d'environ 10 minutes au pire, sans redéploiement.
+#
+# Pour du quasi-immédiat, gardez ce minuteur comme filet et faites déclencher
+# `systemctl start tfb-sync.service` par votre CI (voir docs/DEPLOIEMENT-BASE.md §9.3).
+
+[Unit]
+Description=TFB — synchronisation périodique des modules
+
+[Timer]
+# Un premier passage 2 min après le démarrage, puis toutes les 10 min.
+OnBootSec=2min
+OnUnitActiveSec=10min
+
+# Évite que plusieurs serveurs tapent la base et l'API GitHub à la même seconde.
+RandomizedDelaySec=60
+
+# Rattrape le passage manqué si la machine était éteinte.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

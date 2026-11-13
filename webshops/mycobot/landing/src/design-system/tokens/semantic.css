@@ -1,0 +1,75 @@
+/* Semantic aliases — components reference these, never the base palette directly. */
+:root {
+  /* Brand */
+  --brand: var(--plum-500);
+  --brand-hover: var(--plum-600);
+  --brand-press: var(--plum-700);
+  --brand-subtle: var(--plum-50);
+  --brand-subtle-hover: var(--plum-100);
+  --brand-on: var(--slate-0);
+  --brand-ink: var(--navy-900);
+
+  /* Warm CTA — the landing's conversion colour. Always with navy ink on top. */
+  --cta-warm: var(--ember-500);
+  --cta-warm-hover: var(--ember-600);
+  --cta-warm-press: var(--ember-700);
+  --cta-warm-on: var(--navy-900);
+  --cta-warm-subtle: var(--ember-50);
+  --accent-new: var(--ember-500);
+
+  /* Text */
+  --text-primary: var(--navy-900);
+  --text-secondary: var(--slate-600);
+  --text-tertiary: var(--slate-400);
+  --text-inverse: var(--slate-0);
+  --text-inverse-secondary: rgba(255, 255, 255, 0.68);
+  --text-brand: var(--plum-600);
+  --text-link: var(--plum-600);
+  --text-link-hover: var(--plum-700);
+  --text-success: var(--green-700);
+  --text-warning: var(--amber-700);
+  --text-danger: var(--red-700);
+  --text-disabled: var(--slate-400);
+
+  /* Surfaces */
+  --surface-page: var(--slate-50);
+  --surface-card: var(--slate-0);
+  --surface-raised: var(--slate-0);
+  --surface-sunken: var(--slate-100);
+  --surface-hover: var(--slate-50);
+  --surface-active: var(--slate-100);
+  --surface-inverse: var(--navy-900);
+  --surface-inverse-raised: var(--navy-800);
+  --surface-brand: var(--plum-500);
+  --surface-brand-subtle: var(--plum-50);
+  --surface-success-subtle: var(--green-100);
+  --surface-warning-subtle: var(--amber-100);
+  --surface-danger-subtle: var(--red-100);
+  --surface-info-subtle: var(--blue-100);
+  --surface-scrim: var(--alpha-ink-64);
+
+  /* Borders */
+  --border-subtle: var(--slate-100);
+  --border-default: var(--slate-200);
+  --border-strong: var(--slate-300);
+  --border-brand: var(--plum-400);
+  --border-inverse: var(--alpha-white-16);
+  --border-danger: var(--red-500);
+
+  /* Status foregrounds */
+  --status-success: var(--green-500);
+  --status-warning: var(--amber-500);
+  --status-danger: var(--red-500);
+  --status-info: var(--blue-500);
+  --status-neutral: var(--slate-400);
+
+  /* Data-viz series — ordered; stop at 6 and repeat with 70% opacity if needed. */
+  --chart-1: var(--plum-500);
+  --chart-2: var(--navy-500);
+  --chart-3: var(--teal-500);
+  --chart-4: var(--plum-300);
+  --chart-5: var(--ember-500);
+  --chart-6: var(--navy-300);
+  --chart-grid: var(--slate-100);
+  --chart-axis: var(--slate-400);
+}

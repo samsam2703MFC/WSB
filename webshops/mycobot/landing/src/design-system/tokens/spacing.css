@@ -1,0 +1,28 @@
+/* Spacing — 4px base. Console density uses 1–6; marketing sections use 12–32. */
+:root {
+  --space-0: 0px;
+  --space-05: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* Layout constants */
+  --sidebar-width: 248px;
+  --sidebar-width-collapsed: 68px;
+  --topbar-height: 60px;
+  --content-max: 1200px;
+  --prose-max: 66ch;
+  --gutter: var(--space-6);
+  --gutter-lg: var(--space-10);
+}

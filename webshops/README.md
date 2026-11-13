@@ -13,6 +13,10 @@ webshops/
                       textes de vitrine (pl / en), haut de page, icônes
     zdjecia/          images importées avec le catalogue (WebP / PNG)
       src/            leurs sources SVG
+  mycobot/landing/    la landing MyCobotBuddy (MCB) : application Next.js,
+                      reprise du dépôt landing_tfb — voir son README.md.
+                      Elle ne fait PAS partie de la version assemblée des
+                      boutiques (serveur/assembler.sh ne lit que generique/).
 ```
 
 ## Ajouter une boutique

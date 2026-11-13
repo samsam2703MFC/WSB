@@ -1,0 +1,11 @@
+/* The design system's single entry point: tokens, fonts and base primitives.
+   Everything downstream styles itself with the custom properties it declares.
+   This carries its own reset, which is why Tailwind's preflight is disabled in
+   tailwind.config.ts. */
+@import '../design-system/styles.css';
+
+/* Tailwind is configured with the same tokens (tailwind.config.ts → the design
+   system's preset) and is available for new work. The ported screens style
+   themselves with the custom properties above, exactly as the design system does. */
+@tailwind components;
+@tailwind utilities;

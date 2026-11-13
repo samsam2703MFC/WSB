@@ -1,0 +1,14 @@
+{
+  "_comment": "Les dépôts que `npm run sync:modules` interroge. Chacun publie son .tfb/module.json ; la landing ne stocke aucune copie produit en dur. Ajouter un module = une ligne ici et un manifeste là-bas. Tous les dépôts sont normalisés sur `main` ; un dépôt qui lirait ailleurs peut surcharger avec `ref`.",
+  "defaultRef": "main",
+  "repos": [
+    { "repo": "samsam2703MFC/WebShop" },
+    { "repo": "samsam2703MFC/back_office_ws_franchisor" },
+    { "repo": "samsam2703MFC/back_office_ws_franchisee" },
+    { "repo": "samsam2703MFC/supplier_atl" },
+    { "repo": "samsam2703MFC/pwa_kitchen" },
+    { "repo": "samsam2703MFC/pwa_consultant" },
+    { "repo": "samsam2703MFC/pwa_delivery" },
+    { "repo": "samsam2703MFC/signage" }
+  ]
+}

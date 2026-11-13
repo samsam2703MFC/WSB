@@ -1,0 +1,47 @@
+/* Type scale — 1.26 ratio off a 15px UI base. Display sizes are for marketing + headers. */
+:root {
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 21px;
+  --text-2xl: 25px;
+  --text-3xl: 31px;
+  --text-4xl: 39px;
+  --text-5xl: 49px;
+  --text-6xl: 61px;
+
+  --leading-tight: 1.08;
+  --leading-snug: 1.24;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.68;
+
+  --tracking-display: -0.024em;
+  --tracking-tight: -0.012em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.03em;
+  --tracking-caps: 0.09em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Composed roles */
+  --type-display-1: var(--weight-bold) var(--text-6xl) / var(--leading-tight) var(--font-display);
+  --type-display-2: var(--weight-bold) var(--text-5xl) / var(--leading-tight) var(--font-display);
+  --type-heading-1: var(--weight-semibold) var(--text-4xl) / var(--leading-snug) var(--font-display);
+  --type-heading-2: var(--weight-semibold) var(--text-3xl) / var(--leading-snug) var(--font-display);
+  --type-heading-3: var(--weight-semibold) var(--text-2xl) / var(--leading-snug) var(--font-display);
+  --type-heading-4: var(--weight-semibold) var(--text-xl) / var(--leading-snug) var(--font-display);
+  --type-title: var(--weight-semibold) var(--text-md) / var(--leading-snug) var(--font-sans);
+  --type-body-lg: var(--weight-regular) var(--text-lg) / var(--leading-relaxed) var(--font-sans);
+  --type-body: var(--weight-regular) var(--text-base) / var(--leading-normal) var(--font-sans);
+  --type-body-sm: var(--weight-regular) var(--text-sm) / var(--leading-normal) var(--font-sans);
+  --type-label: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+  --type-caption: var(--weight-regular) var(--text-xs) / 1.4 var(--font-sans);
+  --type-data: var(--weight-medium) var(--text-sm) / 1.3 var(--font-mono);
+  --type-metric: var(--weight-semibold) var(--text-3xl) / 1.05 var(--font-display);
+}

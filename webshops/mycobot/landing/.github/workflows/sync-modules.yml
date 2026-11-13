@@ -1,0 +1,47 @@
+# Valide la fiche `.tfb/module.json` de chaque dépôt module.
+#
+# Ce workflow ne touche PAS la base, volontairement. La sync copie les captures
+# référencées dans STORAGE_PATH : sur un runner GitHub, ce disque est détruit à la
+# fin du job, donc écrire depuis ici remplirait la base de chemins vers des fichiers
+# qui n'existeraient nulle part — et les carrousels retomberaient sur leur
+# placeholder sans qu'aucune erreur ne soit levée.
+#
+# L'écriture se fait sur le serveur, où la base et le disque sont locaux :
+# voir deploy/tfb-sync.timer et docs/DEPLOIEMENT-BASE.md §9.
+#
+# Ce que ce workflow garantit : qu'une fiche cassée se voie tout de suite, avant
+# que le serveur ne la lise.
+name: sync-modules
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [module-manifest-updated]
+  push:
+    paths:
+      - 'content/modules.repos.json'
+      - 'scripts/sync-modules.ts'
+      - 'src/lib/sync/**'
+
+jobs:
+  valider:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+
+      # Échoue si une fiche est malformée ou injoignable. Un dépôt qui n'a pas
+      # encore publié la sienne est signalé sans faire rougir le run.
+      - name: Valider les manifestes
+        env:
+          GITHUB_TOKEN: ${{ secrets.MODULE_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: npm run sync:modules -- --dry-run

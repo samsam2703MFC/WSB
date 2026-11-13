@@ -1,0 +1,64 @@
+# Déclenche la mise à jour du code sur le serveur, après un push sur la branche
+# de production.
+#
+# Ce workflow ne déploie rien lui-même : il ouvre une connexion SSH avec une clé
+# dont la commande est forcée côté serveur (deploy/tfb-update-trigger.sh), et
+# c'est le serveur qui décide de ce qui s'exécute. Le runner n'a donc jamais le
+# droit de faire autre chose que « lance la mise à jour » — même compromis, il ne
+# peut pas ouvrir un shell.
+#
+# Pour la même raison que la sync (voir sync-modules.yml), on ne construit pas
+# ici : le disque du runner disparaît avec le job, et c'est sur le serveur que le
+# build doit atterrir.
+#
+# Secrets à créer dans Settings → Secrets and variables → Actions :
+#   DEPLOY_SSH_KEY    la clé PRIVÉE (le fichier sans .pub) du compte deploy
+#   DEPLOY_HOST       le nom d'hôte ou l'IP du serveur
+#   DEPLOY_USER       le compte de déploiement, « deploy » dans la documentation
+#   DEPLOY_KNOWN_HOSTS  la sortie de `ssh-keyscan -H <hôte>`
+#
+# DEPLOY_KNOWN_HOSTS n'est pas facultatif : sans lui il faudrait désactiver la
+# vérification de l'hôte, et n'importe qui capable de se placer sur le chemin
+# recevrait la clé de déploiement.
+name: deploy
+
+on:
+  push:
+    branches: [feat/landing-and-back-office]
+  workflow_dispatch:
+
+concurrency:
+  # Deux déploiements en parallèle se marcheraient dessus dans node_modules.
+  # On laisse finir celui qui tourne plutôt que de l'interrompre au milieu d'un
+  # build : cancel-in-progress laisserait le serveur dans un état intermédiaire.
+  group: deploy-landing
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Préparer la clé et l'hôte connu
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Déclencher la mise à jour
+        run: |
+          # La commande envoyée est purement informative : le serveur l'ignore et
+          # exécute sa commande forcée. Elle sert au journal, côté serveur.
+          ssh -i ~/.ssh/id_deploy \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+              "deploy ${GITHUB_REPOSITORY} ${GITHUB_SHA}"
+
+      - name: Rappel
+        run: |
+          echo "Déclenchement envoyé. Le build tourne sur le serveur :"
+          echo "  journalctl -u tfb-update -f"
