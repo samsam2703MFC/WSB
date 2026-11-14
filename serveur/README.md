@@ -122,6 +122,44 @@ Basculer le DNS de Szoko vers le nouveau serveur, `sudo wsm https szoko`,
 puis arrêter l'ancien déploiement (Actions → « Deploy to server » → Disable
 workflow).
 
+## 7. Serveur qui a déjà Traefik (Docker) : le mode conteneurs
+
+Si les ports 80/443 sont déjà tenus par Traefik, le déploiement GitHub ne
+touche pas à Apache de la machine (désactivé au démarrage) et lance
+`wsm docker-init` une fois :
+
+- `wsb-web` (PHP 8.3 + Apache) sert toutes les boutiques et le siège ;
+  `wsb-db` (MariaDB) garde leurs bases, sur un réseau privé ;
+- la configuration de Traefik (réseau, entrées HTTP/HTTPS, résolveur de
+  certificats) est **lue sur le serveur** et n'est jamais affichée ;
+  `wsb-web` porte une route Traefik par domaine, certificat compris ;
+- rien de Traefik ni des autres conteneurs n'est modifié ;
+- secrets dans `/etc/wsm/` (root seul), bases dans `/var/lib/wsb-mariadb`.
+
+Sans nom de domaine, les sites ont une adresse provisoire :
+`https://sandbox.<ip-avec-tirets>.sslip.io/` et
+`https://admin.<ip-avec-tirets>.sslip.io/siege/`.
+
+## 8. Le siège BuddyCorp (superadmin)
+
+GitHub → Settings → Secrets and variables → Actions :
+
+| Où | Nom | Valeur |
+| --- | --- | --- |
+| Secrets | `SIEGE_TELEFONY` | les numéros autorisés : `+48600100200, +32470111222` |
+| Secrets | `SMSAPI_TOKEN` | le jeton OAuth SMSAPI qui envoie le code de connexion |
+| Variables | `SMSAPI_NADAWCA` | le nom d'expéditeur validé chez SMSAPI (facultatif) |
+| Variables | `SIEGE_DOMAINE` | son domaine, ex. `admin.buddycorp.pl` (facultatif) |
+
+Entrée : numéro + **code du jour** (JJMM puis le jour de la semaine, lundi = 1 :
+vendredi 13/11 → `13115`), puis le code reçu par SMS → 12 heures.
+Sans numéro autorisé, la page reste cachée (404).
+
+Les clés d'intégration de toutes les boutiques se saisissent là (onglet
+*Klucze*) : une table, une clé de chiffrement par boutique, chaque boutique ne
+lit que les siennes. Dans la console d'une boutique, elles apparaissent
+verrouillées (« centrala »).
+
 ## Toutes les commandes
 
 `sudo wsm aide`.

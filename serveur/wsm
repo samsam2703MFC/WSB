@@ -17,6 +17,11 @@
 #    wsm importer-base <boutique> <dump.sql[.gz]>   remplace la base (après sauvegarde)
 #    wsm https <boutique>                    certificat Let's Encrypt (le DNS doit pointer ici)
 #    wsm apache <boutique>                   réécrit son site Apache depuis le modèle
+#    wsm docker-init                         passe en conteneurs derrière le Traefik du serveur
+#    wsm siege <domaine> [--telefony "+48…, +32…"]
+#                                            le site superadmin BuddyCorp + la base centrale
+#    wsm siege-cle <cle>                     pose une clé du siège (valeur sur l'entrée standard),
+#                                            ex. : printf '%s' "$TOKEN" | wsm siege-cle smsapi.token
 #
 #  OÙ SONT LES CHOSES (WSM_RACINE, par défaut /srv/webshops) :
 #    depot/                      le dépôt GitHub (lecture seule pour nous)
@@ -45,6 +50,11 @@ SAV="$RACINE/sauvegardes"
 APACHE_SITES="${WSM_APACHE_SITES:-/etc/apache2/sites-available}"
 WEB_USER="${WSM_WEB_USER:-www-data}"
 GARDER_VERSIONS="${GARDER_VERSIONS:-8}"
+# hote : Apache et MariaDB sur la machine.  docker : conteneurs wsb-web et
+# wsb-db derrière le Traefik du serveur (wsm docker-init écrit MODE=docker).
+MODE="${MODE:-hote}"
+DK="$RACINE/docker"
+SECRETS=/etc/wsm                     # hors de /srv/webshops : jamais monté dans le conteneur web
 
 dire()   { printf '  %s\n' "$*"; }
 titre()  { printf '\n== %s\n' "$*"; }
@@ -57,7 +67,29 @@ meta()       { grep -E "^$2=" "$BOUT/$1/boutique.conf" 2>/dev/null | head -1 | c
 base_de()    { echo "ws_${1//-/_}"; }
 version_de() { basename "$(dirname "$(readlink -f "$BOUT/$1/current")")"; }
 
+dk_on()  { [ "$MODE" = docker ]; }
+dc()     { docker compose -p wsb -f "$DK/compose.yml" "$@"; }
+db_mdp() { sed -n 's/^MARIADB_ROOT_PASSWORD=//p' "$SECRETS/db.env"; }
+# Le client SQL en root, sur la machine ou dans wsb-db. Le mot de passe passe
+# par l'environnement de la commande, jamais par ses arguments.
+sql_root() {
+  if dk_on; then docker exec -i -e MYSQL_PWD="$(db_mdp)" wsb-db mariadb -uroot "$@"
+  else mysql -uroot "$@"; fi
+}
+dump_root() {
+  if dk_on; then docker exec -i -e MYSQL_PWD="$(db_mdp)" wsb-db mariadb-dump -uroot "$@"
+  else mysqldump -uroot "$@"; fi
+}
+db_hote()   { if dk_on; then echo wsb-db; else echo localhost; fi; }
+db_depuis() { if dk_on; then echo '%'; else echo localhost; fi; }
+type_de()   { meta "$1" TYPE; }
+
 recharger_apache() {
+  if dk_on; then
+    docker exec wsb-web apache2ctl configtest >/dev/null 2>&1 || { docker exec wsb-web apache2ctl configtest; mourir "configuration Apache invalide — rien n'a été rechargé"; }
+    docker exec wsb-web apache2ctl graceful >/dev/null 2>&1 || mourir "Apache du conteneur wsb-web ne recharge pas"
+    return
+  fi
   apache2ctl configtest >/dev/null 2>&1 || { apache2ctl configtest; mourir "configuration Apache invalide — rien n'a été rechargé"; }
   if command -v systemctl >/dev/null && systemctl is-active --quiet apache2 2>/dev/null; then systemctl reload apache2
   else apache2ctl graceful 2>/dev/null || apache2ctl start; fi
@@ -66,8 +98,24 @@ recharger_apache() {
 # php avec la configuration, les données et les photos d'UNE boutique.
 php_boutique() {
   local b="$1"; shift
+  if dk_on; then
+    docker exec -u "$WEB_USER" -e WSM_CONFIG_FILE="$BOUT/$b/config.php" -e WSM_DATA_DIR="$BOUT/$b/data" -e WSM_MEDIA_DIR="$BOUT/$b/media" \
+      wsb-web php "$BOUT/$b/current/backoffice/api/migrate.php" "$@"
+    return
+  fi
   WSM_CONFIG_FILE="$BOUT/$b/config.php" WSM_DATA_DIR="$BOUT/$b/data" WSM_MEDIA_DIR="$BOUT/$b/media" \
     php "$BOUT/$b/current/backoffice/api/migrate.php" "$@"
+}
+
+# La centrale BuddyCorp, avec la configuration du siège (seul détenteur de la clé maîtresse).
+php_siege() {
+  [ -f "$BOUT/siege/config.php" ] || mourir "pas de siège : wsm siege <domaine>"
+  if dk_on; then
+    docker exec -i -u "$WEB_USER" -e WSM_CONFIG_FILE="$BOUT/siege/config.php" -e WSM_DATA_DIR="$BOUT/siege/data" \
+      wsb-web php "$BOUT/siege/current/backoffice/api/centrala_cli.php" "$@"
+  else
+    WSM_CONFIG_FILE="$BOUT/siege/config.php" WSM_DATA_DIR="$BOUT/siege/data" php "$BOUT/siege/current/backoffice/api/centrala_cli.php" "$@"
+  fi
 }
 
 # Le fichier d'un webshop, lu dans la version qu'utilise la boutique.
@@ -93,10 +141,12 @@ cmd_version() {
   # wsm lui-même suit le dépôt : une version apporte aussi ses outils.
   install -m 0755 "$DEPOT/serveur/wsm" /usr/local/sbin/wsm.nouveau && mv -f /usr/local/sbin/wsm.nouveau /usr/local/sbin/wsm
   # Ménage : on garde les GARDER_VERSIONS dernières, et toute version encore utilisée.
-  local utilisees; utilisees=$(for b in "$BOUT"/*/; do [ -L "$b/current" ] && basename "$(dirname "$(readlink -f "$b/current")")"; [ -f "$b/poprzednia" ] && cat "$b/poprzednia"; done 2>/dev/null | sort -u)
-  ls -1 "$REL" | grep -E '^[0-9]{8}-' | sort | head -n -"$GARDER_VERSIONS" | while read -r v; do
+  # (« || true » : sans boutique, ou sans version à effacer, la boucle finit
+  #  sur un test faux — et set -e arrêtait wsm ici, sans un mot.)
+  local utilisees; utilisees=$( { for b in "$BOUT"/*/; do [ -L "$b/current" ] && basename "$(dirname "$(readlink -f "$b/current")")"; [ -f "$b/poprzednia" ] && cat "$b/poprzednia"; done; true; } 2>/dev/null | sort -u)
+  { ls -1 "$REL" | grep -E '^[0-9]{8}-' | sort | head -n -"$GARDER_VERSIONS" | while read -r v; do
     grep -qx "$v" <<<"$utilisees" || rm -rf "${REL:?}/$v"
-  done
+  done; } || true
   dire "version $nom — $(cat "$REL/$nom/COMMIT")"
   echo "$nom" > "$REL/derniere.nom"
 }
@@ -110,6 +160,7 @@ cmd_creer() {
     --webshop) ws="$2"; shift 2;; --email) mail="$2"; shift 2;; --alias) alias="$2"; shift 2;;
     *) mourir "option inconnue : $1";; esac; done
   nom_valide "$b"
+  [ "$b" != siege ] || mourir "« siege » est réservé au site BuddyCorp (wsm siege <domaine>)"
   [[ "$dom" =~ ^[a-z0-9.-]+\.[a-z]{2,}$ ]] || mourir "domaine « $dom » invalide (ex. sklep.example.pl)"
   [ -n "$mail" ] || mourir "e-mail de l'administrateur : --email vous@example.pl (ou EMAIL_ADMIN dans $RACINE/wsm.conf)"
   [ -L "$REL/derniere" ] || mourir "aucune version du code : lancer d'abord « wsm version »"
@@ -123,10 +174,25 @@ cmd_creer() {
   titre "boutique $b — $nomB ($dom), design « $ds »"
 
   dire "base de données $base"
-  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS \`$base\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-                   CREATE USER IF NOT EXISTS '$base'@'localhost' IDENTIFIED BY '$mdp';
-                   ALTER USER '$base'@'localhost' IDENTIFIED BY '$mdp';
-                   GRANT ALL PRIVILEGES ON \`$base\`.* TO '$base'@'localhost'; FLUSH PRIVILEGES;"
+  local dbh dbd; dbh=$(db_hote); dbd=$(db_depuis)
+  sql_root -e "CREATE DATABASE IF NOT EXISTS \`$base\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                   CREATE USER IF NOT EXISTS '$base'@'$dbd' IDENTIFIED BY '$mdp';
+                   ALTER USER '$base'@'$dbd' IDENTIFIED BY '$mdp';
+                   GRANT ALL PRIVILEGES ON \`$base\`.* TO '$base'@'$dbd'; FLUSH PRIVILEGES;"
+
+  # La centrale BuddyCorp, s'il y a un siège : la boutique y lit SES clés
+  # d'intégration, par une vue qui ne montre que ses lignes — son seul droit.
+  local centrala=""
+  if [ -f "$BOUT/siege/config.php" ]; then
+    dire "centrale BuddyCorp : vue v_$base, clé de la boutique"
+    sql_root -e "CREATE OR REPLACE SQL SECURITY DEFINER VIEW wsb.\`v_$base\` AS
+                   SELECT boutique, cle, val FROM wsb.wsb_integracje WHERE boutique = '$b';
+                 GRANT SELECT ON wsb.\`v_$base\` TO '$base'@'$dbd'; FLUSH PRIVILEGES;"
+    local kc; kc=$(php_siege cle "$b") || mourir "clé de la boutique non dérivée"
+    php_siege enregistrer "$b" "$nomB" "$dom" >/dev/null
+    centrala="    'centrala' => ['engine' => 'mysql', 'mysql' => ['host' => '$dbh', 'port' => '3306', 'name' => 'wsb', 'user' => '$base', 'pass' => '$mdp'],
+                   'boutique' => '$b', 'klucz' => '$kc', 'tabela' => 'v_$base'],"
+  fi
 
   dire "dossiers et configuration (secrets : ici seulement)"
   mkdir -p "$dir/media" "$dir/data/zakupy"
@@ -139,10 +205,11 @@ cmd_creer() {
 // poste, KSeF…) se saisissent dans la console, Integracje.
 return [
     'engine' => 'mysql',
-    'mysql'  => ['host' => 'localhost', 'port' => '3306', 'name' => '$base', 'user' => '$base', 'pass' => '$mdp'],
+    'mysql'  => ['host' => '$dbh', 'port' => '3306', 'name' => '$base', 'user' => '$base', 'pass' => '$mdp'],
     'admin_token'       => '$jeton',
     'design_system'     => '$ds',
     'superadmin_emails' => '$SUPERADMIN_EMAILS',
+$centrala
 ];
 PHP
   umask 022
@@ -166,13 +233,15 @@ PHP
   ( umask 077; printf 'Boutique : %s\nConsole  : https://%s/backoffice/\nE-mail   : %s\nMot de passe : %s\n' "$b" "$dom" "$mail" "$pa" > "$dir/ADMIN.txt" )
 
   cmd_apache "$b"
-  cmd_sante "$b" || mourir "la boutique ne répond pas — voir /var/log/apache2/wsm-$b-error.log"
+  cmd_sante "$b" || mourir "la boutique ne répond pas — voir /var/log/apache2/wsm-$b-error.log$(dk_on && echo ' (dans le conteneur wsb-web)')"
 
   titre "boutique « $b » prête"
-  dire "Console : http://$dom/backoffice/  (https dès que le certificat est posé : wsm https $b)"
+  if dk_on; then dire "Console : https://$dom/backoffice/  (certificat : Traefik)"
+  else dire "Console : http://$dom/backoffice/  (https dès que le certificat est posé : wsm https $b)"; fi
   dire "Compte  : $mail"
   dire "Mot de passe (affiché UNE fois, aussi dans $dir/ADMIN.txt, lisible par root seul) : $pa"
-  if getent hosts "$dom" >/dev/null 2>&1; then dire "Le DNS de $dom répond : lancez « wsm https $b »."
+  if dk_on; then :
+  elif getent hosts "$dom" >/dev/null 2>&1; then dire "Le DNS de $dom répond : lancez « wsm https $b »."
   else dire "Le DNS de $dom ne pointe pas encore ici : faites pointer le domaine, puis « wsm https $b »."; fi
 }
 
@@ -182,23 +251,62 @@ cmd_apache() {
   local b="$1"; existe "$b"
   local dom alias lignes=""; dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
   [ -n "$alias" ] && lignes="ServerAlias ${alias//,/ }"
-  sed -e "s#__DOMAINE__#$dom#g" -e "s#__ALIAS__#$lignes#g" -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#$b#g" \
-      "$DEPOT/serveur/apache-boutique.conf" > "$APACHE_SITES/wsm-$b.conf"
-  a2ensite -q "wsm-$b" >/dev/null
+  # Le siège n'ouvre que /siege/ : ni vitrine, ni console de boutique.
+  local accueil=/shop/ restr=""
+  if [ "$(type_de "$b")" = siege ]; then accueil=/siege/; restr='RedirectMatch 404 "^/(shop|backoffice|landing)(/|$)"'; fi
+  local cible="$APACHE_SITES/wsm-$b.conf"
+  dk_on && cible="$RACINE/apache/wsm-$b.conf"
+  # Derrière Traefik, le site est en https : Apache doit le savoir pour ses
+  # propres redirections (sinon « / » repasserait par http://).
+  local sn=""; dk_on && sn="https://"
+  sed -e "s#ServerName __DOMAINE__#ServerName $sn$dom#" -e "s#__DOMAINE__#$dom#g" -e "s#__ALIAS__#$lignes#g" -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#$b#g" \
+      -e "s#__ACCUEIL__#$accueil#g" -e "s#__RESTRICTION__#$restr#g" \
+      "$DEPOT/serveur/apache-boutique.conf" > "$cible"
+  if dk_on; then
+    compose_ecrire                      # les noms de domaine passent dans les étiquettes Traefik
+    dc up -d >/dev/null 2>&1 || dc up -d
+    attendre_web
+  else
+    a2ensite -q "wsm-$b" >/dev/null
+  fi
   recharger_apache
   dire "site Apache wsm-$b ($dom${alias:+, $alias})"
 }
 
 # ---------------------------------------------------------------------------
+# Une requête au site d'une boutique, vue de l'intérieur (sans DNS ni Traefik).
+http_interne() { # <domaine> <chemin> [-o fichier|corps]
+  local dom="$1" ch="$2" mode="${3:-code}"
+  local args=(-s --max-time 20 -H "Host: $dom" -H "X-Forwarded-Proto: https")
+  if [ "$mode" = code ]; then args+=(-o /dev/null -w '%{http_code}'); fi
+  if dk_on; then docker exec wsb-web curl "${args[@]}" "http://127.0.0.1$ch" || true
+  else curl "${args[@]}" "http://127.0.0.1$ch" || true; fi
+}
+
+attendre_web() {
+  dk_on || return 0
+  local i; for i in $(seq 1 30); do docker exec wsb-web apache2ctl -t >/dev/null 2>&1 && \
+    [ "$(docker exec wsb-web curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/ 2>/dev/null)" != 000 ] && return 0; sleep 1; done
+  mourir "le conteneur wsb-web ne répond pas (docker logs wsb-web)"
+}
+
 cmd_sante() {
   local b="$1"; existe "$b"
   local dom ds code html ok=0; dom=$(meta "$b" DOMAINE)
+  if [ "$(type_de "$b")" = siege ]; then
+    html=$(http_interne "$dom" /siege/ corps); code=$(http_interne "$dom" /siege/)
+    if [ "$code" = 200 ] && grep -q BuddyCorp <<<"$html"; then dire "siège      : 200"; return 0; fi
+    # Sans téléphone autorisé, la page se cache (404) : c'est voulu, pas une panne.
+    local tel; tel=$(php -r '$c = @include $argv[1]; echo is_array($c) ? trim((string) ($c["siege"]["telefony"] ?? "")) : "";' "$BOUT/$b/config.php" 2>/dev/null || true)
+    if [ "$code" = 404 ] && [ -z "$tel" ]; then dire "siège      : 404 (aucun téléphone autorisé : page cachée)"; return 0; fi
+    dire "siège      : $code — NE RÉPOND PAS"; return 1
+  fi
   ds=$(php -r '$c = @include $argv[1]; echo is_array($c) ? ($c["design_system"] ?? "") : "";' "$BOUT/$b/config.php" 2>/dev/null || true)
   # X-Forwarded-Proto : la boutique exige le https ; en local, on dit qu'on l'est.
-  html=$(curl -s --max-time 20 -H "Host: $dom" -H "X-Forwarded-Proto: https" "http://127.0.0.1/shop/" || true)
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -H "Host: $dom" -H "X-Forwarded-Proto: https" "http://127.0.0.1/shop/" || true)
+  html=$(http_interne "$dom" /shop/ corps)
+  code=$(http_interne "$dom" /shop/)
   if [ "$code" = 200 ] && grep -q "ds/${ds:-szoko}/tokens.css" <<<"$html"; then dire "boutique   : 200, design « ${ds:-szoko} »"; else dire "boutique   : $code — NE RÉPOND PAS"; ok=1; fi
-  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -H "Host: $dom" -H "X-Forwarded-Proto: https" "http://127.0.0.1/backoffice/login.php" || true)
+  code=$(http_interne "$dom" /backoffice/login.php)
   if [ "$code" = 200 ]; then dire "console    : 200"; else dire "console    : $code — NE RÉPOND PAS"; ok=1; fi
   return $ok
 }
@@ -210,7 +318,7 @@ cmd_sauvegarde() {
   local b="$1"; existe "$b"
   local base f; base=$(meta "$b" BASE); mkdir -p "$SAV/$b"
   f="$SAV/$b/$(date +%Y%m%d-%H%M%S).sql.gz"
-  mysqldump -uroot --single-transaction --routines --default-character-set=utf8mb4 "$base" | gzip -9 > "$f"
+  dump_root --single-transaction --routines --default-character-set=utf8mb4 "$base" | gzip -9 > "$f"
   chmod 600 "$f"
   ls -1t "$SAV/$b"/*.sql.gz 2>/dev/null | tail -n +15 | xargs -r rm -f
   dire "sauvegarde $b → $f ($(du -h "$f" | cut -f1))"
@@ -245,7 +353,9 @@ cmd_deployer() {
     # Le schéma suit le code : colonnes ajoutées, libellés nouveaux. Toujours
     # ADDITIF — l'ancienne version tourne encore sur la nouvelle base, c'est
     # ce qui rend le retour possible.
-    if ! php_boutique "$b" >/dev/null || ! php_boutique "$b" --sync-content >/dev/null; then
+    if [ "$(type_de "$b")" = siege ]; then
+      php_siege schema >/dev/null || { basculer "$b" "$REL/$avant/site"; mourir "siège : schéma central refusé — revenu à $avant"; }
+    elif ! php_boutique "$b" >/dev/null || ! php_boutique "$b" --sync-content >/dev/null; then
       basculer "$b" "$REL/$avant/site"; recharger_apache
       mourir "$b : mise à jour du schéma refusée — revenue à $avant (sauvegarde dans $SAV/$b)"
     fi
@@ -284,7 +394,7 @@ cmd_importer_base() {
   cmd_sauvegarde "$b"
   local base; base=$(meta "$b" BASE)
   titre "import de $f dans $base"
-  if [[ "$f" == *.gz ]]; then gunzip -c "$f"; else cat "$f"; fi | mysql -uroot --default-character-set=utf8mb4 "$base"
+  if [[ "$f" == *.gz ]]; then gunzip -c "$f"; else cat "$f"; fi | sql_root --default-character-set=utf8mb4 "$base"
   php_boutique "$b" >/dev/null   # colonnes et tables du code actuel
   dire "base importée ; les photos (media/) se copient à part : rsync -a <ancien>/shop/media/ $BOUT/$b/media/"
 }
@@ -292,6 +402,7 @@ cmd_importer_base() {
 cmd_https() {
   racine_seulement
   local b="$1"; existe "$b"
+  if dk_on; then dire "certificats : Traefik s'en charge (étiquettes de wsb-web) — rien à faire"; return 0; fi
   local dom alias args=(); dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
   command -v certbot >/dev/null || mourir "certbot absent (apt install certbot python3-certbot-apache)"
   [ -n "$EMAIL_ADMIN" ] || mourir "EMAIL_ADMIN vide dans $RACINE/wsm.conf (adresse pour Let's Encrypt)"
@@ -310,7 +421,200 @@ cmd_liste() {
   [ -L "$REL/derniere" ] && printf '\ndernière version construite : %s (%s)\n' "$(basename "$(readlink -f "$REL/derniere")")" "$(cat "$REL/derniere/COMMIT" 2>/dev/null)"
 }
 
-aide() { sed -n '3,20p' "$0" | sed 's/^#  \{0,1\}//'; }
+# ---------------------------------------------------------------------------
+#  MODE DOCKER — derrière le Traefik déjà en place sur le serveur.
+#
+#  On ne touche PAS à Traefik : on lit, sur la machine, comment il est
+#  configuré (son réseau, ses entrées HTTP/HTTPS, son résolveur de
+#  certificats — d'après ses arguments et les étiquettes des conteneurs qu'il
+#  sert déjà), et le conteneur wsb-web porte les étiquettes qui vont avec.
+#  Ces noms restent dans $DK/traefik.env : ils ne s'affichent pas (les
+#  journaux de déploiement sont publics).
+# ---------------------------------------------------------------------------
+traefik_detecter() {
+  local t; t=$(docker ps --format '{{.Names}} {{.Image}}' | awk '$2 ~ /traefik/ {print $1; exit}')
+  [ -n "$t" ] || mourir "aucun conteneur Traefik en marche sur ce serveur"
+  python3 - "$t" > "$DK/traefik.env.nouveau" <<'PY'
+import json, re, subprocess, sys, collections
+t = sys.argv[1]
+insp = lambda n: json.loads(subprocess.check_output(['docker', 'inspect', n]))[0]
+T = insp(t)
+txt = '\n'.join((T.get('Args') or []) + (T['Config'].get('Cmd') or []))
+for f in ('/etc/traefik/traefik.yml', '/etc/traefik/traefik.yaml', '/traefik.yml', '/traefik.yaml', '/etc/traefik/traefik.toml', '/traefik.toml'):
+    try: txt += '\n' + subprocess.check_output(['docker', 'exec', t, 'cat', f], stderr=subprocess.DEVNULL).decode('utf-8', 'replace')
+    except Exception: pass
+eps = {}
+for m in re.finditer(r'--entry[pP]oints\.([A-Za-z0-9_-]+)\.address=[^:\s]*:(\d+)', txt): eps.setdefault(m.group(2), m.group(1))
+for m in re.finditer(r'^\s+([A-Za-z0-9_-]+):\s*\n\s+address:\s*["\']?[^:"\'\s]*:(\d+)', txt, re.M): eps.setdefault(m.group(2), m.group(1))
+for m in re.finditer(r'\[entry[pP]oints\.([A-Za-z0-9_-]+)\]\s*\n\s*address\s*=\s*"[^:"]*:(\d+)"', txt): eps.setdefault(m.group(2), m.group(1))
+res, epl, nets = collections.Counter(), collections.Counter(), collections.Counter()
+tnets = list((T['NetworkSettings'].get('Networks') or {}).keys())
+for cid in subprocess.check_output(['docker', 'ps', '-q']).decode().split():
+    C = insp(cid)
+    if C['Id'] == T['Id'] or C['Name'].lstrip('/') == 'wsb-web': continue
+    L = C['Config'].get('Labels') or {}
+    if not any(k.startswith('traefik.') for k in L): continue
+    for k, v in L.items():
+        if k.endswith('.tls.certresolver'): res[v] += 1
+        if k.endswith('.entrypoints'):
+            for e in v.split(','): epl[e.strip()] += 1
+        if k == 'traefik.docker.network': nets[v] += 3
+    for n in (C['NetworkSettings'].get('Networks') or {}):
+        if n in tnets: nets[n] += 1
+m = re.search(r'--providers\.docker\.network=(\S+)', txt)
+if m: nets[m.group(1)] += 10
+for m in re.finditer(r'--certificates[rR]esolvers\.([A-Za-z0-9_-]+)\.acme', txt): res[m.group(1)] += 0.5
+m = re.search(r'certificates[rR]esolvers:\s*\n\s+([A-Za-z0-9_-]+):', txt)
+if m: res[m.group(1)] += 0.5
+net = nets.most_common(1)[0][0] if nets else next((n for n in tnets if n not in ('bridge', 'host', 'none')), '')
+https = eps.get('443') or next((e for e, _ in epl.most_common() if 'secure' in e or e == 'https'), '') or 'websecure'
+http = eps.get('80') or next((e for e, _ in epl.most_common() if e != https), '') or 'web'
+r = res.most_common(1)[0][0] if res else ''
+ok = lambda s: s if re.fullmatch(r'[A-Za-z0-9_.-]{1,64}', s or '') else ''
+print(f'TRAEFIK_NET={ok(net)}\nEP_HTTP={ok(http)}\nEP_HTTPS={ok(https)}\nRESOLVER={ok(r)}')
+PY
+  . "$DK/traefik.env.nouveau"
+  [ -n "${TRAEFIK_NET:-}" ] && docker network inspect "$TRAEFIK_NET" >/dev/null 2>&1 || mourir "réseau de Traefik introuvable"
+  mv -f "$DK/traefik.env.nouveau" "$DK/traefik.env"; chmod 600 "$DK/traefik.env"
+  dire "Traefik : réseau ✓, entrées HTTP/HTTPS ✓, certificats $([ -n "$RESOLVER" ] && echo '✓ (Let'"'"'s Encrypt du serveur)' || echo '✗ — aucun résolveur trouvé : certificat par défaut de Traefik')"
+}
+
+# Le compose de wsb-web et wsb-db, avec une route Traefik par domaine.
+compose_ecrire() {
+  . "$DK/traefik.env"
+  local L=() b dom alias regle
+  L+=("traefik.enable=true" "traefik.docker.network=$TRAEFIK_NET"
+      "traefik.http.services.wsb.loadbalancer.server.port=80"
+      "traefik.http.middlewares.wsb-https.redirectscheme.scheme=https"
+      "traefik.http.middlewares.wsb-https.redirectscheme.permanent=true")
+  for d in "$BOUT"/*/; do
+    [ -f "$d/boutique.conf" ] || continue
+    b=$(basename "$d"); dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
+    regle="Host(\`$dom\`)"; for a in ${alias//,/ }; do regle+=" || Host(\`$a\`)"; done
+    L+=("traefik.http.routers.wsb-$b.rule=$regle" "traefik.http.routers.wsb-$b.entrypoints=$EP_HTTPS"
+        "traefik.http.routers.wsb-$b.tls=true" "traefik.http.routers.wsb-$b.service=wsb")
+    [ -n "$RESOLVER" ] && L+=("traefik.http.routers.wsb-$b.tls.certresolver=$RESOLVER")
+    L+=("traefik.http.routers.wsb-$b-http.rule=$regle" "traefik.http.routers.wsb-$b-http.entrypoints=$EP_HTTP"
+        "traefik.http.routers.wsb-$b-http.middlewares=wsb-https" "traefik.http.routers.wsb-$b-http.service=wsb")
+  done
+  {
+    cat <<YML
+# Écrit par wsm (compose_ecrire) — ne pas éditer : réécrit à chaque boutique.
+name: wsb
+services:
+  db:
+    image: mariadb:11.4
+    container_name: wsb-db
+    restart: unless-stopped
+    env_file: [$SECRETS/db.env]
+    volumes:
+      - /var/lib/wsb-mariadb:/var/lib/mysql
+    networks: [interne]
+  web:
+    build: $DEPOT/serveur/docker
+    image: wsb-web:local
+    container_name: wsb-web
+    restart: unless-stopped
+    depends_on: [db]
+    volumes:
+      - $RACINE:$RACINE
+    networks: [interne, traefik]
+    labels:
+YML
+    local l; for l in "${L[@]}"; do printf '      - "%s"\n' "$l"; done
+    cat <<YML
+networks:
+  interne: {}
+  traefik:
+    external: true
+    name: $TRAEFIK_NET
+YML
+  } > "$DK/compose.yml.nouveau"
+  mv -f "$DK/compose.yml.nouveau" "$DK/compose.yml"; chmod 600 "$DK/compose.yml"
+}
+
+cmd_docker_init() {
+  racine_seulement
+  command -v docker >/dev/null || mourir "docker absent"
+  docker compose version >/dev/null 2>&1 || mourir "« docker compose » absent (paquet docker-compose-plugin)"
+  titre "conteneurs wsb-web et wsb-db derrière Traefik"
+  mkdir -p "$DK" "$RACINE/apache" /var/lib/wsb-mariadb; install -d -m 700 "$SECRETS"
+  [ -s "$SECRETS/db.env" ] || ( umask 077; echo "MARIADB_ROOT_PASSWORD=$(openssl rand -hex 24)" > "$SECRETS/db.env" )
+  traefik_detecter
+  compose_ecrire
+  dire "image wsb-web (PHP 8.3 + Apache) : construction"
+  dc build -q web >/dev/null || dc build web
+  dc up -d >/dev/null 2>&1 || dc up -d
+  local i; for i in $(seq 1 60); do MODE=docker sql_root -e 'SELECT 1' >/dev/null 2>&1 && break; sleep 2; done
+  MODE=docker sql_root -e 'SELECT 1' >/dev/null 2>&1 || mourir "la base wsb-db ne répond pas (docker logs wsb-db)"
+  if grep -q '^MODE=' "$RACINE/wsm.conf" 2>/dev/null; then sed -i 's/^MODE=.*/MODE="docker"/' "$RACINE/wsm.conf"
+  else echo 'MODE="docker"' >> "$RACINE/wsm.conf"; fi
+  MODE=docker
+  attendre_web
+  dire "wsb-db et wsb-web en marche ; Apache et MariaDB de la machine ne servent plus"
+}
+
+# ---------------------------------------------------------------------------
+#  LE SIÈGE BuddyCorp : la base centrale (clés d'intégration de toutes les
+#  boutiques) et son site superadmin. Rejouable : relancé, il garde ses
+#  secrets et réécrit sa configuration (téléphones, domaine).
+# ---------------------------------------------------------------------------
+cmd_siege() {
+  racine_seulement
+  local dom="${1:-}"; shift || true
+  local tel=""
+  while [ $# -gt 0 ]; do case "$1" in --telefony) tel="$2"; shift 2;; *) mourir "option inconnue : $1";; esac; done
+  [[ "$dom" =~ ^[a-z0-9.-]+\.[a-z]{2,}$ ]] || mourir "usage : wsm siege <domaine> [--telefony \"+48…, +32…\"]"
+  [ -L "$REL/derniere" ] || mourir "aucune version du code : lancer d'abord « wsm version »"
+  local dir="$BOUT/siege" dbh dbd; dbh=$(db_hote); dbd=$(db_depuis)
+  [ -n "$tel" ] || tel=$(php -r '$c = @include $argv[1]; echo is_array($c) ? ($c["siege"]["telefony"] ?? "") : "";' "$dir/config.php" 2>/dev/null || true)
+  titre "siège BuddyCorp ($dom)"
+  install -d -m 700 "$SECRETS"
+  [ -s "$SECRETS/wsb-master" ] || ( umask 077; openssl rand -hex 32 > "$SECRETS/wsb-master" )
+  [ -s "$SECRETS/wsb-siege.pass" ] || ( umask 077; openssl rand -hex 18 > "$SECRETS/wsb-siege.pass" )
+  local master mdp; master=$(cat "$SECRETS/wsb-master"); mdp=$(cat "$SECRETS/wsb-siege.pass")
+  dire "base centrale wsb"
+  sql_root -e "CREATE DATABASE IF NOT EXISTS wsb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+               CREATE USER IF NOT EXISTS 'wsb_siege'@'$dbd' IDENTIFIED BY '$mdp';
+               ALTER USER 'wsb_siege'@'$dbd' IDENTIFIED BY '$mdp';
+               GRANT ALL PRIVILEGES ON wsb.* TO 'wsb_siege'@'$dbd'; FLUSH PRIVILEGES;"
+  mkdir -p "$dir/data" "$dir/media"
+  umask 027
+  # Les numéros passent par l'environnement : jamais recopiés tels quels dans du PHP.
+  TEL="$tel" php -r '
+    $t = preg_replace("/[^0-9+,; ]/", "", (string) getenv("TEL"));
+    printf("<?php\n// Siège BuddyCorp — écrit par wsm le %s. SECRETS : ne jamais copier dans le dépôt.\nreturn [\n    %s => [%s => %s, %s => [%s => %s, %s => %s, %s => %s, %s => %s, %s => %s],\n                   %s => %s],\n    %s => [%s => %s, %s => %s],\n];\n",
+      date("Y-m-d"), var_export("centrala", true), var_export("engine", true), var_export("mysql", true),
+      var_export("mysql", true), var_export("host", true), var_export($argv[1], true), var_export("port", true), var_export("3306", true),
+      var_export("name", true), var_export("wsb", true), var_export("user", true), var_export("wsb_siege", true), var_export("pass", true), var_export($argv[2], true),
+      var_export("master", true), var_export($argv[3], true),
+      var_export("siege", true), var_export("telefony", true), var_export($t, true), var_export("boutique", true), var_export("buddycorp", true));
+  ' "$dbh" "$mdp" "$master" > "$dir/config.php"
+  umask 022
+  printf 'DOMAINE=%s\nALIAS=\nWEBSHOP=\nBASE=wsb\nTYPE=siege\nCREEE=%s\n' "$dom" "$(meta siege CREEE 2>/dev/null || true)" > "$dir/boutique.conf.nouveau"
+  grep -q '^CREEE=.\+' "$dir/boutique.conf.nouveau" || sed -i "s/^CREEE=.*/CREEE=$(date '+%F %T')/" "$dir/boutique.conf.nouveau"
+  mv -f "$dir/boutique.conf.nouveau" "$dir/boutique.conf"
+  [ -L "$dir/current" ] || ln -sfn "$(readlink -f "$REL/derniere")/site" "$dir/current"
+  chown -R root:"$WEB_USER" "$dir"; chmod 640 "$dir/config.php"; chown -R "$WEB_USER":"$WEB_USER" "$dir/data" "$dir/media"
+  php_siege schema >/dev/null || mourir "schéma central refusé"
+  local n; n=$(TEL="$tel" php -r 'echo count(array_filter(preg_split("/[,;\n]+/", (string) getenv("TEL")), fn($x) => strlen(preg_replace("/\D/", "", $x)) >= 9));')
+  dire "téléphones autorisés : $n"
+  cmd_apache siege
+  cmd_sante siege || mourir "le site du siège ne répond pas"
+  [ "$n" -gt 0 ] || dire "ATTENTION : aucun téléphone — la page répond 404 tant que la liste est vide"
+  dire "superadmin : https://$dom/siege/  (code du jour JJMM + jour de semaine, puis SMS)"
+}
+
+cmd_siege_cle() {
+  racine_seulement
+  local k="${1:-}"
+  [[ "$k" =~ ^[a-z0-9_.]{1,80}$ ]] || mourir "usage : printf '%s' \"\$VALEUR\" | wsm siege-cle <cle>   (ex. smsapi.token)"
+  [ ! -t 0 ] || mourir "la valeur se donne sur l'entrée standard, jamais en argument"
+  php_siege zapisz buddycorp "$k" >/dev/null
+  dire "siège : clé $k enregistrée (chiffrée)"
+}
+
+aide() { sed -n '3,26p' "$0" | sed 's/^#  \{0,1\}//'; }
 
 cmd="${1:-aide}"; shift || true
 case "$cmd" in
@@ -325,6 +629,9 @@ case "$cmd" in
   importer-base) cmd_importer_base "${1:?usage : wsm importer-base <boutique> <dump>}" "${2:?usage : wsm importer-base <boutique> <dump>}";;
   https) cmd_https "${1:?usage : wsm https <boutique>}";;
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
+  docker-init) cmd_docker_init;;
+  siege) cmd_siege "$@";;
+  siege-cle) cmd_siege_cle "${1:-}";;
   aide|-h|--help) aide;;
   *) aide; exit 2;;
 esac

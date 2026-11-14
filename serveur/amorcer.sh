@@ -17,10 +17,11 @@
 set -euo pipefail
 
 ICI="$(cd "$(dirname "$0")" && pwd)"
-BRANCHE=main; SHA=""; EMAIL=""; IP=""; ACTION=push; BOUTIQUE=""
+BRANCHE=main; SHA=""; EMAIL=""; IP=""; ACTION=push; BOUTIQUE=""; SIEGE_DOM=""
 while [ $# -gt 0 ]; do case "$1" in
   --branche) BRANCHE="$2"; shift 2;; --sha) SHA="$2"; shift 2;; --email) EMAIL="$2"; shift 2;;
   --ip) IP="$2"; shift 2;; --action) ACTION="$2"; shift 2;; --boutique) BOUTIQUE="$2"; shift 2;;
+  --siege-domaine) SIEGE_DOM="$2"; shift 2;;
   *) echo "option inconnue : $1" >&2; exit 2;; esac; done
 [ "$(id -u)" = 0 ] || { echo "amorcer : root nécessaire" >&2; exit 1; }
 
@@ -74,28 +75,59 @@ if [ ! -x /usr/local/sbin/wsm ]; then
 fi
 
 W=/usr/local/sbin/wsm
-# Ports 80/443 tenus par autre chose (ici Traefik, dans Docker) : Apache ne
-# doit SURTOUT PAS démarrer au boot avant lui — il prendrait le port 80 et
-# couperait les sites existants. On le désactive et on s'arrête.
+CONF=/srv/webshops/wsm.conf
+
+# Les secrets que GitHub a déposés pour ce passage (téléphones du siège,
+# jeton SMSAPI) : lus, puis effacés tout de suite. Jamais affichés.
+SEC=/tmp/wsb-secrets.env
+sec() { [ -f "$SEC" ] && sed -n "s/^$1=//p" "$SEC" | head -1 || true; }
+TELS=$(sec SIEGE_TELEFONY); SMSTOK=$(sec SMSAPI_TOKEN); SMSNAD=$(sec SMSAPI_NADAWCA)
+[ -f "$SEC" ] && { shred -u "$SEC" 2>/dev/null || rm -f "$SEC"; }
+
+# wsm d'abord, celui de ce commit (déposé par GitHub à côté de ce script) :
+# l'ancien pouvait s'arrêter en chemin.
+[ -x /usr/local/sbin/wsm ] && [ -f "$ICI/wsm" ] && install -m 0755 "$ICI/wsm" /usr/local/sbin/wsm
+# Le code ensuite : la version poussée apporte aussi le wsm qui va avec.
+[ "$ACTION" = push ] && "$W" version "${SHA:-$BRANCHE}"
+
+# Ports 80/443 tenus par autre chose (ici Traefik, dans Docker) : Apache de la
+# machine ne doit SURTOUT PAS démarrer au boot avant lui — il prendrait le
+# port 80 et couperait les sites existants. Les boutiques passent alors en
+# conteneur, derrière ce Traefik (wsm docker-init).
 if ss -ltnpH 2>/dev/null | awk '$4 ~ /:(80|443)$/' | grep -qv apache2; then
   systemctl disable --now apache2 >/dev/null 2>&1 || true
-  echo
-  echo "ARRÊT : les ports 80/443 appartiennent déjà à un autre service (Traefik / Docker)."
-  echo "  Apache est désactivé au démarrage (il ne gênera pas ce service)."
-  echo "  apache2 au démarrage : $(systemctl is-enabled apache2 2>/dev/null || true), état : $(systemctl is-active apache2 2>/dev/null || true)"
-  echo "  Rien n'a été créé ni déployé : les boutiques doivent passer derrière ce service."
-  exit 1
-fi
-# Apache doit tourner : sinon on ne crée ni ne déploie rien, on montre pourquoi.
-if [ "$ACTION" != liste ] && ! systemctl is-active --quiet apache2; then
+  if command -v docker >/dev/null && docker ps --format '{{.Image}}' | grep -q traefik; then
+    grep -q '^MODE="docker"' "$CONF" 2>/dev/null || "$W" docker-init
+  else
+    echo; echo "ARRÊT : les ports 80/443 appartiennent à un autre service, qui n'est pas Traefik."
+    echo "  Rien n'a été créé ni déployé."; exit 1
+  fi
+elif [ "$ACTION" != liste ] && ! systemctl is-active --quiet apache2; then
+  # Mode machine : Apache doit tourner, sinon on ne crée ni ne déploie rien.
   systemctl start apache2 2>/dev/null || true
   if ! systemctl is-active --quiet apache2; then
     echo; echo "ARRÊT : Apache ne démarre pas — rien n'a été créé ni déployé."; etat; exit 1
   fi
 fi
+
+# Le siège BuddyCorp : créé au premier passage, réécrit quand la liste des
+# téléphones change (on compare une empreinte, pas les numéros).
+siege() {
+  local dom="${SIEGE_DOM:-}"
+  [ -n "$dom" ] || { [ -n "$IP" ] && dom="admin.${IP//./-}.sslip.io"; }
+  [ -n "$dom" ] || { echo "adresse IP inconnue : siège non créé" >&2; return 1; }
+  local emp; emp=$(printf '%s' "$TELS" | sha256sum | cut -c1-16)
+  if [ ! -f /srv/webshops/boutiques/siege/boutique.conf ] || { [ -n "$TELS" ] && [ "$(cat /etc/wsm/telefony.emp 2>/dev/null)" != "$emp" ]; }; then
+    "$W" siege "$dom" --telefony "$TELS"
+    [ -n "$TELS" ] && { install -d -m 700 /etc/wsm; echo "$emp" > /etc/wsm/telefony.emp; }
+  fi
+  [ -n "$SMSTOK" ] && printf '%s' "$SMSTOK" | "$W" siege-cle smsapi.token
+  [ -n "$SMSNAD" ] && printf '%s' "$SMSNAD" | "$W" siege-cle smsapi.nadawca
+  return 0
+}
 case "$ACTION" in
   push)
-    "$W" version "${SHA:-$BRANCHE}"
+    siege
     if [ ! -d /srv/webshops/boutiques/sandbox ]; then
       [ -n "$IP" ] || { echo "adresse IP inconnue : sandbox non créée" >&2; exit 1; }
       DOM="sandbox.${IP//./-}.sslip.io"
@@ -110,7 +142,7 @@ case "$ACTION" in
         exit 1
       fi
     fi
-    "$W" deployer sandbox
+    "$W" deployer sandbox siege
     ;;
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;

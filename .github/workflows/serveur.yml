@@ -22,20 +22,28 @@ name: Nouveau serveur (wsm)
 # la boutique « sandbox » (sandbox.<ip>.sslip.io) au premier passage.
 # Variable facultative WSM_EMAIL : l'e-mail administrateur (consoles, Let's Encrypt).
 #
+# Le siège BuddyCorp (superadmin, clés de toutes les boutiques) :
+#   secret SIEGE_TELEFONY   les numéros autorisés, ex. « +48600100200, +32470111222 »
+#   secret SMSAPI_TOKEN     le jeton OAuth SMSAPI du siège (envoi du code de connexion)
+#   variable SMSAPI_NADAWCA le nom d'expéditeur validé chez SMSAPI (facultatif)
+#   variable SIEGE_DOMAINE  son domaine (défaut : admin.<ip>.sslip.io)
+# Ils passent par un fichier déposé puis effacé sur le serveur, jamais par la
+# ligne de commande ni par le journal.
+#
 # wsm-deploy ne peut lancer QUE wsm, et seulement version / deployer / valider /
 # liste / sante / retour : une clé volée ne crée ni ne supprime rien.
 
 on:
-  # PAS DE DÉCLENCHEMENT AUTOMATIQUE pour l'instant : le serveur visé fait déjà
-  # tourner Traefik (Docker) sur 80/443 ; les boutiques y passeront en
-  # conteneur. Jusque-là, chaque push entrerait en root pour rien.
-  # Rétablir ensuite :  push: branches: [main]
+  push:
+    # main : le flux normal. La branche de travail : le temps de mettre le
+    # nouveau serveur en route sans passer par main — à retirer après fusion.
+    branches: [main, claude/wizardly-cori-jqdkt7]
   workflow_dispatch:
     inputs:
       action:
         description: "Que faire"
         type: choice
-        options: [valider, deployer, retour, liste]
+        options: [mettre-a-jour, valider, deployer, retour, liste]
         default: liste
       boutique:
         description: "Boutique (pour deployer / retour)"
@@ -85,26 +93,41 @@ jobs:
           BOUTIQUE: ${{ inputs.boutique }}
           SHA: ${{ github.sha }}
           BRANCHE: ${{ github.ref_name }}
+          SIEGE_TELEFONY: ${{ secrets.SIEGE_TELEFONY }}
+          SMSAPI_TOKEN: ${{ secrets.SMSAPI_TOKEN }}
+          SMSAPI_NADAWCA: ${{ vars.SMSAPI_NADAWCA }}
+          SIEGE_DOMAINE: ${{ vars.SIEGE_DOMAINE }}
         run: |
           sudo apt-get install -y -qq sshpass >/dev/null
           USR="${USR:-root}"
           O=(-p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -o ServerAliveInterval=30)
           IP=$(getent ahostsv4 "$HOST" | awk 'NR==1{print $1}')
+          # Le journal est public : l'adresse du serveur n'y apparaît sous aucune forme.
+          echo "::add-mask::$IP"; echo "::add-mask::${IP//./-}"
           if [ "$EVENT" = push ]; then A=push; else A="${ACTION:-liste}"; fi
+          [ "$A" = mettre-a-jour ] && A=push
+          case "${SIEGE_DOMAINE:-}" in ''|*[!a-z0-9.-]*) SIEGE_DOMAINE="";; esac
+          ( umask 077
+            printf 'SIEGE_TELEFONY=%s\nSMSAPI_TOKEN=%s\nSMSAPI_NADAWCA=%s\n' \
+              "$(printf '%s' "$SIEGE_TELEFONY" | tr -d '\r\n')" "$(printf '%s' "$SMSAPI_TOKEN" | tr -d '\r\n')" \
+              "$(printf '%s' "$SMSAPI_NADAWCA" | tr -d '\r\n')" > "$RUNNER_TEMP/wsb-secrets.env" )
           if [ "$A" = deployer ] || [ "$A" = retour ]; then
             [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide"; exit 1; }
           fi
           sshpass -e scp -P "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-            serveur/amorcer.sh serveur/installer.sh "$USR@$HOST:/tmp/"
+            serveur/amorcer.sh serveur/installer.sh serveur/wsm "$RUNNER_TEMP/wsb-secrets.env" "$USR@$HOST:/tmp/"
+          rm -f "$RUNNER_TEMP/wsb-secrets.env"
           # root : directement ; sinon sudo, le mot de passe sur l'entrée standard.
-          ARGS="--branche '$BRANCHE' --sha '$SHA' --email '$EMAIL' --ip '$IP' --action '$A' --boutique '$BOUTIQUE'"
+          ARGS="--branche '$BRANCHE' --sha '$SHA' --email '$EMAIL' --ip '$IP' --action '$A' --boutique '$BOUTIQUE' --siege-domaine '$SIEGE_DOMAINE'"
           printf '%s\n' "$SSHPASS" | sshpass -e ssh "${O[@]}" "$USR@$HOST" \
             "if [ \$(id -u) = 0 ]; then bash /tmp/amorcer.sh $ARGS </dev/null; else sudo -S -p '' bash /tmp/amorcer.sh $ARGS; fi"
           if [ "$A" = push ]; then
-            URL="http://sandbox.${IP//./-}.sslip.io/shop/"
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL" || true)
-            echo "Sandbox : $URL → HTTP $code"
-            echo "### Sandbox : $URL (HTTP $code)" >> "$GITHUB_STEP_SUMMARY"
+            for site in sandbox:shop admin:siege; do
+              h="${site%%:*}"; [ "$h" = admin ] && [ -n "$SIEGE_DOMAINE" ] && continue
+              URL="https://$h.${IP//./-}.sslip.io/${site#*:}/"
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL" || true)
+              echo "$h : https://$h.<IP avec des tirets>.sslip.io/${site#*:}/ → HTTP $code"
+            done
           fi
 
       # ── Accès par clé : wsm-deploy ne peut lancer QUE wsm (version, deployer,
