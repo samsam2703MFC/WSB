@@ -28,7 +28,9 @@ header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store');
-header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
+// Polices du design system TFB (Google Fonts) ; « Konsola ↗ » poste ici puis
+// redirige vers le domaine de la boutique : form-action doit l'accepter (https:).
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; form-action 'self' https:; frame-ancestors 'none'; base-uri 'none'");
 header('X-Robots-Tag: noindex, nofollow');
 
 $pdo = wsb_pdo();
@@ -284,35 +286,64 @@ function strona(string $tytul, callable $tresc): void {
     $h = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); ?>
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title><?= $h($tytul) ?> · BuddyCorp</title>
+<link rel="stylesheet" href="tfb.css">
 <style>
-  :root{--ink:#14161a;--mut:#5d6470;--line:#e2e5ea;--bg:#f5f6f8;--acc:#1f4fd8;--ok:#1d7a46;--err:#b42318}
-  *{box-sizing:border-box} body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg)}
-  header{display:flex;gap:18px;align-items:center;padding:12px 24px;background:#fff;border-bottom:1px solid var(--line)}
-  header b{margin-right:auto} header a{color:var(--ink);text-decoration:none;padding:6px 10px;border-radius:8px} header a.on{background:var(--bg);font-weight:600}
-  main{max-width:1240px;margin:24px auto;padding:0 16px}
-  .kafle{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px} .kafel{flex:1 1 200px;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-  .kafel span{display:block;color:var(--mut);font-size:13px} .kafel b{display:block;font-size:22px;margin:2px 0} .kafel small{color:var(--mut);font-size:12px}
-  table.przeglad td small{display:block;color:var(--mut);font-size:12px} table.przeglad .l{text-align:right;white-space:nowrap}
-  button.maly{margin:0;padding:6px 12px;font-size:13px;white-space:nowrap}
-  .karta{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px} .waska{max-width:420px;margin:60px auto}
-  h1{font-size:22px;margin:0 0 16px} h2{font-size:17px;margin:24px 0 8px}
-  label{display:block;font-weight:600;margin:10px 0 4px} input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit}
-  button{margin-top:14px;padding:10px 16px;border:0;border-radius:8px;background:var(--acc);color:#fff;font:inherit;font-weight:600;cursor:pointer}
-  .w-linii{display:flex;gap:8px;align-items:end;flex-wrap:wrap} .w-linii input,.w-linii select{width:auto}
-  fieldset{border:1px solid var(--line);border-radius:10px;margin:16px 0;padding:8px 16px 14px} legend{font-weight:700;padding:0 6px}
-  .pole{padding:8px 0;border-bottom:1px dashed var(--line)} .pole:last-child{border:0} .pole code{font-weight:400;color:var(--mut);font-size:12px}
-  .stan{display:inline-block;margin-top:4px;font-size:13px;padding:2px 10px;border-radius:6px} .stan.tak{background:#e7f5ec;color:var(--ok)} .stan.nie{background:#f1f2f4;color:var(--mut)}
-  .usun{display:inline-flex;gap:6px;font-weight:400;margin-left:12px} .usun input{width:auto}
-  small,.pomoc{display:block;color:var(--mut);font-size:13px} .ok{color:var(--ok)} .blad{color:var(--err)}
-  table{width:100%;border-collapse:collapse;font-size:14px} th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+  /* BuddyCorp sur le design system TFB (tfb.css : jetons, polices, base). */
+  body{font:var(--type-body);background:var(--surface-page)}
+  header{position:sticky;top:0;z-index:5;display:flex;gap:6px;align-items:center;height:var(--topbar-height);padding:0 var(--space-6);background:var(--gradient-ink);color:var(--text-inverse);box-shadow:var(--shadow-md)}
+  header .marque{display:flex;align-items:center;gap:10px;margin-right:auto;font:var(--weight-bold) var(--text-md)/1 var(--font-display);letter-spacing:var(--tracking-tight)}
+  header .marque i{width:26px;height:26px;border-radius:50%;background:var(--gradient-plum);box-shadow:var(--shadow-brand)}
+  header .marque small{display:inline;color:var(--text-inverse-secondary);font:var(--type-caption);letter-spacing:var(--tracking-caps);text-transform:uppercase}
+  header a{color:var(--text-inverse-secondary);padding:8px 12px;border-radius:var(--radius-md);font:var(--type-label);transition:var(--transition-control)}
+  header a:hover{color:var(--text-inverse);background:var(--alpha-white-08);text-decoration:none}
+  header a.on{color:var(--text-inverse);background:var(--alpha-white-16)}
+  header button.wyloguj{margin:0 0 0 8px;background:transparent;color:var(--text-inverse);border:1px solid var(--border-inverse);box-shadow:none}
+  header button.wyloguj:hover{background:var(--alpha-white-08)}
+  main{max-width:1280px;margin:var(--space-8) auto;padding:0 var(--space-6)}
+  .karta{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-card);padding:var(--space-6) var(--space-8);box-shadow:var(--shadow-sm)}
+  .waska{max-width:440px;margin:12vh auto}
+  .waska h1::before{content:"";display:block;width:44px;height:44px;margin-bottom:var(--space-4);border-radius:50%;background:var(--gradient-plum);box-shadow:var(--shadow-brand)}
+  h1{font:var(--type-heading-3);letter-spacing:var(--tracking-tight);margin:0 0 var(--space-5)}
+  h2{font:var(--type-heading-4);margin:var(--space-8) 0 var(--space-3)}
+  label{display:block;font:var(--type-label);color:var(--text-secondary);margin:var(--space-4) 0 var(--space-1)}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border-default);border-radius:var(--radius-control);background:var(--surface-card);font:var(--type-body);transition:var(--transition-control)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--border-brand);box-shadow:var(--shadow-focus)}
+  button{margin-top:var(--space-5);padding:10px 18px;border:0;border-radius:var(--radius-control);background:var(--brand);color:var(--brand-on);font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);cursor:pointer;box-shadow:var(--shadow-xs);transition:var(--transition-control)}
+  button:hover{background:var(--brand-hover)} button:active{background:var(--brand-press)}
+  button.maly{margin:0;padding:7px 12px;font-size:var(--text-sm);white-space:nowrap}
+  .w-linii{display:flex;gap:var(--space-2);align-items:end;flex-wrap:wrap} .w-linii input,.w-linii select{width:auto}
+  .w-linii label{margin-top:0}
+  .kafle{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-4);margin-bottom:var(--space-6)}
+  .kafel{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-card);padding:var(--space-4) var(--space-5);box-shadow:var(--shadow-xs)}
+  .kafel span{display:block;font:var(--weight-semibold) var(--text-xs)/1.2 var(--font-sans);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-brand)}
+  .kafel b{display:block;font:var(--type-metric);margin:var(--space-2) 0 var(--space-1);font-variant-numeric:tabular-nums}
+  .kafel small{color:var(--text-secondary);font:var(--type-caption)}
+  table{width:100%;border-collapse:separate;border-spacing:0;font:var(--type-body-sm)}
+  th{font:var(--weight-semibold) var(--text-2xs)/1.2 var(--font-sans);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-secondary);background:var(--slate-25)}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border-subtle);vertical-align:top}
+  tr:hover td{background:var(--surface-hover)}
+  table.przeglad td small{display:block;color:var(--text-secondary);font:var(--type-caption)}
+  table.przeglad .l{text-align:right;white-space:nowrap;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  table.przeglad td b{font:var(--weight-semibold) var(--text-base)/1.3 var(--font-display)}
+  fieldset{border:1px solid var(--border-subtle);border-radius:var(--radius-card);margin:var(--space-5) 0;padding:var(--space-2) var(--space-5) var(--space-4)}
+  legend{font:var(--weight-semibold) var(--text-md)/1.2 var(--font-display);padding:0 var(--space-2);color:var(--text-primary)}
+  .pole{padding:var(--space-3) 0;border-bottom:1px dashed var(--border-default)} .pole:last-child{border:0}
+  .pole code{font:var(--type-data);color:var(--text-tertiary)}
+  .stan{display:inline-block;margin-top:var(--space-1);font:var(--type-caption);padding:3px 10px;border-radius:var(--radius-sm)}
+  .stan.tak{background:var(--surface-success-subtle);color:var(--text-success)} .stan.nie{background:var(--surface-sunken);color:var(--text-secondary)}
+  .usun{display:inline-flex;gap:6px;font:var(--type-caption);color:var(--text-danger);margin-left:var(--space-3)} .usun input{width:auto}
+  small,.pomoc{display:block;color:var(--text-secondary);font:var(--type-body-sm)} .pomoc{margin:var(--space-3) 0}
+  .ok{color:var(--text-success)} .blad{color:var(--text-danger)}
+  code{font:var(--type-data)}
+  @media (max-width:760px){ header{flex-wrap:wrap;height:auto;padding:var(--space-2) var(--space-4)} .karta{padding:var(--space-5)} main{padding:0 var(--space-3)} table.przeglad{display:block;overflow-x:auto} }
 </style></head><body>
 <?php if ($kto !== null): ?>
-<header><b>BuddyCorp · superadmin</b>
+<header><span class="marque"><i></i>BuddyCorp <small>superadmin</small></span>
   <a href="?p=przeglad" class="<?= $p === 'przeglad' ? 'on' : '' ?>">Przegląd</a>
   <a href="?p=klucze" class="<?= $p === 'klucze' ? 'on' : '' ?>">Klucze</a>
   <a href="?p=sklepy" class="<?= $p === 'sklepy' ? 'on' : '' ?>">Sklepy</a>
   <a href="?p=dziennik" class="<?= $p === 'dziennik' ? 'on' : '' ?>">Dziennik</a>
-  <form method="post" action="?p=wyloguj" style="margin:0"><input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><button style="margin:0;background:#fff;color:var(--ink);border:1px solid var(--line)">Wyloguj</button></form>
+  <form method="post" action="?p=wyloguj" style="margin:0"><input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><button class="wyloguj">Wyloguj</button></form>
 </header>
 <?php endif; ?>
 <main><?php $tresc(); ?></main></body></html>
