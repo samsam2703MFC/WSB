@@ -159,6 +159,8 @@ jobs:
             done
             ipc=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "http://$IP/backoffice/login.php" || true)
             echo "console par l'IP : http://<IP>/backoffice → HTTP $ipc"
+            ipa=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "http://$IP/admin/" || true)
+            echo "superadmin par l'IP : http://<IP>/admin → HTTP $ipa (404 tant qu'aucun téléphone n'est autorisé)"
           fi
 
       # ── Accès par clé : wsm-deploy ne peut lancer QUE wsm (version, deployer,

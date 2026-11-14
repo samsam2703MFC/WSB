@@ -247,11 +247,53 @@ PHP
 }
 
 # ---------------------------------------------------------------------------
+# Le site d'une ADRESSE IP du serveur (alias IP d'une boutique) : la console et
+# la vitrine de cette boutique (/backoffice, /shop) et, s'il existe, le
+# superadmin BuddyCorp sous /admin. En http (pas de certificat pour une IP) :
+# ServerName sans « https:// », pour que les redirections d'Apache y restent.
+ip_sites_ecrire() {
+  dk_on || return 0
+  local d b ip alias f
+  rm -f "$RACINE"/apache/wsm-ip-*.conf
+  for d in "$BOUT"/*/; do
+    [ -f "$d/boutique.conf" ] || continue
+    b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
+    alias=$(meta "$b" ALIAS)
+    for ip in ${alias//,/ }; do
+      [[ "$ip" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || continue
+      f="$RACINE/apache/wsm-ip-${ip//./-}.conf"
+      [ -f "$f" ] && continue                      # une IP = une seule boutique (la première)
+      sed -e "s#__DOMAINE__#$ip#g" -e "s#__ALIAS__##g" -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#ip-$b#g" \
+          -e "s#__ACCUEIL__#/backoffice/#g" -e "s#__RESTRICTION__##g" \
+          "$DEPOT/serveur/apache-boutique.conf" > "$f"
+      if [ -f "$BOUT/siege/config.php" ]; then
+        # /admin = le superadmin BuddyCorp, avec SA configuration (elle l'emporte
+        # sur celle de la boutique dans ce dossier).
+        local bloc
+        bloc="    Alias /admin $BOUT/siege/current/siege
+    <Directory $BOUT/siege/current/siege>
+        Options -Indexes +FollowSymLinks
+        AllowOverride None
+        Require all granted
+        DirectoryIndex index.php
+        SetEnv WSM_CONFIG_FILE $BOUT/siege/config.php
+        SetEnv WSM_DATA_DIR    $BOUT/siege/data
+        SetEnv WSM_MEDIA_DIR   $BOUT/siege/media
+    </Directory>"
+        BLOC="$bloc" php -r '$f = $argv[1]; $t = file_get_contents($f);
+          $t = preg_replace("#</VirtualHost>\s*$#", getenv("BLOC") . "\n</VirtualHost>\n", $t, 1); file_put_contents($f, $t);' "$f"
+      fi
+    done
+  done
+}
+
 cmd_apache() {
   racine_seulement
   local b="$1"; existe "$b"
-  local dom alias lignes=""; dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
-  [ -n "$alias" ] && lignes="ServerAlias ${alias//,/ }"
+  local dom alias lignes="" a noms=""; dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
+  # Une adresse IP n'est pas un ServerAlias : elle a son propre site (ip_sites_ecrire).
+  for a in ${alias//,/ }; do [[ "$a" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || noms+=" $a"; done
+  [ -n "$noms" ] && lignes="ServerAlias${noms}"
   # Le siège n'ouvre que /siege/ : ni vitrine, ni console de boutique.
   local accueil=/shop/ restr=""
   if [ "$(type_de "$b")" = siege ]; then accueil=/siege/; restr='RedirectMatch 404 "^/(shop|backoffice|landing)(/|$)"'; fi
@@ -263,6 +305,7 @@ cmd_apache() {
   sed -e "s#ServerName __DOMAINE__#ServerName $sn$dom#" -e "s#__DOMAINE__#$dom#g" -e "s#__ALIAS__#$lignes#g" -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#$b#g" \
       -e "s#__ACCUEIL__#$accueil#g" -e "s#__RESTRICTION__#$restr#g" \
       "$DEPOT/serveur/apache-boutique.conf" > "$cible"
+  dk_on && ip_sites_ecrire
   if dk_on; then
     compose_ecrire                      # les noms de domaine passent dans les étiquettes Traefik
     dc up -d >/dev/null 2>&1 || dc up -d
@@ -502,7 +545,7 @@ compose_ecrire() {
     if [ -n "$ips" ]; then
       ri=""
       for ip in $ips; do ri+="${ri:+ || }Host(\`$ip\`)"; done
-      ri="($ri) && (PathPrefix(\`/backoffice\`) || PathPrefix(\`/shop\`))"
+      ri="($ri) && (PathPrefix(\`/backoffice\`) || PathPrefix(\`/shop\`) || PathPrefix(\`/admin\`))"
       L+=("traefik.http.routers.wsb-$b-ip.rule=$ri" "traefik.http.routers.wsb-$b-ip.entrypoints=$EP_HTTP"
           "traefik.http.routers.wsb-$b-ip.priority=100" "traefik.http.routers.wsb-$b-ip.service=wsb"
           "traefik.http.routers.wsb-$b-ip.middlewares=wsb-ip-slash"
@@ -520,7 +563,7 @@ compose_ecrire() {
   # /backoffice → /backoffice/ en http (Apache le ferait vers https:// : certificat refusé
   # pour une IP). « $$ » : compose lit un « $ » seul comme une variable.
   if [ "$IP_SLASH" = 1 ]; then
-    L+=('traefik.http.middlewares.wsb-ip-slash.redirectregex.regex=^http://([^/]+)/(backoffice|shop)$$'
+    L+=('traefik.http.middlewares.wsb-ip-slash.redirectregex.regex=^http://([^/]+)/(backoffice|shop|admin)$$'
         'traefik.http.middlewares.wsb-ip-slash.redirectregex.replacement=http://$${1}/$${2}/')
   fi
   {

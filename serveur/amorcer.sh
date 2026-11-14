@@ -149,7 +149,11 @@ case "$ACTION" in
     # reste à ce qui la sert déjà.
     if [ -n "$IP" ]; then
       cur=$(sed -n 's/^ALIAS=//p' /srv/webshops/boutiques/sandbox/boutique.conf)
-      printf ',%s,' "$cur" | grep -qF ",$IP," || "$W" alias sandbox "${cur:+$cur,}$IP"
+      if printf ',%s,' "$cur" | grep -qF ",$IP,"; then
+        [ -f "/srv/webshops/apache/wsm-ip-${IP//./-}.conf" ] || "$W" apache sandbox
+      else
+        "$W" alias sandbox "${cur:+$cur,}$IP"
+      fi
     fi
     ;;
   creer)
