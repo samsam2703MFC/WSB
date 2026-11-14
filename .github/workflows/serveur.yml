@@ -125,8 +125,15 @@ jobs:
             for site in sandbox:shop admin:siege; do
               h="${site%%:*}"; [ "$h" = admin ] && [ -n "$SIEGE_DOMAINE" ] && continue
               URL="https://$h.${IP//./-}.sslip.io/${site#*:}/"
-              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL" || true)
-              echo "$h : https://$h.<IP avec des tirets>.sslip.io/${site#*:}/ → HTTP $code"
+              # Routage (certificat ignoré) puis certificat : le premier
+              # certificat Let's Encrypt peut prendre une minute ou deux.
+              r=000; c=000
+              for i in $(seq 1 18); do
+                r=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 15 "$URL" || true)
+                c=$(curl -s  -o /dev/null -w '%{http_code}' --max-time 15 "$URL" || true)
+                [ "$c" != 000 ] && break; sleep 10
+              done
+              echo "$h : https://$h.<IP avec des tirets>.sslip.io/${site#*:}/ → routage HTTP $r, certificat $([ "$c" != 000 ] && echo "valide (HTTP $c)" || echo "pas encore valide")"
             done
           fi
 
