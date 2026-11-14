@@ -13,6 +13,9 @@
 //    ?p=sklepy    le registre des boutiques
 //    ?p=dziennik  qui a changé quoi (des noms de clés, jamais une valeur)
 //    ?p=wyloguj   fin de session
+//
+//  Habillage (client, 14 nov. 2026 : « moderne, minimaliste, type Apple, en
+//  gardant les couleurs de TF Buddy ») : siege.css, sur les jetons de tfb.css.
 // ============================================================================
 declare(strict_types=1);
 
@@ -51,6 +54,39 @@ $p = (string) ($_GET['p'] ?? '');
 $kto = wsb_sesja($pdo);
 $msg = ''; $err = '';
 
+// ---- Petits rendus partagés -------------------------------------------------
+/** Un pictogramme au trait (SVG, couleur du texte). */
+function ikona(string $n): string {
+    $d = [
+        'przeglad' => '<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
+        'klucze'   => '<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3m-4 4 3 3m-6 0 2 2"/>',
+        'sklepy'   => '<path d="M4 9h16l-1.2-4.2A1 1 0 0 0 17.8 4H6.2a1 1 0 0 0-1 .8z"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 20v-5h4v5"/>',
+        'dziennik' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        'wyjscie'  => '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
+        'strzalka' => '<path d="M7 17 17 7M9 7h8v8"/>',
+        'ok'       => '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.5L16 9.5"/>',
+        'blad'     => '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/>',
+        'szewron'  => '<path d="m9 6 6 6-6 6"/>',
+    ][$n] ?? '';
+    return '<svg class="ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
+}
+
+/** Un message en bandeau (succès ou erreur). */
+function bandeau(string $ok, string $blad): string {
+    $h = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+    $o = '';
+    if ($ok !== '')   $o .= '<div class="baner ok">' . ikona('ok') . '<span>' . $h($ok) . '</span></div>';
+    if ($blad !== '') $o .= '<div class="baner blad">' . ikona('blad') . '<span>' . $h($blad) . '</span></div>';
+    return $o;
+}
+
+/** Les initiales d'un nom, pour la pastille d'une boutique. */
+function inicjaly(string $s): string {
+    $w = preg_split('/[\s\-_.]+/u', trim($s), -1, PREG_SPLIT_NO_EMPTY) ?: ['?'];
+    $i = mb_strtoupper(mb_substr($w[0], 0, 1) . (isset($w[1]) ? mb_substr($w[1], 0, 1) : mb_substr($w[0], 1, 1)));
+    return $i !== '' ? $i : '?';
+}
+
 // ---- Entrée ------------------------------------------------------------------
 if ($kto === null) {
     $etap2 = is_array($_SESSION['wsb_etap'] ?? null) && ($_SESSION['wsb_etap']['do'] ?? 0) > time();
@@ -73,24 +109,32 @@ if ($kto === null) {
         unset($_SESSION['wsb_etap']); $etap2 = false;
     }
     strona('Logowanie', function () use ($h, $csrf, $etap2, $msg, $err) { ?>
-      <div class="karta waska">
-        <h1>BuddyCorp — superadmin</h1>
-        <?php if ($msg) echo '<p class="ok">' . $h($msg) . '</p>'; if ($err) echo '<p class="blad">' . $h($err) . '</p>'; ?>
-        <?php if (!$etap2): ?>
-        <form method="post" autocomplete="off">
-          <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="etap1">
-          <label>Numer telefonu<input name="tel" type="tel" required placeholder="+48 600 000 000"></label>
-          <label>Kod dnia<input name="kod" inputmode="numeric" required maxlength="8"></label>
-          <button>Wyślij kod SMS</button>
-        </form>
-        <?php else: ?>
-        <form method="post" autocomplete="off">
-          <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="etap2">
-          <label>Kod z SMS-a<input name="sms" inputmode="numeric" required maxlength="10" autofocus></label>
-          <button>Zaloguj (12 h)</button>
-        </form>
-        <p><a href="?od-nowa=1">Zacznij od nowa</a></p>
-        <?php endif; ?>
+      <div class="wejscie">
+        <div class="wejscie-karta">
+          <div class="logo-duze">B</div>
+          <h1>BuddyCorp</h1>
+          <p class="pod">Panel superadministratora</p>
+          <div class="kroki" aria-label="Krok <?= $etap2 ? 2 : 1 ?> z 2"><span class="<?= $etap2 ? 'zrob' : 'teraz' ?>"></span><span class="<?= $etap2 ? 'teraz' : '' ?>"></span></div>
+          <?= bandeau($msg, $err) ?>
+          <?php if (!$etap2): ?>
+          <form method="post" autocomplete="off">
+            <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="etap1">
+            <div class="grupa">
+              <label class="wiersz"><span>Telefon</span><input name="tel" type="tel" required placeholder="+48 600 000 000" autofocus></label>
+              <label class="wiersz"><span>Kod dnia</span><input name="kod" inputmode="numeric" required maxlength="8" placeholder="••••••"></label>
+            </div>
+            <button class="glowny pelny">Wyślij kod SMS</button>
+          </form>
+          <?php else: ?>
+          <form method="post" autocomplete="off">
+            <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="etap2">
+            <input class="kod-sms" name="sms" inputmode="numeric" autocomplete="one-time-code" required maxlength="10" placeholder="Kod z SMS-a" autofocus>
+            <button class="glowny pelny">Zaloguj na 12 godzin</button>
+          </form>
+          <a class="cichy" href="?od-nowa=1">Zacznij od nowa</a>
+          <?php endif; ?>
+        </div>
+        <p class="stopka">Dostęp tylko dla uprawnionych numerów · sesja 12 h</p>
       </div>
     <?php });
     exit;
@@ -119,51 +163,68 @@ if ($p === 'przeglad') {
     $dane = array_map('wsb_dane_sklepu', wsb_sklepy_serwera());
     strona('Przegląd', function () use ($h, $csrf, $dane) {
         $zl = fn(int $g) => number_format($g / 100, 2, ',', ' ') . ' zł';
+        $zl0 = fn(int $g) => number_format($g / 100, 0, ',', ' ') . ' zł';
+        // Évolution face au mois précédent : une pastille verte ou rouge.
+        $zmiana = function (int|float $a, int|float $b) use ($h): string {
+            if ($b == 0) return $a > 0 ? '<span class="delta up">nowe</span>' : '<span class="delta">—</span>';
+            $x = ($a - $b) / $b * 100;
+            return '<span class="delta ' . ($x >= 0 ? 'up' : 'down') . '">' . ($x >= 0 ? '↑ ' : '↓ ') . $h(number_format(abs($x), 0, ',', ' ')) . ' %</span>';
+        };
         $sum = ['n' => 0, 'g' => 0, 'pn' => 0, 'pg' => 0, 'd' => 0, 'pd' => 0];
         foreach ($dane as $d) if (!empty($d['dostepny'])) {
             $sum['n'] += $d['teraz']['orders']; $sum['g'] += $d['teraz']['gross']; $sum['d'] += $d['rozl_teraz']['do_zaplaty'];
             $sum['pn'] += $d['poprz']['orders']; $sum['pg'] += $d['poprz']['gross']; $sum['pd'] += $d['rozl_poprz']['do_zaplaty'];
         }
-        $mies = fn(string $ym) => $ym; ?>
-      <div class="karta">
-        <h1>Przegląd sieci</h1>
-        <div class="kafle">
-          <div class="kafel"><span>Sklepy</span><b><?= count($dane) ?></b></div>
-          <div class="kafel"><span>Zamówienia · <?= $h(date('m.Y')) ?></span><b><?= $sum['n'] ?></b><small>poprz. miesiąc: <?= $sum['pn'] ?></small></div>
-          <div class="kafel"><span>Obrót brutto · <?= $h(date('m.Y')) ?></span><b><?= $h($zl($sum['g'])) ?></b><small>poprz. miesiąc: <?= $h($zl($sum['pg'])) ?></small></div>
-          <div class="kafel"><span>Należne BuddyCorp · <?= $h(date('m.Y')) ?></span><b><?= $h($zl($sum['d'])) ?></b><small>poprz. miesiąc: <?= $h($zl($sum['pd'])) ?></small></div>
-        </div>
-        <table class="przeglad">
-          <tr><th>Sklep</th><th>Wersja</th><th class="l">Zamówienia</th><th class="l">Obrót brutto</th><th class="l">Prowizja · czynsz</th><th class="l">Do zapłaty</th><th>Ostatnie zam.</th><th class="l">Produkty</th><th class="l">Klucze</th><th></th></tr>
-        <?php if (!$dane): ?><tr><td colspan="10">Brak sklepów na serwerze.</td></tr><?php endif; ?>
-        <?php foreach ($dane as $d): ?>
-          <tr>
-            <td><b><?php $nz = (string) ($d['sprzedawca'] ?? ''); echo $h($nz !== '' && stripos($nz, 'UZUPE') === false ? $nz : $d['slug']); ?></b>
-                <small><code><?= $h($d['slug']) ?></code> · <a href="https://<?= $h($d['domena']) ?>/shop/" target="_blank" rel="noopener"><?= $h($d['domena']) ?> ↗</a></small></td>
-            <td><small><?= $h(substr($d['wersja'], 0, 15)) ?></small><small><?= $h(substr($d['commit'], 0, 7)) ?></small></td>
-          <?php if (empty($d['dostepny'])): ?>
-            <td colspan="7" class="blad">Baza sklepu niedostępna — dane nieczytelne.</td>
-          <?php else: $r = $d['rozl_teraz']; $w = $d['warunki']; ?>
-            <td class="l"><?= (int) $d['teraz']['orders'] ?><small>poprz. <?= (int) $d['poprz']['orders'] ?></small></td>
-            <td class="l"><?= $h($zl($d['teraz']['gross'])) ?><small>poprz. <?= $h($zl($d['poprz']['gross'])) ?></small></td>
-            <td class="l"><?= $h($zl($r['prowizja'])) ?> · <?= $h($zl($r['czynsz'])) ?>
-                <small><?= $h(rtrim(rtrim(number_format($w['rate'] * 100, 2, ',', ''), '0'), ',')) ?> % <?= $w['basis'] === 'towar' ? 'od towaru' : 'od brutto' ?><?= $w['ustalone'] ? '' : ' · domyślne' ?></small></td>
-            <td class="l"><?= $h($zl($r['do_zaplaty'])) ?><small>pobrane przez Stripe: <?= $h($zl($r['pobrane'])) ?></small></td>
-            <td><?= $h($d['ostatnie'] !== '' ? substr($d['ostatnie'], 0, 10) : '—') ?></td>
-            <td class="l"><?= (int) $d['produkty'] ?></td>
-            <td class="l"><a href="?p=klucze&amp;b=<?= $h($d['slug']) ?>"><?= (int) $d['klucze'] ?> ›</a></td>
-          <?php endif; ?>
-            <td>
-              <form method="post" action="?p=sso" target="_blank" style="margin:0">
-                <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="b" value="<?= $h($d['slug']) ?>">
-                <button class="maly" title="Wejście bez hasła — link ważny 1 minutę, jednorazowy">Konsola ↗</button>
-              </form>
-            </td>
-          </tr>
-        <?php endforeach; ?>
-        </table>
-        <p class="pomoc">Kwoty w złotych, z płatnych zamówień (bez anulowanych) bieżącego miesiąca; prowizja i czynsz według warunków ustawionych w konsoli sklepu (Superadmin). Tylko odczyt.</p>
+        $miesiace = ['', 'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+        $miesiac = $miesiace[(int) date('n')] . ' ' . date('Y'); ?>
+      <div class="naglowek">
+        <div><p class="nadtytul"><?= $h($miesiac) ?></p><h1>Przegląd</h1></div>
       </div>
+
+      <section class="kafle">
+        <div class="kafel"><span>Sklepy</span><b><?= count($dane) ?></b><small><?= count(array_filter($dane, fn($d) => !empty($d['dostepny']))) ?> aktywne</small></div>
+        <div class="kafel"><span>Zamówienia</span><b><?= $sum['n'] ?></b><small><?= $zmiana($sum['n'], $sum['pn']) ?> vs <?= $sum['pn'] ?></small></div>
+        <div class="kafel"><span>Obrót brutto</span><b><?= $h($zl0($sum['g'])) ?></b><small><?= $zmiana($sum['g'], $sum['pg']) ?> vs <?= $h($zl0($sum['pg'])) ?></small></div>
+        <div class="kafel akcent"><span>Należne BuddyCorp</span><b><?= $h($zl0($sum['d'])) ?></b><small><?= $zmiana($sum['d'], $sum['pd']) ?> vs <?= $h($zl0($sum['pd'])) ?></small></div>
+      </section>
+
+      <h2 class="sekcja">Sklepy</h2>
+      <section class="lista">
+        <?php if (!$dane): ?><div class="pusto">Brak sklepów na serwerze.</div><?php endif; ?>
+        <?php foreach ($dane as $d):
+          $nz = (string) ($d['sprzedawca'] ?? ''); $nazwa = $nz !== '' && stripos($nz, 'UZUPE') === false ? $nz : $d['slug']; ?>
+        <div class="sklep">
+          <div class="sklep-kto">
+            <span class="awatar"><?= $h(inicjaly($nazwa)) ?></span>
+            <div>
+              <b><?= $h($nazwa) ?></b>
+              <a class="domena" href="https://<?= $h($d['domena']) ?>/shop/" target="_blank" rel="noopener"><?= $h($d['domena']) ?></a>
+            </div>
+          </div>
+          <?php if (empty($d['dostepny'])): ?>
+            <div class="sklep-blad"><?= ikona('blad') ?> Baza sklepu niedostępna</div>
+          <?php else: $r = $d['rozl_teraz']; $w = $d['warunki']; ?>
+          <dl class="sklep-liczby">
+            <div><dt>Zamówienia</dt><dd><?= (int) $d['teraz']['orders'] ?></dd><small><?= $zmiana($d['teraz']['orders'], $d['poprz']['orders']) ?></small></div>
+            <div><dt>Obrót</dt><dd><?= $h($zl0($d['teraz']['gross'])) ?></dd><small><?= $zmiana($d['teraz']['gross'], $d['poprz']['gross']) ?></small></div>
+            <div title="Prowizja <?= $h($zl($r['prowizja'])) ?> · czynsz <?= $h($zl($r['czynsz'])) ?> · pobrane przez Stripe <?= $h($zl($r['pobrane'])) ?>">
+              <dt>Do zapłaty</dt><dd><?= $h($zl0($r['do_zaplaty'])) ?></dd>
+              <small><?= $h(rtrim(rtrim(number_format($w['rate'] * 100, 2, ',', ''), '0'), ',')) ?> % <?= $w['basis'] === 'towar' ? 'od towaru' : 'od brutto' ?><?= $w['ustalone'] ? '' : ' · domyślne' ?></small></div>
+            <div><dt>Produkty</dt><dd><?= (int) $d['produkty'] ?></dd><small>ost. zam. <?= $h($d['ostatnie'] !== '' ? date('d.m', strtotime($d['ostatnie'])) : '—') ?></small></div>
+          </dl>
+          <?php endif; ?>
+          <div class="sklep-akcje">
+            <a class="pigulka" href="?p=klucze&amp;b=<?= $h($d['slug']) ?>" title="Klucze integracji"><?= ikona('klucze') ?><?= (int) ($d['klucze'] ?? 0) ?></a>
+            <form method="post" action="?p=sso" target="_blank">
+              <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="b" value="<?= $h($d['slug']) ?>">
+              <button class="glowny maly" title="Wejście bez hasła — link ważny 1 minutę, jednorazowy">Konsola <?= ikona('strzalka') ?></button>
+            </form>
+          </div>
+          <div class="sklep-wersja"><?= $h(substr((string) $d['wersja'], 0, 15)) ?> · <?= $h(substr((string) $d['commit'], 0, 7)) ?></div>
+        </div>
+        <?php endforeach; ?>
+      </section>
+      <p class="przypis">Kwoty z płatnych zamówień bieżącego miesiąca (bez anulowanych), porównane z poprzednim. Prowizja i czynsz według warunków ustawionych w konsoli sklepu. Tylko odczyt.</p>
     <?php });
     exit;
 }
@@ -181,37 +242,50 @@ if ($p === 'sklepy') {
         } catch (Throwable $e) { $err = $e->getMessage(); }
     }
     strona('Sklepy', function () use ($h, $csrf, $sklepy, $err) { ?>
-      <div class="karta">
-        <h1>Sklepy</h1>
-        <?php if ($err) echo '<p class="blad">' . $h($err) . '</p>'; ?>
-        <table><tr><th>Sklep</th><th>Nazwa</th><th>Domena</th><th>Od</th><th></th></tr>
+      <div class="naglowek"><div><p class="nadtytul">Rejestr centrali</p><h1>Sklepy</h1></div></div>
+      <?= bandeau('', $err) ?>
+      <section class="lista">
+        <?php if (!$sklepy): ?><div class="pusto">Rejestr jest pusty.</div><?php endif; ?>
         <?php foreach ($sklepy as $s): ?>
-          <tr><td><code><?= $h($s['slug']) ?></code></td><td><?= $h($s['nom']) ?></td><td><?= $h($s['domaine']) ?></td>
-              <td><?= $h(substr($s['creee'], 0, 10)) ?></td><td><a href="?p=klucze&amp;b=<?= $h($s['slug']) ?>">Klucze →</a></td></tr>
+        <a class="wiersz-lista" href="?p=klucze&amp;b=<?= $h($s['slug']) ?>">
+          <span class="awatar"><?= $h(inicjaly((string) ($s['nom'] ?: $s['slug']))) ?></span>
+          <span class="rozciag"><b><?= $h($s['nom']) ?></b><small><?= $h($s['slug']) ?><?= $s['domaine'] ? ' · ' . $h($s['domaine']) : '' ?></small></span>
+          <span class="szary">od <?= $h(date('d.m.Y', strtotime((string) $s['creee']))) ?></span>
+          <?= ikona('szewron') ?>
+        </a>
         <?php endforeach; ?>
-        </table>
-        <h2>Dodaj do rejestru</h2>
-        <p class="pomoc">Zwykle robi to <code>wsm creer</code>. Tu — dla sklepu spoza serwera.</p>
-        <form method="post" class="w-linii">
-          <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="dodaj">
-          <input name="slug" required pattern="[a-z0-9][a-z0-9-]{1,39}" placeholder="slug">
-          <input name="nom" required placeholder="Nazwa"><input name="domaine" placeholder="domena.pl">
-          <button>Dodaj</button>
-        </form>
-      </div>
+      </section>
+
+      <h2 class="sekcja">Dodaj sklep spoza serwera</h2>
+      <form method="post" class="lista formularz">
+        <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="dodaj">
+        <label class="wiersz"><span>Identyfikator</span><input name="slug" required pattern="[a-z0-9][a-z0-9-]{1,39}" placeholder="moj-sklep"></label>
+        <label class="wiersz"><span>Nazwa</span><input name="nom" required placeholder="Mój sklep"></label>
+        <label class="wiersz"><span>Domena</span><input name="domaine" placeholder="sklep.pl"></label>
+        <div class="stopka-formularza"><span class="szary">Sklepy z serwera dodaje <code>wsm creer</code>.</span><button class="glowny">Dodaj</button></div>
+      </form>
     <?php });
     exit;
 }
 
 if ($p === 'dziennik') {
     $rows = $pdo->query("SELECT kiedy, kto, boutique, akcja, szczegoly FROM wsb_dziennik ORDER BY id DESC LIMIT 300")->fetchAll();
-    strona('Dziennik', function () use ($h, $rows) { ?>
-      <div class="karta"><h1>Dziennik</h1>
-        <table><tr><th>Kiedy</th><th>Kto</th><th>Sklep</th><th>Co</th><th></th></tr>
-        <?php foreach ($rows as $r): ?>
-          <tr><td><?= $h($r['kiedy']) ?></td><td><?= $h($r['kto']) ?></td><td><?= $h($r['boutique']) ?></td><td><?= $h($r['akcja']) ?></td><td><code><?= $h($r['szczegoly']) ?></code></td></tr>
-        <?php endforeach; ?>
-        </table></div>
+    strona('Dziennik', function () use ($h, $rows) {
+        $dzien = ''; ?>
+      <div class="naglowek"><div><p class="nadtytul">Ostatnie 300 zdarzeń</p><h1>Dziennik</h1></div></div>
+      <?php if (!$rows): ?><section class="lista"><div class="pusto">Brak zdarzeń.</div></section><?php endif; ?>
+      <?php foreach ($rows as $r):
+        $d = substr((string) $r['kiedy'], 0, 10);
+        if ($d !== $dzien): if ($dzien !== '') echo '</section>'; $dzien = $d; ?>
+          <h2 class="sekcja"><?= $h(date('d.m.Y', strtotime($d))) ?></h2><section class="lista">
+        <?php endif; ?>
+        <div class="zdarzenie">
+          <span class="godzina"><?= $h(substr((string) $r['kiedy'], 11, 5)) ?></span>
+          <span class="rozciag"><b><?= $h($r['akcja']) ?></b><?php if ((string) $r['szczegoly'] !== ''): ?> <code><?= $h($r['szczegoly']) ?></code><?php endif; ?>
+            <small><?= $h($r['kto']) ?></small></span>
+          <span class="etykieta"><?= $h($r['boutique']) ?></span>
+        </div>
+      <?php endforeach; if ($dzien !== '') echo '</section>'; ?>
     <?php });
     exit;
 }
@@ -238,113 +312,85 @@ $wart = wsb_klucze($b, true);
 $meta = wsb_klucze_meta($pdo, $b);
 if (isset($_GET['ok'])) $msg = 'Zapisano zmian: ' . (int) $_GET['ok'] . '.';
 
-strona('Klucze integracji', function () use ($h, $csrf, $b, $slugi, $pola, $wart, $meta, $msg, $err, $siege) { ?>
-  <div class="karta">
-    <h1>Klucze integracji</h1>
-    <form method="get" class="w-linii"><input type="hidden" name="p" value="klucze">
-      <label>Sklep <select name="b" onchange="this.form.submit()">
-      <?php foreach ($slugi as $s) echo '<option value="' . $h($s) . '"' . ($s === $b ? ' selected' : '') . '>' . $h($s) . ($s === $siege ? ' (siedziba)' : '') . '</option>'; ?>
-      </select></label><noscript><button>Pokaż</button></noscript></form>
-    <?php if ($msg) echo '<p class="ok">' . $h($msg) . '</p>'; if ($err) echo '<p class="blad">' . $h($err) . '</p>'; ?>
-    <p class="pomoc">Puste pole = bez zmian. Sekrety nie są nigdy wyświetlane. Każda wartość jest szyfrowana kluczem tego sklepu.</p>
-    <form method="post" autocomplete="off">
-      <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="zapisz">
-      <?php foreach (WSM_SETTINGS_KLUCZE as $g => $tytul):
-        $grupa = array_filter($pola, fn($d) => $d[0] === $g); if (!$grupa) continue; ?>
-        <fieldset><legend><?= $h($tytul) ?></legend>
+strona('Klucze integracji', function () use ($h, $csrf, $b, $slugi, $pola, $wart, $meta, $msg, $err, $siege) {
+    $razem = count($pola); $ust = count(array_intersect_key($wart, $pola)); ?>
+  <div class="naglowek">
+    <div><p class="nadtytul"><?= $ust ?> z <?= $razem ?> ustawionych</p><h1>Klucze integracji</h1></div>
+  </div>
+  <nav class="segment" aria-label="Sklep">
+    <?php foreach ($slugi as $s): ?>
+      <a href="?p=klucze&amp;b=<?= $h($s) ?>" class="<?= $s === $b ? 'on' : '' ?>"><?= $h($s === $siege ? 'Siedziba' : $s) ?></a>
+    <?php endforeach; ?>
+  </nav>
+  <?= bandeau($msg, $err) ?>
+  <form method="post" autocomplete="off" class="klucze">
+    <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="a" value="zapisz">
+    <?php foreach (WSM_SETTINGS_KLUCZE as $g => $tytul):
+      $grupa = array_filter($pola, fn($d) => $d[0] === $g); if (!$grupa) continue;
+      $n = count(array_intersect_key($wart, $grupa)); ?>
+      <details class="lista grupa-kluczy"<?= $n ? ' open' : '' ?>>
+        <summary>
+          <span class="rozciag"><b><?= $h($tytul) ?></b></span>
+          <span class="licznik <?= $n === count($grupa) ? 'pelny' : ($n ? 'czesc' : '') ?>"><?= $n ?>/<?= count($grupa) ?></span>
+          <?= ikona('szewron') ?>
+        </summary>
         <?php foreach ($grupa as $k => $d):
           [$grp, $label, $path, $env, $type, $help] = $d;
           $f = str_replace('.', '__', $k); $jest = isset($wart[$k]); $m = $meta[$k] ?? null; ?>
-          <div class="pole">
-            <label for="<?= $h($f) ?>"><?= $h($label) ?> <code><?= $h($k) ?></code></label>
-            <?php if (str_starts_with($type, 'select:')): ?>
-              <select id="<?= $h($f) ?>" name="<?= $h($f) ?>"><option value="">— bez zmian —</option>
-              <?php foreach (explode('|', substr($type, 7)) as $o) echo '<option' . (($wart[$k] ?? null) === $o ? ' selected' : '') . '>' . $h($o) . '</option>'; ?>
-              </select>
-            <?php elseif ($type === 'pem'): ?>
-              <textarea id="<?= $h($f) ?>" name="<?= $h($f) ?>" rows="3" placeholder="<?= $jest ? 'ustawiony — wklej nowy, aby zmienić' : '-----BEGIN PUBLIC KEY-----' ?>"></textarea>
-            <?php elseif ($type === 'secret'): ?>
-              <input id="<?= $h($f) ?>" name="<?= $h($f) ?>" type="password" autocomplete="new-password" placeholder="<?= $jest ? '•••••••• ustawiony' : 'brak' ?>">
-            <?php else: ?>
-              <input id="<?= $h($f) ?>" name="<?= $h($f) ?>" placeholder="<?= $h($jest ? $wart[$k] : 'brak') ?>">
-            <?php endif; ?>
-            <span class="stan <?= $jest ? 'tak' : 'nie' ?>"><?= $jest ? 'ustawiony' . ($m ? ' ' . $h(substr($m['zmieniono'], 0, 16)) . ' · ' . $h($m['przez']) : '') : 'brak' ?></span>
-            <?php if ($jest): ?><label class="usun"><input type="checkbox" name="<?= $h($f) ?>__usun" value="1"> usuń</label><?php endif; ?>
-            <?php if ($help): ?><small><?= $h($help) ?></small><?php endif; ?>
+        <div class="pole">
+          <div class="pole-gora">
+            <label for="<?= $h($f) ?>"><?= $h($label) ?></label>
+            <span class="stan <?= $jest ? 'tak' : 'nie' ?>"<?= $m ? ' title="' . $h(substr($m['zmieniono'], 0, 16) . ' · ' . $m['przez']) . '"' : '' ?>><i></i><?= $jest ? 'Ustawiony' : 'Brak' ?></span>
           </div>
+          <?php if (str_starts_with($type, 'select:')): ?>
+            <select id="<?= $h($f) ?>" name="<?= $h($f) ?>"><option value="">— bez zmian —</option>
+            <?php foreach (explode('|', substr($type, 7)) as $o) echo '<option' . (($wart[$k] ?? null) === $o ? ' selected' : '') . '>' . $h($o) . '</option>'; ?>
+            </select>
+          <?php elseif ($type === 'pem'): ?>
+            <textarea id="<?= $h($f) ?>" name="<?= $h($f) ?>" rows="3" placeholder="<?= $jest ? 'Ustawiony — wklej nowy, aby zmienić' : '-----BEGIN PUBLIC KEY-----' ?>"></textarea>
+          <?php elseif ($type === 'secret'): ?>
+            <input id="<?= $h($f) ?>" name="<?= $h($f) ?>" type="password" autocomplete="new-password" placeholder="<?= $jest ? '••••••••••••' : 'Wklej klucz' ?>">
+          <?php else: ?>
+            <input id="<?= $h($f) ?>" name="<?= $h($f) ?>" placeholder="<?= $h($jest ? $wart[$k] : '—') ?>">
+          <?php endif; ?>
+          <div class="pole-dol">
+            <code><?= $h($k) ?></code>
+            <?php if ($help): ?><span class="pomoc"><?= $h($help) ?></span><?php endif; ?>
+            <?php if ($jest): ?><label class="usun"><input type="checkbox" name="<?= $h($f) ?>__usun" value="1"> Usuń</label><?php endif; ?>
+          </div>
+        </div>
         <?php endforeach; ?>
-        </fieldset>
-      <?php endforeach; ?>
-      <button>Zapisz klucze sklepu <?= $h($b) ?></button>
-    </form>
-  </div>
+      </details>
+    <?php endforeach; ?>
+    <div class="pasek-zapisu">
+      <span class="szary">Puste pole = bez zmian · każda wartość szyfrowana kluczem sklepu</span>
+      <button class="glowny">Zapisz · <?= $h($b === $siege ? 'Siedziba' : $b) ?></button>
+    </div>
+  </form>
 <?php });
 
 // ---- Gabarit -----------------------------------------------------------------
 function strona(string $tytul, callable $tresc): void {
     global $kto, $csrf, $p;
-    $h = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); ?>
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title><?= $h($tytul) ?> · BuddyCorp</title>
-<link rel="stylesheet" href="tfb.css">
-<style>
-  /* BuddyCorp sur le design system TFB (tfb.css : jetons, polices, base). */
-  body{font:var(--type-body);background:var(--surface-page)}
-  header{position:sticky;top:0;z-index:5;display:flex;gap:6px;align-items:center;height:var(--topbar-height);padding:0 var(--space-6);background:var(--gradient-ink);color:var(--text-inverse);box-shadow:var(--shadow-md)}
-  header .marque{display:flex;align-items:center;gap:10px;margin-right:auto;font:var(--weight-bold) var(--text-md)/1 var(--font-display);letter-spacing:var(--tracking-tight)}
-  header .marque i{width:26px;height:26px;border-radius:50%;background:var(--gradient-plum);box-shadow:var(--shadow-brand)}
-  header .marque small{display:inline;color:var(--text-inverse-secondary);font:var(--type-caption);letter-spacing:var(--tracking-caps);text-transform:uppercase}
-  header a{color:var(--text-inverse-secondary);padding:8px 12px;border-radius:var(--radius-md);font:var(--type-label);transition:var(--transition-control)}
-  header a:hover{color:var(--text-inverse);background:var(--alpha-white-08);text-decoration:none}
-  header a.on{color:var(--text-inverse);background:var(--alpha-white-16)}
-  header button.wyloguj{margin:0 0 0 8px;background:transparent;color:var(--text-inverse);border:1px solid var(--border-inverse);box-shadow:none}
-  header button.wyloguj:hover{background:var(--alpha-white-08)}
-  main{max-width:1280px;margin:var(--space-8) auto;padding:0 var(--space-6)}
-  .karta{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-card);padding:var(--space-6) var(--space-8);box-shadow:var(--shadow-sm)}
-  .waska{max-width:440px;margin:12vh auto}
-  .waska h1::before{content:"";display:block;width:44px;height:44px;margin-bottom:var(--space-4);border-radius:50%;background:var(--gradient-plum);box-shadow:var(--shadow-brand)}
-  h1{font:var(--type-heading-3);letter-spacing:var(--tracking-tight);margin:0 0 var(--space-5)}
-  h2{font:var(--type-heading-4);margin:var(--space-8) 0 var(--space-3)}
-  label{display:block;font:var(--type-label);color:var(--text-secondary);margin:var(--space-4) 0 var(--space-1)}
-  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border-default);border-radius:var(--radius-control);background:var(--surface-card);font:var(--type-body);transition:var(--transition-control)}
-  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--border-brand);box-shadow:var(--shadow-focus)}
-  button{margin-top:var(--space-5);padding:10px 18px;border:0;border-radius:var(--radius-control);background:var(--brand);color:var(--brand-on);font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);cursor:pointer;box-shadow:var(--shadow-xs);transition:var(--transition-control)}
-  button:hover{background:var(--brand-hover)} button:active{background:var(--brand-press)}
-  button.maly{margin:0;padding:7px 12px;font-size:var(--text-sm);white-space:nowrap}
-  .w-linii{display:flex;gap:var(--space-2);align-items:end;flex-wrap:wrap} .w-linii input,.w-linii select{width:auto}
-  .w-linii label{margin-top:0}
-  .kafle{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-4);margin-bottom:var(--space-6)}
-  .kafel{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--radius-card);padding:var(--space-4) var(--space-5);box-shadow:var(--shadow-xs)}
-  .kafel span{display:block;font:var(--weight-semibold) var(--text-xs)/1.2 var(--font-sans);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-brand)}
-  .kafel b{display:block;font:var(--type-metric);margin:var(--space-2) 0 var(--space-1);font-variant-numeric:tabular-nums}
-  .kafel small{color:var(--text-secondary);font:var(--type-caption)}
-  table{width:100%;border-collapse:separate;border-spacing:0;font:var(--type-body-sm)}
-  th{font:var(--weight-semibold) var(--text-2xs)/1.2 var(--font-sans);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-secondary);background:var(--slate-25)}
-  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border-subtle);vertical-align:top}
-  tr:hover td{background:var(--surface-hover)}
-  table.przeglad td small{display:block;color:var(--text-secondary);font:var(--type-caption)}
-  table.przeglad .l{text-align:right;white-space:nowrap;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
-  table.przeglad td b{font:var(--weight-semibold) var(--text-base)/1.3 var(--font-display)}
-  fieldset{border:1px solid var(--border-subtle);border-radius:var(--radius-card);margin:var(--space-5) 0;padding:var(--space-2) var(--space-5) var(--space-4)}
-  legend{font:var(--weight-semibold) var(--text-md)/1.2 var(--font-display);padding:0 var(--space-2);color:var(--text-primary)}
-  .pole{padding:var(--space-3) 0;border-bottom:1px dashed var(--border-default)} .pole:last-child{border:0}
-  .pole code{font:var(--type-data);color:var(--text-tertiary)}
-  .stan{display:inline-block;margin-top:var(--space-1);font:var(--type-caption);padding:3px 10px;border-radius:var(--radius-sm)}
-  .stan.tak{background:var(--surface-success-subtle);color:var(--text-success)} .stan.nie{background:var(--surface-sunken);color:var(--text-secondary)}
-  .usun{display:inline-flex;gap:6px;font:var(--type-caption);color:var(--text-danger);margin-left:var(--space-3)} .usun input{width:auto}
-  small,.pomoc{display:block;color:var(--text-secondary);font:var(--type-body-sm)} .pomoc{margin:var(--space-3) 0}
-  .ok{color:var(--text-success)} .blad{color:var(--text-danger)}
-  code{font:var(--type-data)}
-  @media (max-width:760px){ header{flex-wrap:wrap;height:auto;padding:var(--space-2) var(--space-4)} .karta{padding:var(--space-5)} main{padding:0 var(--space-3)} table.przeglad{display:block;overflow-x:auto} }
-</style></head><body>
+    $h = fn($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+    $v = (string) @filemtime(__DIR__ . '/siege.css'); ?>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f5f6f9"><title><?= $h($tytul) ?> · BuddyCorp</title>
+<link rel="stylesheet" href="tfb.css"><link rel="stylesheet" href="siege.css?v=<?= $h($v) ?>">
+</head><body class="<?= $kto === null ? 'bez-menu' : '' ?>">
 <?php if ($kto !== null): ?>
-<header><span class="marque"><i></i>BuddyCorp <small>superadmin</small></span>
-  <a href="?p=przeglad" class="<?= $p === 'przeglad' ? 'on' : '' ?>">Przegląd</a>
-  <a href="?p=klucze" class="<?= $p === 'klucze' ? 'on' : '' ?>">Klucze</a>
-  <a href="?p=sklepy" class="<?= $p === 'sklepy' ? 'on' : '' ?>">Sklepy</a>
-  <a href="?p=dziennik" class="<?= $p === 'dziennik' ? 'on' : '' ?>">Dziennik</a>
-  <form method="post" action="?p=wyloguj" style="margin:0"><input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><button class="wyloguj">Wyloguj</button></form>
-</header>
+<aside class="menu">
+  <div class="marka"><span class="logo">B</span><span>BuddyCorp<small>Superadmin</small></span></div>
+  <nav>
+    <?php foreach (['przeglad' => 'Przegląd', 'klucze' => 'Klucze', 'sklepy' => 'Sklepy', 'dziennik' => 'Dziennik'] as $k => $l): ?>
+      <a href="?p=<?= $k ?>" class="<?= $p === $k ? 'on' : '' ?>"><?= ikona($k) ?><span><?= $l ?></span></a>
+    <?php endforeach; ?>
+  </nav>
+  <div class="ja">
+    <span class="ja-tel"><?= $h(wsb_tel_maska($kto)) ?></span>
+    <form method="post" action="?p=wyloguj"><input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><button class="ikonowy" title="Wyloguj"><?= ikona('wyjscie') ?><span>Wyloguj</span></button></form>
+  </div>
+</aside>
 <?php endif; ?>
 <main><?php $tresc(); ?></main></body></html>
 <?php }
