@@ -143,6 +143,13 @@ case "$ACTION" in
       fi
     fi
     "$W" deployer sandbox siege
+    # La console de la sandbox aussi par l'adresse IP du serveur (client : « je veux
+    # voir <IP>/backoffice ») : /backoffice et /shop seulement, la racine de l'IP
+    # reste à ce qui la sert déjà.
+    if [ -n "$IP" ]; then
+      cur=$(sed -n 's/^ALIAS=//p' /srv/webshops/boutiques/sandbox/boutique.conf)
+      printf ',%s,' "$cur" | grep -qF ",$IP," || "$W" alias sandbox "${cur:+$cur,}$IP"
+    fi
     ;;
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;

@@ -143,6 +143,8 @@ jobs:
               ADR="https://$h.<IP avec des tirets>.sslip.io/${site#*:}/"; [ "$AFFICHER" = true ] && ADR="$URL"
               echo "$h : $ADR → routage HTTP $r, certificat $([ "$c" != 000 ] && echo "valide (HTTP $c)" || echo "pas encore valide")"
             done
+            ipc=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "http://$IP/backoffice/login.php" || true)
+            echo "console par l'IP : http://<IP>/backoffice → HTTP $ipc"
           fi
 
       # ── Accès par clé : wsm-deploy ne peut lancer QUE wsm (version, deployer,

@@ -20,6 +20,7 @@
 #    wsm docker-init                         passe en conteneurs derrière le Traefik du serveur
 #    wsm siege <domaine> [--telefony "+48…, +32…"]
 #                                            le site superadmin BuddyCorp + la base centrale
+#    wsm alias <boutique> <a,b,…>            ses autres noms (domaines ; une IP = /backoffice et /shop)
 #    wsm siege-cle <cle>                     pose une clé du siège (valeur sur l'entrée standard),
 #                                            ex. : printf '%s' "$TOKEN" | wsm siege-cle smsapi.token
 #
@@ -482,7 +483,7 @@ PY
 # Le compose de wsb-web et wsb-db, avec une route Traefik par domaine.
 compose_ecrire() {
   . "$DK/traefik.env"
-  local L=() b dom alias regle
+  local L=() b dom alias regle IP_SLASH=0
   L+=("traefik.enable=true" "traefik.docker.network=$TRAEFIK_NET"
       "traefik.http.services.wsb.loadbalancer.server.port=80"
       "traefik.http.middlewares.wsb-https.redirectscheme.scheme=https"
@@ -490,13 +491,38 @@ compose_ecrire() {
   for d in "$BOUT"/*/; do
     [ -f "$d/boutique.conf" ] || continue
     b=$(basename "$d"); dom=$(meta "$b" DOMAINE); alias=$(meta "$b" ALIAS)
-    regle="Host(\`$dom\`)"; for a in ${alias//,/ }; do regle+=" || Host(\`$a\`)"; done
+    # Une ADRESSE IP n'a pas de certificat Let's Encrypt : elle a ses propres
+    # routes (http direct, https au certificat par défaut de Traefik), limitées
+    # à /backoffice et /shop — la racine de l'IP reste à ce qui la sert déjà.
+    local ips="" ri="" ip
+    regle="Host(\`$dom\`)"
+    for a in ${alias//,/ }; do
+      if [[ "$a" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then ips+=" $a"; else regle+=" || Host(\`$a\`)"; fi
+    done
+    if [ -n "$ips" ]; then
+      ri=""
+      for ip in $ips; do ri+="${ri:+ || }Host(\`$ip\`)"; done
+      ri="($ri) && (PathPrefix(\`/backoffice\`) || PathPrefix(\`/shop\`))"
+      L+=("traefik.http.routers.wsb-$b-ip.rule=$ri" "traefik.http.routers.wsb-$b-ip.entrypoints=$EP_HTTP"
+          "traefik.http.routers.wsb-$b-ip.priority=100" "traefik.http.routers.wsb-$b-ip.service=wsb"
+          "traefik.http.routers.wsb-$b-ip.middlewares=wsb-ip-slash"
+          "traefik.http.routers.wsb-$b-ips.rule=$ri" "traefik.http.routers.wsb-$b-ips.entrypoints=$EP_HTTPS"
+          "traefik.http.routers.wsb-$b-ips.priority=100" "traefik.http.routers.wsb-$b-ips.tls=true"
+          "traefik.http.routers.wsb-$b-ips.service=wsb")
+      IP_SLASH=1
+    fi
     L+=("traefik.http.routers.wsb-$b.rule=$regle" "traefik.http.routers.wsb-$b.entrypoints=$EP_HTTPS"
         "traefik.http.routers.wsb-$b.tls=true" "traefik.http.routers.wsb-$b.service=wsb")
     [ -n "$RESOLVER" ] && L+=("traefik.http.routers.wsb-$b.tls.certresolver=$RESOLVER")
     L+=("traefik.http.routers.wsb-$b-http.rule=$regle" "traefik.http.routers.wsb-$b-http.entrypoints=$EP_HTTP"
         "traefik.http.routers.wsb-$b-http.middlewares=wsb-https" "traefik.http.routers.wsb-$b-http.service=wsb")
   done
+  # /backoffice → /backoffice/ en http (Apache le ferait vers https:// : certificat refusé
+  # pour une IP). « $$ » : compose lit un « $ » seul comme une variable.
+  if [ "$IP_SLASH" = 1 ]; then
+    L+=('traefik.http.middlewares.wsb-ip-slash.redirectregex.regex=^http://([^/]+)/(backoffice|shop)$$'
+        'traefik.http.middlewares.wsb-ip-slash.redirectregex.replacement=http://$${1}/$${2}/')
+  fi
   {
     cat <<YML
 # Écrit par wsm (compose_ecrire) — ne pas éditer : réécrit à chaque boutique.
@@ -605,6 +631,19 @@ cmd_siege() {
   dire "superadmin : https://$dom/siege/  (code du jour JJMM + jour de semaine, puis SMS)"
 }
 
+# Les autres noms d'une boutique (domaines, ou une adresse IP : /backoffice et /shop seulement).
+cmd_alias() {
+  racine_seulement
+  local b="${1:-}" liste="${2-}" a propre=""; existe "$b"
+  for a in ${liste//,/ }; do
+    [[ "$a" =~ ^[a-z0-9.-]+\.[a-z]{2,}$ || "$a" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || mourir "alias « $a » : ni un domaine ni une adresse IP"
+    propre+="${propre:+,}$a"
+  done
+  sed -i "s/^ALIAS=.*/ALIAS=$propre/" "$BOUT/$b/boutique.conf"
+  dire "$b : autres noms = ${propre:-aucun}"
+  cmd_apache "$b"
+}
+
 cmd_siege_cle() {
   racine_seulement
   local k="${1:-}"
@@ -614,7 +653,7 @@ cmd_siege_cle() {
   dire "siège : clé $k enregistrée (chiffrée)"
 }
 
-aide() { sed -n '3,26p' "$0" | sed 's/^#  \{0,1\}//'; }
+aide() { sed -n '3,27p' "$0" | sed 's/^#  \{0,1\}//'; }
 
 cmd="${1:-aide}"; shift || true
 case "$cmd" in
@@ -632,6 +671,7 @@ case "$cmd" in
   docker-init) cmd_docker_init;;
   siege) cmd_siege "$@";;
   siege-cle) cmd_siege_cle "${1:-}";;
+  alias) cmd_alias "${1:-}" "${2-}";;
   aide|-h|--help) aide;;
   *) aide; exit 2;;
 esac
