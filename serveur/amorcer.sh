@@ -176,6 +176,12 @@ case "$ACTION" in
       fi
     fi
     ;;
+  demenager)
+    # L'archive de l'ancien serveur (ancien-export.sh), déposée par GitHub.
+    [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide" >&2; exit 2; }
+    [ -s /tmp/wsb-demenagement.tgz ] || { echo "archive de l'ancien serveur absente ou vide" >&2; exit 1; }
+    "$W" demenager "$BOUTIQUE" /tmp/wsb-demenagement.tgz
+    ;;
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;
   retour)   "$W" retour "$BOUTIQUE" ;;

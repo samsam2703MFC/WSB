@@ -15,6 +15,7 @@
 #    wsm sante <boutique>                    la boutique et sa console répondent-elles ?
 #    wsm sauvegarde <boutique> | --toutes    copie de la base dans sauvegardes/ (14 gardées)
 #    wsm importer-base <boutique> <dump.sql[.gz]>   remplace la base (après sauvegarde)
+#    wsm demenager <boutique> <archive.tgz>         base + photos + données + clés d'une ancienne boutique
 #    wsm https <boutique>                    certificat Let's Encrypt (le DNS doit pointer ici)
 #    wsm apache <boutique>                   réécrit son site Apache depuis le modèle
 #    wsm docker-init                         passe en conteneurs derrière le Traefik du serveur
@@ -443,6 +444,51 @@ cmd_importer_base() {
   dire "base importée ; les photos (media/) se copient à part : rsync -a <ancien>/shop/media/ $BOUT/$b/media/"
 }
 
+# Un dump de MySQL 8 tel que MariaDB l'accepte : collations 0900, chiffrement
+# des tables, GTID et DEFINER (l'utilisateur de l'ancien serveur n'existe pas ici).
+dump_pour_mariadb() {
+  sed -E -e 's/utf8mb4_0900_[a-z_]+/utf8mb4_unicode_ci/g' \
+         -e 's#/\*!80016 DEFAULT ENCRYPTION=.?N.? \*/##g' \
+         -e 's/DEFINER=`[^`]*`@`[^`]*`//g' \
+         -e '/GTID_PURGED/d' -e '/^SET @MYSQLDUMP_TEMP_LOG_BIN/d' -e '/^SET @@SESSION.SQL_LOG_BIN/d'
+}
+
+# wsm demenager <boutique> <archive.tgz> — l'archive d'ancien-export.sh : la
+# base (sauvegarde de l'actuelle d'abord), les photos, les données, puis les
+# clés d'intégration dans la table centrale. L'archive est effacée à la fin.
+# N'affiche que des nombres.
+cmd_demenager() {
+  racine_seulement
+  local b="$1" a="$2"; existe "$b"; [ -f "$a" ] || mourir "archive $a introuvable"
+  local t; t=$(mktemp -d /root/wsm-demenagement.XXXXXX)
+  ( umask 077; tar -xzf "$a" -C "$t" ) || { rm -rf "$t"; mourir "archive illisible"; }
+  if [ -f "$t/base.sql.gz" ]; then
+    gunzip -c "$t/base.sql.gz" | dump_pour_mariadb | gzip > "$t/base-mariadb.sql.gz"
+    titre "base : $(gunzip -c "$t/base-mariadb.sql.gz" | grep -c '^CREATE TABLE') tables, $(gunzip -c "$t/base-mariadb.sql.gz" | grep -c '^INSERT INTO') blocs de lignes"
+    cmd_importer_base "$b" "$t/base-mariadb.sql.gz"
+  elif [ -f "$t/base.sqlite" ]; then
+    rm -rf "$t"; mourir "l'ancienne boutique est en SQLite : import pas prévu (passer d'abord en MySQL)"
+  else
+    rm -rf "$t"; mourir "pas de base dans l'archive"
+  fi
+  titre "photos et données"
+  [ -d "$t/media" ] && rsync -a --exclude .htaccess "$t/media/" "$BOUT/$b/media/"
+  [ -d "$t/data" ]  && rsync -a --exclude .htaccess "$t/data/" "$BOUT/$b/data/"
+  chown -R "$WEB_USER":"$WEB_USER" "$BOUT/$b/media" "$BOUT/$b/data"
+  dire "$(find "$t/media" -type f 2>/dev/null | wc -l) photos, $(find "$t/data" -type f 2>/dev/null | wc -l) fichiers de données copiés"
+  if [ -f "$t/config.local.php" ] && [ -f "$BOUT/siege/config.php" ]; then
+    titre "clés d'intégration → table centrale"
+    local c="$BOUT/siege/data/demenagement-$b.php"
+    install -m 600 -o "$WEB_USER" -g "$WEB_USER" "$t/config.local.php" "$c"
+    php_siege reprendre-cles "$b" "$c" || dire "reprise des clés : échec (à refaire : wsm demenager)"
+    shred -u "$c" 2>/dev/null || rm -f "$c"
+  fi
+  find "$t" -type f -exec shred -u {} + 2>/dev/null; rm -rf "$t"
+  shred -u "$a" 2>/dev/null || rm -f "$a"
+  recharger_apache
+  dire "boutique $b déménagée"
+}
+
 cmd_https() {
   racine_seulement
   local b="$1"; existe "$b"
@@ -709,6 +755,7 @@ case "$cmd" in
   sante) cmd_sante "${1:?usage : wsm sante <boutique>}";;
   sauvegarde) cmd_sauvegarde "${1:?usage : wsm sauvegarde <boutique>|--toutes}";;
   importer-base) cmd_importer_base "${1:?usage : wsm importer-base <boutique> <dump>}" "${2:?usage : wsm importer-base <boutique> <dump>}";;
+  demenager) cmd_demenager "${1:?usage : wsm demenager <boutique> <archive.tgz>}" "${2:?usage : wsm demenager <boutique> <archive.tgz>}";;
   https) cmd_https "${1:?usage : wsm https <boutique>}";;
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
   docker-init) cmd_docker_init;;
