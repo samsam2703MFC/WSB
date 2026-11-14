@@ -49,6 +49,10 @@ on:
         description: "Boutique (pour deployer / retour)"
         required: false
         default: ""
+      afficher_adresse:
+        description: "Afficher les adresses des sites en clair (le journal est PUBLIC)"
+        type: boolean
+        default: false
 
 concurrency:
   group: nouveau-serveur
@@ -97,13 +101,16 @@ jobs:
           SMSAPI_TOKEN: ${{ secrets.SMSAPI_TOKEN }}
           SMSAPI_NADAWCA: ${{ vars.SMSAPI_NADAWCA }}
           SIEGE_DOMAINE: ${{ vars.SIEGE_DOMAINE }}
+          AFFICHER: ${{ inputs.afficher_adresse }}
         run: |
           sudo apt-get install -y -qq sshpass >/dev/null
           USR="${USR:-root}"
           O=(-p "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -o ServerAliveInterval=30)
           IP=$(getent ahostsv4 "$HOST" | awk 'NR==1{print $1}')
           # Le journal est public : l'adresse du serveur n'y apparaît sous aucune forme.
-          echo "::add-mask::$IP"; echo "::add-mask::${IP//./-}"
+          # (Sauf demande explicite « afficher_adresse » : alors les adresses des
+          #  sites — l'IP avec des tirets — s'affichent en clair à la fin.)
+          echo "::add-mask::$IP"; [ "$AFFICHER" = true ] || echo "::add-mask::${IP//./-}"
           if [ "$EVENT" = push ]; then A=push; else A="${ACTION:-liste}"; fi
           [ "$A" = mettre-a-jour ] && A=push
           case "${SIEGE_DOMAINE:-}" in ''|*[!a-z0-9.-]*) SIEGE_DOMAINE="";; esac
@@ -133,7 +140,8 @@ jobs:
                 c=$(curl -s  -o /dev/null -w '%{http_code}' --max-time 15 "$URL" || true)
                 [ "$c" != 000 ] && break; sleep 10
               done
-              echo "$h : https://$h.<IP avec des tirets>.sslip.io/${site#*:}/ → routage HTTP $r, certificat $([ "$c" != 000 ] && echo "valide (HTTP $c)" || echo "pas encore valide")"
+              ADR="https://$h.<IP avec des tirets>.sslip.io/${site#*:}/"; [ "$AFFICHER" = true ] && ADR="$URL"
+              echo "$h : $ADR → routage HTTP $r, certificat $([ "$c" != 000 ] && echo "valide (HTTP $c)" || echo "pas encore valide")"
             done
           fi
 
