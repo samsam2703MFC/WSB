@@ -17,11 +17,12 @@
 set -euo pipefail
 
 ICI="$(cd "$(dirname "$0")" && pwd)"
-BRANCHE=main; SHA=""; EMAIL=""; IP=""; ACTION=push; BOUTIQUE=""; SIEGE_DOM=""
+BRANCHE=main; SHA=""; EMAIL=""; IP=""; ACTION=push; BOUTIQUE=""; SIEGE_DOM=""; DOMAINE=""
 while [ $# -gt 0 ]; do case "$1" in
   --branche) BRANCHE="$2"; shift 2;; --sha) SHA="$2"; shift 2;; --email) EMAIL="$2"; shift 2;;
   --ip) IP="$2"; shift 2;; --action) ACTION="$2"; shift 2;; --boutique) BOUTIQUE="$2"; shift 2;;
   --siege-domaine) SIEGE_DOM="$2"; shift 2;;
+  --domaine) DOMAINE="$2"; shift 2;;
   *) echo "option inconnue : $1" >&2; exit 2;; esac; done
 [ "$(id -u)" = 0 ] || { echo "amorcer : root nécessaire" >&2; exit 1; }
 
@@ -88,7 +89,7 @@ TELS=$(sec SIEGE_TELEFONY); SMSTOK=$(sec SMSAPI_TOKEN); SMSNAD=$(sec SMSAPI_NADA
 # l'ancien pouvait s'arrêter en chemin.
 [ -x /usr/local/sbin/wsm ] && [ -f "$ICI/wsm" ] && install -m 0755 "$ICI/wsm" /usr/local/sbin/wsm
 # Le code ensuite : la version poussée apporte aussi le wsm qui va avec.
-[ "$ACTION" = push ] && "$W" version "${SHA:-$BRANCHE}"
+case "$ACTION" in push|creer) "$W" version "${SHA:-$BRANCHE}" ;; esac
 
 # Ports 80/443 tenus par autre chose (ici Traefik, dans Docker) : Apache de la
 # machine ne doit SURTOUT PAS démarrer au boot avant lui — il prendrait le
@@ -149,6 +150,26 @@ case "$ACTION" in
     if [ -n "$IP" ]; then
       cur=$(sed -n 's/^ALIAS=//p' /srv/webshops/boutiques/sandbox/boutique.conf)
       printf ',%s,' "$cur" | grep -qF ",$IP," || "$W" alias sandbox "${cur:+$cur,}$IP"
+    fi
+    ;;
+  creer)
+    # Une boutique de webshops/<boutique>/ (design, catalogue). Sans domaine :
+    # une adresse provisoire <boutique>.<ip>.sslip.io (certificat compris).
+    [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide" >&2; exit 2; }
+    if [ -d "/srv/webshops/boutiques/$BOUTIQUE" ]; then
+      echo "La boutique « $BOUTIQUE » existe déjà : rien n'est recréé."
+    else
+      [ -n "$DOMAINE" ] || { [ -n "$IP" ] && DOMAINE="$BOUTIQUE.${IP//./-}.sslip.io"; }
+      [ -n "$DOMAINE" ] || { echo "domaine inconnu" >&2; exit 1; }
+      echo; echo "== création de la boutique $BOUTIQUE ($DOMAINE)"
+      # La sortie de « wsm creer » contient le mot de passe : elle reste ici.
+      if "$W" creer "$BOUTIQUE" "$DOMAINE" --webshop "$BOUTIQUE" > "/root/wsm-creation-$BOUTIQUE.log" 2>&1; then
+        grep -v -i 'mot de passe' "/root/wsm-creation-$BOUTIQUE.log" || true
+        echo "  (mot de passe administrateur : sudo cat /srv/webshops/boutiques/$BOUTIQUE/ADMIN.txt)"
+      else
+        grep -v -i 'mot de passe' "/root/wsm-creation-$BOUTIQUE.log" || true
+        exit 1
+      fi
     fi
     ;;
   valider)  "$W" valider ;;

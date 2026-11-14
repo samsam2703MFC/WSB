@@ -43,10 +43,14 @@ on:
       action:
         description: "Que faire"
         type: choice
-        options: [mettre-a-jour, valider, deployer, retour, liste]
+        options: [mettre-a-jour, creer, valider, deployer, retour, liste]
         default: liste
       boutique:
         description: "Boutique (pour deployer / retour)"
+        required: false
+        default: ""
+      domaine:
+        description: "Domaine de la boutique à créer (vide = adresse provisoire <boutique>.<ip>.sslip.io)"
         required: false
         default: ""
       afficher_adresse:
@@ -102,6 +106,7 @@ jobs:
           SMSAPI_NADAWCA: ${{ vars.SMSAPI_NADAWCA }}
           SIEGE_DOMAINE: ${{ vars.SIEGE_DOMAINE }}
           AFFICHER: ${{ inputs.afficher_adresse }}
+          DOMAINE: ${{ inputs.domaine }}
         run: |
           sudo apt-get install -y -qq sshpass >/dev/null
           USR="${USR:-root}"
@@ -118,16 +123,25 @@ jobs:
             printf 'SIEGE_TELEFONY=%s\nSMSAPI_TOKEN=%s\nSMSAPI_NADAWCA=%s\n' \
               "$(printf '%s' "$SIEGE_TELEFONY" | tr -d '\r\n')" "$(printf '%s' "$SMSAPI_TOKEN" | tr -d '\r\n')" \
               "$(printf '%s' "$SMSAPI_NADAWCA" | tr -d '\r\n')" > "$RUNNER_TEMP/wsb-secrets.env" )
-          if [ "$A" = deployer ] || [ "$A" = retour ]; then
+          case "${DOMAINE:-}" in ''|*[!a-z0-9.-]*) DOMAINE="";; esac
+          if [ "$A" = deployer ] || [ "$A" = retour ] || [ "$A" = creer ]; then
             [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide"; exit 1; }
           fi
           sshpass -e scp -P "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
             serveur/amorcer.sh serveur/installer.sh serveur/wsm "$RUNNER_TEMP/wsb-secrets.env" "$USR@$HOST:/tmp/"
           rm -f "$RUNNER_TEMP/wsb-secrets.env"
           # root : directement ; sinon sudo, le mot de passe sur l'entrée standard.
-          ARGS="--branche '$BRANCHE' --sha '$SHA' --email '$EMAIL' --ip '$IP' --action '$A' --boutique '$BOUTIQUE' --siege-domaine '$SIEGE_DOMAINE'"
+          ARGS="--branche '$BRANCHE' --sha '$SHA' --email '$EMAIL' --ip '$IP' --action '$A' --boutique '$BOUTIQUE' --siege-domaine '$SIEGE_DOMAINE' --domaine '$DOMAINE'"
           printf '%s\n' "$SSHPASS" | sshpass -e ssh "${O[@]}" "$USR@$HOST" \
             "if [ \$(id -u) = 0 ]; then bash /tmp/amorcer.sh $ARGS </dev/null; else sudo -S -p '' bash /tmp/amorcer.sh $ARGS; fi"
+          if [ "$A" = creer ] && [ -z "$DOMAINE" ]; then
+            for ch in shop/ backoffice/login.php; do
+              URL="https://$BOUTIQUE.${IP//./-}.sslip.io/$ch"; c=000
+              for i in $(seq 1 18); do c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$URL" || true); [ "$c" = 200 ] && break; sleep 10; done
+              ADR="https://$BOUTIQUE.<IP avec des tirets>.sslip.io/$ch"; [ "$AFFICHER" = true ] && ADR="$URL"
+              echo "$BOUTIQUE : $ADR → HTTP $c"
+            done
+          fi
           if [ "$A" = push ]; then
             for site in sandbox:shop admin:siege; do
               h="${site%%:*}"; [ "$h" = admin ] && [ -n "$SIEGE_DOMAINE" ] && continue
