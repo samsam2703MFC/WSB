@@ -8,6 +8,7 @@
 //  configuration n'a ni clé maîtresse ni liste de téléphones.
 //
 //    ?            entrée : téléphone + code du jour, puis code SMS → 12 h
+//    ?p=przeglad  les données générales de chaque boutique + « Konsola ↗ » (entrée directe)
 //    ?p=klucze    les clés d'une boutique (lecture : état ; écriture : nouvelle valeur)
 //    ?p=sklepy    le registre des boutiques
 //    ?p=dziennik  qui a changé quoi (des noms de clés, jamais une valeur)
@@ -19,6 +20,7 @@ $API = is_dir(__DIR__ . '/../backoffice/api') ? __DIR__ . '/../backoffice/api' :
 require_once $API . '/db.php';
 require_once $API . '/settings.php';
 require_once $API . '/siege_auth.php';
+require_once $API . '/siege_dane.php';
 
 if (!wsb_siege_actif()) { http_response_code(404); exit; }
 
@@ -60,7 +62,7 @@ if ($kto === null) {
         if ($r === 'ok' && !isset($_SESSION['wsb_etap'])) $_SESSION['wsb_etap'] = ['tel' => '', 'do' => time() + WSB_ETAP_SEKUNDY];
     } elseif ($post && ($_POST['a'] ?? '') === 'etap2') {
         $r = (($_SESSION['wsb_etap']['tel'] ?? '') === '') ? 'zly' : wsb_etap2($pdo, (string) ($_POST['sms'] ?? ''), $ip);
-        if ($r === 'ok') { header('Location: ?p=klucze', true, 303); exit; }
+        if ($r === 'ok') { header('Location: ?p=przeglad', true, 303); exit; }
         $err = ['zly' => 'Kod SMS jest nieprawidłowy.', 'stary' => 'Kod SMS wygasł — zacznij od nowa.',
                 'brak' => 'Sesja logowania wygasła — zacznij od nowa.', 'limit' => 'Zbyt wiele prób — zacznij od nowa za 15 minut.'][$r]
               ?? 'SMSAPI nie odpowiada. Spróbuj ponownie.';
@@ -96,6 +98,72 @@ if ($kto === null) {
 if ($p === 'wyloguj') {
     if ($post) { wsb_sesja_zamknij($pdo); session_destroy(); header('Location: ./', true, 303); exit; }
     $p = 'klucze';
+}
+
+if ($p === '') $p = 'przeglad';
+
+// Entrée directe dans la console d'une boutique : un lien signé d'une minute.
+if ($p === 'sso') {
+    $b = (string) ($_POST['b'] ?? '');
+    $serw = wsb_sklepy_serwera();
+    if (!$post || !isset($serw[$b]) || $serw[$b]['domena'] === '') { http_response_code(404); exit('Nieznany sklep.'); }
+    $jeton = wsb_sso_jeton($b, wsb_tel_maska($kto));
+    wsb_dziennik($pdo, wsb_tel_maska($kto), $b, 'wejście do konsoli sklepu');
+    header('Location: https://' . $serw[$b]['domena'] . '/backoffice/sso.php?t=' . rawurlencode($jeton), true, 303);
+    exit;
+}
+
+if ($p === 'przeglad') {
+    $dane = array_map('wsb_dane_sklepu', wsb_sklepy_serwera());
+    strona('Przegląd', function () use ($h, $csrf, $dane) {
+        $zl = fn(int $g) => number_format($g / 100, 2, ',', ' ') . ' zł';
+        $sum = ['n' => 0, 'g' => 0, 'pn' => 0, 'pg' => 0, 'd' => 0, 'pd' => 0];
+        foreach ($dane as $d) if (!empty($d['dostepny'])) {
+            $sum['n'] += $d['teraz']['orders']; $sum['g'] += $d['teraz']['gross']; $sum['d'] += $d['rozl_teraz']['do_zaplaty'];
+            $sum['pn'] += $d['poprz']['orders']; $sum['pg'] += $d['poprz']['gross']; $sum['pd'] += $d['rozl_poprz']['do_zaplaty'];
+        }
+        $mies = fn(string $ym) => $ym; ?>
+      <div class="karta">
+        <h1>Przegląd sieci</h1>
+        <div class="kafle">
+          <div class="kafel"><span>Sklepy</span><b><?= count($dane) ?></b></div>
+          <div class="kafel"><span>Zamówienia · <?= $h(date('m.Y')) ?></span><b><?= $sum['n'] ?></b><small>poprz. miesiąc: <?= $sum['pn'] ?></small></div>
+          <div class="kafel"><span>Obrót brutto · <?= $h(date('m.Y')) ?></span><b><?= $h($zl($sum['g'])) ?></b><small>poprz. miesiąc: <?= $h($zl($sum['pg'])) ?></small></div>
+          <div class="kafel"><span>Należne BuddyCorp · <?= $h(date('m.Y')) ?></span><b><?= $h($zl($sum['d'])) ?></b><small>poprz. miesiąc: <?= $h($zl($sum['pd'])) ?></small></div>
+        </div>
+        <table class="przeglad">
+          <tr><th>Sklep</th><th>Wersja</th><th class="l">Zamówienia</th><th class="l">Obrót brutto</th><th class="l">Prowizja · czynsz</th><th class="l">Do zapłaty</th><th>Ostatnie zam.</th><th class="l">Produkty</th><th class="l">Klucze</th><th></th></tr>
+        <?php if (!$dane): ?><tr><td colspan="10">Brak sklepów na serwerze.</td></tr><?php endif; ?>
+        <?php foreach ($dane as $d): ?>
+          <tr>
+            <td><b><?php $nz = (string) ($d['sprzedawca'] ?? ''); echo $h($nz !== '' && stripos($nz, 'UZUPE') === false ? $nz : $d['slug']); ?></b>
+                <small><code><?= $h($d['slug']) ?></code> · <a href="https://<?= $h($d['domena']) ?>/shop/" target="_blank" rel="noopener"><?= $h($d['domena']) ?> ↗</a></small></td>
+            <td><small><?= $h(substr($d['wersja'], 0, 15)) ?></small><small><?= $h(substr($d['commit'], 0, 7)) ?></small></td>
+          <?php if (empty($d['dostepny'])): ?>
+            <td colspan="7" class="blad">Baza sklepu niedostępna — dane nieczytelne.</td>
+          <?php else: $r = $d['rozl_teraz']; $w = $d['warunki']; ?>
+            <td class="l"><?= (int) $d['teraz']['orders'] ?><small>poprz. <?= (int) $d['poprz']['orders'] ?></small></td>
+            <td class="l"><?= $h($zl($d['teraz']['gross'])) ?><small>poprz. <?= $h($zl($d['poprz']['gross'])) ?></small></td>
+            <td class="l"><?= $h($zl($r['prowizja'])) ?> · <?= $h($zl($r['czynsz'])) ?>
+                <small><?= $h(rtrim(rtrim(number_format($w['rate'] * 100, 2, ',', ''), '0'), ',')) ?> % <?= $w['basis'] === 'towar' ? 'od towaru' : 'od brutto' ?><?= $w['ustalone'] ? '' : ' · domyślne' ?></small></td>
+            <td class="l"><?= $h($zl($r['do_zaplaty'])) ?><small>pobrane przez Stripe: <?= $h($zl($r['pobrane'])) ?></small></td>
+            <td><?= $h($d['ostatnie'] !== '' ? substr($d['ostatnie'], 0, 10) : '—') ?></td>
+            <td class="l"><?= (int) $d['produkty'] ?></td>
+            <td class="l"><a href="?p=klucze&amp;b=<?= $h($d['slug']) ?>"><?= (int) $d['klucze'] ?> ›</a></td>
+          <?php endif; ?>
+            <td>
+              <form method="post" action="?p=sso" target="_blank" style="margin:0">
+                <input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><input type="hidden" name="b" value="<?= $h($d['slug']) ?>">
+                <button class="maly" title="Wejście bez hasła — link ważny 1 minutę, jednorazowy">Konsola ↗</button>
+              </form>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </table>
+        <p class="pomoc">Kwoty w złotych, z płatnych zamówień (bez anulowanych) bieżącego miesiąca; prowizja i czynsz według warunków ustawionych w konsoli sklepu (Superadmin). Tylko odczyt.</p>
+      </div>
+    <?php });
+    exit;
 }
 
 $sklepy = wsb_boutiques($pdo);
@@ -221,7 +289,11 @@ function strona(string $tytul, callable $tresc): void {
   *{box-sizing:border-box} body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg)}
   header{display:flex;gap:18px;align-items:center;padding:12px 24px;background:#fff;border-bottom:1px solid var(--line)}
   header b{margin-right:auto} header a{color:var(--ink);text-decoration:none;padding:6px 10px;border-radius:8px} header a.on{background:var(--bg);font-weight:600}
-  main{max-width:1000px;margin:24px auto;padding:0 16px}
+  main{max-width:1240px;margin:24px auto;padding:0 16px}
+  .kafle{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px} .kafel{flex:1 1 200px;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kafel span{display:block;color:var(--mut);font-size:13px} .kafel b{display:block;font-size:22px;margin:2px 0} .kafel small{color:var(--mut);font-size:12px}
+  table.przeglad td small{display:block;color:var(--mut);font-size:12px} table.przeglad .l{text-align:right;white-space:nowrap}
+  button.maly{margin:0;padding:6px 12px;font-size:13px;white-space:nowrap}
   .karta{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px} .waska{max-width:420px;margin:60px auto}
   h1{font-size:22px;margin:0 0 16px} h2{font-size:17px;margin:24px 0 8px}
   label{display:block;font-weight:600;margin:10px 0 4px} input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit}
@@ -236,7 +308,8 @@ function strona(string $tytul, callable $tresc): void {
 </style></head><body>
 <?php if ($kto !== null): ?>
 <header><b>BuddyCorp · superadmin</b>
-  <a href="?p=klucze" class="<?= $p === 'klucze' || $p === '' ? 'on' : '' ?>">Klucze</a>
+  <a href="?p=przeglad" class="<?= $p === 'przeglad' ? 'on' : '' ?>">Przegląd</a>
+  <a href="?p=klucze" class="<?= $p === 'klucze' ? 'on' : '' ?>">Klucze</a>
   <a href="?p=sklepy" class="<?= $p === 'sklepy' ? 'on' : '' ?>">Sklepy</a>
   <a href="?p=dziennik" class="<?= $p === 'dziennik' ? 'on' : '' ?>">Dziennik</a>
   <form method="post" action="?p=wyloguj" style="margin:0"><input type="hidden" name="csrf" value="<?= $h($csrf) ?>"><button style="margin:0;background:#fff;color:var(--ink);border:1px solid var(--line)">Wyloguj</button></form>

@@ -262,3 +262,41 @@ function wsb_boutique_enregistrer(PDO $pdo, string $slug, string $nom, string $d
     $pdo->prepare("INSERT INTO wsb_boutiques (slug, nom, domaine, active, creee) VALUES (?,?,?,1,?)")
         ->execute([$slug, $nom, $domaine, date('Y-m-d H:i:s')]);
 }
+
+// ---------------------------------------------------------------------------
+//  CONNEXION DIRECTE du superadmin BuddyCorp à la console d'une boutique.
+//
+//  Le siège signe un lien d'UNE minute avec la clé de CETTE boutique (dérivée
+//  de la maîtresse) ; la boutique le vérifie avec la sienne. Un lien ne sert
+//  qu'une fois (nonce gardé côté boutique). Une boutique ne peut pas en
+//  fabriquer pour une autre : elle n'a que sa clé.
+// ---------------------------------------------------------------------------
+const WSB_SSO_DUREE = 60;
+
+function wsb_b64u(string $s): string { return rtrim(strtr(base64_encode($s), '+/', '-_'), '='); }
+function wsb_b64u_dec(string $s): string { return (string) base64_decode(strtr($s, '-_', '+/'), true); }
+
+/** Siège : le jeton pour entrer dans la console de $boutique. */
+function wsb_sso_jeton(string $boutique, string $kto): string {
+    if (!wsb_est_siege()) throw new RuntimeException('réservé au siège');
+    $cle = wsb_cle_boutique($boutique);
+    $p = wsb_b64u((string) json_encode(['b' => $boutique, 'exp' => time() + WSB_SSO_DUREE,
+        'n' => bin2hex(random_bytes(16)), 'k' => $kto], JSON_UNESCAPED_UNICODE));
+    return $p . '.' . wsb_b64u(hash_hmac('sha256', $p, $cle, true));
+}
+
+/** Boutique : le jeton est-il valable pour MOI ? Rend ['n','k','exp'] ou une erreur (string). */
+function wsb_sso_verifier(string $jeton): array|string {
+    if (!wsb_actif() || wsb_est_siege()) return 'boutique non reliée à la centrale';
+    if (!preg_match('/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/', $jeton)) return 'lien illisible';
+    [$p, $sig] = explode('.', $jeton, 2);
+    $attendu = wsb_b64u(hash_hmac('sha256', $p, wsb_cle_boutique(), true));
+    if (!hash_equals($attendu, $sig)) return 'signature refusée';
+    $d = json_decode(wsb_b64u_dec($p), true);
+    if (!is_array($d) || ($d['b'] ?? '') !== (string) (wsb_cfg()['boutique'] ?? '')) return 'lien d’une autre boutique';
+    $exp = (int) ($d['exp'] ?? 0);
+    if ($exp < time()) return 'lien expiré';
+    if ($exp > time() + WSB_SSO_DUREE + 30) return 'lien invalide';
+    if (!preg_match('/^[0-9a-f]{32}$/', (string) ($d['n'] ?? ''))) return 'lien invalide';
+    return ['n' => (string) $d['n'], 'k' => (string) ($d['k'] ?? ''), 'exp' => $exp];
+}
