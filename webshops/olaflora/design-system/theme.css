@@ -1,9 +1,9 @@
-/* Poszła w las — retouches de composants (spécification : « Visual foundations »).
+/* Ola flora — retouches de composants (thème commun Poszła w las · Ola flora, portée .brand-of).
    Imprimées APRÈS shop.css. La structure des pages ne change pas ; seul
    l'habillage des composants communs suit la marque. Couleurs : toujours les
    jetons, donc Wygląd s'applique encore par-dessus. */
 
-/* ---- Titres : Baloo 2, lourds, serrés, en minuscules comme le logo -------- */
+/* ---- Titres : Poppins 600, serrés, casse de la phrase ---------------------- */
 h1, h2, h3, .tytul-2, .section-head h2, .promise h2, .card h3,
 .hero:not(.sek) h1, .hero:not(.sek) .slajd-h {
   font-family: var(--font-display);
@@ -11,7 +11,6 @@ h1, h2, h3, .tytul-2, .section-head h2, .promise h2, .card h3,
   letter-spacing: var(--tracking-tight);
 }
 h1, h2, .tytul-2, .section-head h2, .hero:not(.sek) h1, .hero:not(.sek) .slajd-h {
-  text-transform: lowercase;
   line-height: var(--leading-tight);
 }
 .tytul-2 span { color: var(--text-muted); }
@@ -20,15 +19,15 @@ h1, h2, .tytul-2, .section-head h2, .hero:not(.sek) h1, .hero:not(.sek) .slajd-h
 body { font-size: var(--text-md); line-height: var(--leading-relaxed); }
 .prose, .lead, .section-head .sub { max-width: 64ch; }
 
-/* ---- La voix « étiquette » : Space Mono, capitales, approche 0,12em ---------
+/* ---- La voix « étiquette » : Space Mono, minuscules, approche 0,14em ---------
    Sur-titres, métadonnées, badges, prix. */
 .eyebrow, .hero:not(.sek) .eyebrow, .eyebrow.accent, .product-buy .eyebrow, .kontakt-txt .eyebrow,
 .card-meta, .badge {
   font-family: var(--font-mono);
   font-weight: var(--weight-regular);
   font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-caps);
+  text-transform: lowercase;
+  letter-spacing: .14em;
   color: var(--text-strong);
 }
 .price { font-family: var(--font-mono); font-weight: var(--weight-bold); letter-spacing: 0; }

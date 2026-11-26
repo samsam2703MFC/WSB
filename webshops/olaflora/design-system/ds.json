@@ -1,7 +1,7 @@
 {
   "nom": "Ola flora",
-  "logo": "assets/logo.svg",
-  "theme_color": "#F1ACC0",
+  "logo": "assets/logo.png",
+  "theme_color": "#F4EFE7",
   "fichiers": [
     "tokens/colors.css",
     "tokens/typography.css",
@@ -12,32 +12,32 @@
     "tokens/fonts.css"
   ],
   "polices": {
+    "poppins": [
+      "Poppins",
+      "'Poppins', 'Work Sans', system-ui, sans-serif",
+      "Poppins — titres et interface : sans géométrique d'Ola flora"
+    ],
     "worksans": [
       "Work Sans",
       "'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      "Work Sans — domyślna dla tekstu: spokojna, czytelna"
-    ],
-    "baloo": [
-      "Baloo 2",
-      "'Baloo 2', 'Work Sans', system-ui, sans-serif",
-      "Baloo 2 — domyślna dla nagłówków: ciężka, zaokrąglona, jak logo"
+      "Work Sans — texte courant"
     ]
   },
   "wyglad": {
     "font_body": "worksans",
-    "font_head": "baloo",
-    "font_head_baza": "baloo",
-    "brand": "#465803",
-    "accent": "#465803",
-    "bg": "#FBF6F5",
+    "font_head": "poppins",
+    "font_head_baza": "poppins",
+    "brand": "#465802",
+    "accent": "#465802",
+    "bg": "#F4EFE7",
     "przyciski": "marka"
   },
   "email": {
-    "tlo": "#FBF6F5",
-    "karta": "#FFFCFB",
-    "tekst": "#354202",
-    "cichy": "#4A4C33",
-    "akcent": "#465803",
-    "linia": "#F1ACC0"
+    "tlo": "#F4EFE7",
+    "karta": "#FBF8F3",
+    "tekst": "#2E2924",
+    "cichy": "#6A6157",
+    "akcent": "#465802",
+    "linia": "#D8CDBD"
   }
 }

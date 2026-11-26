@@ -1,18 +1,21 @@
 # Ola flora — design system
 
-Décoration florale (mariages, événements) et boutique en ligne. **Copie du design
-system de Poszła w las** (même document : « Poszła w las · Ola flora — design
-system », 12/11/2026) : même encre olive `#465803`, mêmes polices (Baloo 2,
-Work Sans, Space Mono), même voix — avec le champ **rose `#F1ACC0`** au lieu de la
-sauge, un papier à peine rosé et la framboise `#730216` pour les erreurs.
+Décoration florale de mariages et d'événements, pracownia florystyczna. Source :
+design system « Poszła w las · Ola flora » fourni avec les maquettes (zip « Back
+office CRM floral », 26/11/2026), portée `.brand-of` — la palette **atelier** du
+site Ola flora 2026 :
 
-Dans les fichiers, la variable du champ garde son nom commun (`--pwl-sage`) : elle
-vaut ici le rose ; le thème (`theme.css`) est celui de Poszła w las, inchangé.
+| Rôle | Valeur |
+| --- | --- |
+| fond des pages | lin `#F4EFE7` ; cartes `#FBF8F3` ; champ `#EBE3D6` |
+| encre | terre d'ombre `#2E2924` ; secondaire `#6A6157` |
+| accent (boutons, liens) | olive `#465802`, partagée avec Poszła w las |
+| touches | rose `#F1ACC0` (planche officielle), framboise `#730216` (erreurs) |
+| polices | Poppins (titres, interface), Work Sans (texte), Space Mono (étiquettes) |
+| logo | le sygnet officiel (marguerite), `assets/logo.png` |
 
-## À fournir
-
-- **Le logo** : `assets/logo.svg` est PROVISOIRE (une fleur olive sur rose).
-- **Les photos** de la boutique et des réalisations.
+Le thème (`theme.css`) est celui du système commun, adapté : titres en casse de
+la phrase, sur-titres en minuscules (« OLA FLORA » en capitales est le logo).
 
 ---
 

@@ -7,5 +7,6 @@
   "alias": [],
   "langue": "pl",
   "base": "olaflora",
-  "_base": "La base MySQL de la boutique s'appelle « olaflora » (demande du client, 26/11/2026) au lieu de ws_olaflora."
+  "_base": "La base MySQL de la boutique s'appelle « olaflora » (demande du client, 26/11/2026) au lieu de ws_olaflora.",
+  "katalog": "katalog/katalog.json"
 }

@@ -1,0 +1,566 @@
+{
+ "_opis": "Catalogue de départ d'Ola flora (offre mariage), tiré du projet « Back office CRM floral » (katalog-wesela.js, textes de « Ola flora - wesela v2 »). Prix TTC en zł, INDICATIFS, à valider par Ola. Import : php migrate.php --import-katalog <ce fichier>.",
+ "kategorie": [
+  {
+   "nazwa": "Wesela",
+   "pod": [
+    {
+     "nazwa": "Para młoda"
+    },
+    {
+     "nazwa": "Ceremonia"
+    },
+    {
+     "nazwa": "Przyjęcie"
+    },
+    {
+     "nazwa": "Usługi"
+    }
+   ]
+  }
+ ],
+ "kategorie_wylacz": [
+  "Pieczywo",
+  "Ciasta świeże",
+  "Czekolada",
+  "Katering",
+  "Lody",
+  "Menu i zestawy"
+ ],
+ "dostawa": [
+  {
+   "id": "bez_wysylki",
+   "carrier": "",
+   "kind": "brak",
+   "cena_netto": 0,
+   "vat": 0.23,
+   "kraje": "*",
+   "kolejnosc": 1,
+   "teksty": {
+    "pl": {
+     "label": "Bez wysyłki — realizacja na miejscu",
+     "note": "Termin i miejsce realizacji ustalamy razem; dekoracje przywożę i montuję sama."
+    },
+    "en": {
+     "label": "No shipping — on-site service",
+     "note": "We agree the date and venue together; I bring and install the decorations."
+    }
+   }
+  }
+ ],
+ "rabaty_wagowe": false,
+ "ikony_obietnic": [
+  "zdjecia/ikona-1.png",
+  "zdjecia/ikona-2.png",
+  "zdjecia/ikona-3.png"
+ ],
+ "teksty": {
+  "pl": {
+   "brand": "Ola flora",
+   "meta.title": "Ola flora — florystyka ślubna i dekoracje inspirowane naturą",
+   "meta.desc": "Bukiety ślubne, dekoracja sali i ceremonii, kwiaty dla firm. Pracownia florystyczna Ola flora — kompozycje pełne lekkości, sezonowe kwiaty.",
+   "footer.tagline": "Pracownia florystyczna — florystyka inspirowana naturą",
+   "catalog.title": "Oferta weselna",
+   "catalog.sub": "Ceny orientacyjne za sztukę lub komplet. Ostateczną wycenę przygotowuję indywidualnie, po poznaniu Waszych planów.",
+   "promise.title": "Współpraca krok po kroku.",
+   "promise.sub": "Każda uroczystość jest inna, dlatego najpierw poznaję Wasze pomysły i oczekiwania.",
+   "promise.1.t": "Indywidualna oferta",
+   "promise.1.d": "Na podstawie Waszych inspiracji przygotowuję propozycję dekoracji wraz z koncepcją i wyceną.",
+   "promise.2.t": "Sezonowe kwiaty",
+   "promise.2.d": "Sięgam po rośliny charakterystyczne dla danej pory roku — lekko, naturalnie, harmonijnie.",
+   "promise.3.t": "Drugie życie kwiatów",
+   "promise.3.d": "Po uroczystości przygotowuję z kwiatów mniejsze bukiety, którymi możecie obdarować Gości.",
+   "story.pro.eyebrow": "Kwiaty dla firm",
+   "story.pro.title": "Zazieleniamy wnętrza i przygotowujemy oprawę florystyczną firmowych wydarzeń.",
+   "story.pro.text": "Recepcje, regularne kompozycje, eventy — napiszcie, przygotuję propozycję.",
+   "story.pro.cta": "Napisz do Ola flora",
+   "home.title": "Florystyka inspirowana naturą",
+   "footer.rights": "Wszelkie prawa zastrzeżone. Zdjęcia: Ola flora.",
+   "info.darmowa": "Dojazd i montaż dekoracji na miejscu uroczystości"
+  }
+ },
+ "slajdy": [
+  {
+   "zdjecie": "zdjecia/hero.webp",
+   "link": "#katalog",
+   "teksty": {
+    "pl": {
+     "eyebrow": "pracownia florystyczna",
+     "title": "Florystyka inspirowana naturą",
+     "tekst": "Natura niezmiennie pozostaje moim źródłem inspiracji. Tworzę kompozycje pełne lekkości i swobody, dopasowane do charakteru przestrzeni, okazji i osób, dla których powstają.",
+     "cta_label": "Poznaj ofertę"
+    }
+   }
+  }
+ ],
+ "produkty": [
+  {
+   "id": "of-pm-01",
+   "kategoria": "Para młoda",
+   "rodzaj": "usluga",
+   "cena": 420,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PM-01",
+   "zdjecie": "zdjecia/bukiet-pastelowy.webp",
+   "teksty": {
+    "pl": {
+     "name": "Bukiet panny młodej, sezonowy",
+     "subtitle": "Para młoda · cena za szt.",
+     "desc": "Element pakietu bazowego."
+    }
+   }
+  },
+  {
+   "id": "of-pm-01-plus",
+   "kategoria": "Para młoda",
+   "rodzaj": "usluga",
+   "cena": 600,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PM-01-UP",
+   "zdjecie": "zdjecia/bukiet-kolorowy.webp",
+   "teksty": {
+    "pl": {
+     "name": "Bukiet z piwonią i różą ogrodową",
+     "subtitle": "Para młoda · wersja rozszerzona · cena za szt.",
+     "desc": "Piwonie są w czerwcu w szczycie. Bukiet będzie pełniejszy i dłużej trzyma formę. Rozszerzona wersja: „Bukiet panny młodej, sezonowy”."
+    }
+   }
+  },
+  {
+   "id": "of-pm-02",
+   "kategoria": "Para młoda",
+   "rodzaj": "usluga",
+   "cena": 45,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PM-02",
+   "zdjecie": "zdjecia/detale-buty.webp",
+   "teksty": {
+    "pl": {
+     "name": "Butonierka pana młodego",
+     "subtitle": "Para młoda · cena za szt.",
+     "desc": "Element pakietu bazowego."
+    }
+   }
+  },
+  {
+   "id": "of-pm-03",
+   "kategoria": "Para młoda",
+   "rodzaj": "usluga",
+   "cena": 180,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PM-03",
+   "zdjecie": "zdjecia/bukiet-jezioro.webp",
+   "teksty": {
+    "pl": {
+     "name": "Bukiety druhen",
+     "subtitle": "Para młoda · cena za szt. · zwykle 3 szt.",
+     "desc": "Mniejsze wersje Twojego bukietu spinają zdjęcia grupowe."
+    }
+   }
+  },
+  {
+   "id": "of-pm-04",
+   "kategoria": "Para młoda",
+   "rodzaj": "usluga",
+   "cena": 45,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PM-04",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Butonierki świadków i ojców",
+     "subtitle": "Para młoda · cena za szt. · zwykle 4 szt.",
+     "desc": "Drobiazg, ale na zdjęciach rodzinnych od razu widać, kto jest z kim."
+    }
+   }
+  },
+  {
+   "id": "of-pm-05",
+   "kategoria": "Para młoda",
+   "rodzaj": "usluga",
+   "cena": 160,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PM-05",
+   "zdjecie": "zdjecia/panna-mloda-wstazki.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wianek do włosów",
+     "subtitle": "Para młoda · cena za szt.",
+     "desc": "Z tych samych kwiatów co bukiet, robiony rano w dniu ślubu."
+    }
+   }
+  },
+  {
+   "id": "of-cer-01",
+   "kategoria": "Ceremonia",
+   "rodzaj": "usluga",
+   "cena": 650,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-CER-01",
+   "zdjecie": "zdjecia/kosciol-taniec.webp",
+   "teksty": {
+    "pl": {
+     "name": "Dekoracja ołtarza, podstawowa",
+     "subtitle": "Ceremonia · cena za komplet",
+     "desc": "Element pakietu bazowego."
+    }
+   }
+  },
+  {
+   "id": "of-cer-01-plus",
+   "kategoria": "Ceremonia",
+   "rodzaj": "usluga",
+   "cena": 1350,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-CER-01-UP",
+   "zdjecie": "zdjecia/kosciol-taniec.webp",
+   "teksty": {
+    "pl": {
+     "name": "Dekoracja ołtarza, rozbudowana",
+     "subtitle": "Ceremonia · wersja rozszerzona · cena za komplet",
+     "desc": "Dwie duże kompozycje po bokach zamiast jednej. To tło każdego zdjęcia z ceremonii. Rozszerzona wersja: „Dekoracja ołtarza, podstawowa”."
+    }
+   }
+  },
+  {
+   "id": "of-cer-02",
+   "kategoria": "Ceremonia",
+   "rodzaj": "usluga",
+   "cena": 60,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-CER-02",
+   "zdjecie": "zdjecia/ceremonia-las.webp",
+   "teksty": {
+    "pl": {
+     "name": "Dekoracja ławek",
+     "subtitle": "Ceremonia · cena za szt. · zwykle 10 szt.",
+     "desc": "Co druga ławka wystarcza, żeby przejście wyglądało na pełne."
+    }
+   }
+  },
+  {
+   "id": "of-cer-02-plus",
+   "kategoria": "Ceremonia",
+   "rodzaj": "usluga",
+   "cena": 110,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-CER-02-UP",
+   "zdjecie": "zdjecia/ceremonia-las.webp",
+   "teksty": {
+    "pl": {
+     "name": "Ławki z girlandą z zieleni",
+     "subtitle": "Ceremonia · wersja rozszerzona · cena za szt.",
+     "desc": "Girlanda łączy ławki w jedną linię aż do ołtarza. Rozszerzona wersja: „Dekoracja ławek”."
+    }
+   }
+  },
+  {
+   "id": "of-cer-03",
+   "kategoria": "Ceremonia",
+   "rodzaj": "usluga",
+   "cena": 2400,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-CER-03",
+   "zdjecie": "zdjecia/luk-wieczor.webp",
+   "teksty": {
+    "pl": {
+     "name": "Łuk kwiatowy na ceremonię w plenerze",
+     "subtitle": "Ceremonia · cena za komplet",
+     "desc": "W plenerze łuk zastępuje ołtarz, a potem przenosimy go na salę jako tło do zdjęć."
+    }
+   }
+  },
+  {
+   "id": "of-cer-04",
+   "kategoria": "Ceremonia",
+   "rodzaj": "usluga",
+   "cena": 90,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-CER-04",
+   "zdjecie": "zdjecia/para-pole.webp",
+   "teksty": {
+    "pl": {
+     "name": "Płatki dla dzieci",
+     "subtitle": "Ceremonia · cena za komplet",
+     "desc": "Dzieci sypią płatki przed Wami — goście to uwielbiają."
+    }
+   }
+  },
+  {
+   "id": "of-cer-05",
+   "kategoria": "Ceremonia",
+   "rodzaj": "usluga",
+   "cena": 380,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "usł.",
+   "sku": "OF-CER-05",
+   "zdjecie": "zdjecia/brama-plener.webp",
+   "teksty": {
+    "pl": {
+     "name": "Przeniesienie dekoracji z kościoła na salę",
+     "subtitle": "Ceremonia · cena za usługa",
+     "desc": "Te same kwiaty pracują dwa razy: rano w kościele, wieczorem na sali."
+    }
+   }
+  },
+  {
+   "id": "of-prz-01",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 180,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PRZ-01",
+   "zdjecie": "zdjecia/stol-gosciny.webp",
+   "teksty": {
+    "pl": {
+     "name": "Kompozycja na stół gościnny, niska",
+     "subtitle": "Przyjęcie · cena za szt. · zwykle 8 szt.",
+     "desc": "Element pakietu bazowego."
+    }
+   }
+  },
+  {
+   "id": "of-prz-01-plus",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 320,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PRZ-01-UP",
+   "zdjecie": "zdjecia/oranzeria-stol.webp",
+   "teksty": {
+    "pl": {
+     "name": "Kompozycja wysoka, na wazonie 40 cm",
+     "subtitle": "Przyjęcie · wersja rozszerzona · cena za szt.",
+     "desc": "Wysokie kompozycje nie zasłaniają gości przy stole, a sala wygląda na wyższą. Rozszerzona wersja: „Kompozycja na stół gościnny, niska”."
+    }
+   }
+  },
+  {
+   "id": "of-prz-02",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 1200,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-PRZ-02",
+   "zdjecie": "zdjecia/stol-prezydialny.webp",
+   "teksty": {
+    "pl": {
+     "name": "Girlanda na stół prezydialny",
+     "subtitle": "Przyjęcie · cena za komplet",
+     "desc": "Wasz stół jest na co drugim zdjęciu z przyjęcia."
+    }
+   }
+  },
+  {
+   "id": "of-prz-03",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 650,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-PRZ-03",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Dekoracja słodkiego stołu",
+     "subtitle": "Przyjęcie · cena za komplet",
+     "desc": "Tort i ciasta stoją cały wieczór — kwiaty robią z nich osobne miejsce."
+    }
+   }
+  },
+  {
+   "id": "of-prz-04",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 850,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-PRZ-04",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Lustro selfie z kwiatami",
+     "subtitle": "Przyjęcie · cena za komplet",
+     "desc": "Goście sami robią zdjęcia. To dekoracja, która pracuje przez cały wieczór."
+    }
+   }
+  },
+  {
+   "id": "of-prz-05",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 2800,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-PRZ-05",
+   "zdjecie": "zdjecia/scianka-wstazki.webp",
+   "teksty": {
+    "pl": {
+     "name": "Ścianka kwiatowa",
+     "subtitle": "Przyjęcie · cena za komplet",
+     "desc": "Jedno miejsce, w którym każdy chce mieć zdjęcie z Wami."
+    }
+   }
+  },
+  {
+   "id": "of-prz-06",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 240,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "kpl.",
+   "sku": "OF-PRZ-06",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Stojak na księgę gości z kwiatami",
+     "subtitle": "Przyjęcie · cena za komplet",
+     "desc": "Mały akcent przy wejściu, goście od razu wiedzą, gdzie się wpisać."
+    }
+   }
+  },
+  {
+   "id": "of-prz-07",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 12,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PRZ-07",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Świece i lampiony, wynajem",
+     "subtitle": "Przyjęcie · cena za szt. · zwykle 30 szt.",
+     "desc": "Wieczorem to światło robi nastrój."
+    }
+   }
+  },
+  {
+   "id": "of-prz-07-plus",
+   "kategoria": "Przyjęcie",
+   "rodzaj": "usluga",
+   "cena": 22,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "szt.",
+   "sku": "OF-PRZ-07-UP",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Wysokie lampiony ze świecą w szkle",
+     "subtitle": "Przyjęcie · wersja rozszerzona · cena za szt.",
+     "desc": "Wyższy płomień widać z każdego miejsca na sali. Rozszerzona wersja: „Świece i lampiony, wynajem”."
+    }
+   }
+  },
+  {
+   "id": "of-usl-01",
+   "kategoria": "Usługi",
+   "rodzaj": "usluga",
+   "cena": 120,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "usł.",
+   "sku": "OF-USL-01",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Dojazd do 30 km od pracowni",
+     "subtitle": "Usługi · cena za usługa",
+     "desc": "Element pakietu bazowego."
+    }
+   }
+  },
+  {
+   "id": "of-usl-01-plus",
+   "kategoria": "Usługi",
+   "rodzaj": "usluga",
+   "cena": 280,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "usł.",
+   "sku": "OF-USL-01-UP",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Dojazd 30–60 km",
+     "subtitle": "Usługi · wersja rozszerzona · cena za usługa",
+     "desc": "Sala jest dalej niż 30 km, więc liczymy drugi kurs busa. Rozszerzona wersja: „Dojazd do 30 km od pracowni”."
+    }
+   }
+  },
+  {
+   "id": "of-usl-02",
+   "kategoria": "Usługi",
+   "rodzaj": "usluga",
+   "cena": 760,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "usł.",
+   "sku": "OF-USL-02",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Florystka na miejscu, 8 h",
+     "subtitle": "Usługi · cena za usługa",
+     "desc": "Ktoś od nas pilnuje dekoracji przez cały dzień i poprawia, co trzeba."
+    }
+   }
+  },
+  {
+   "id": "of-usl-03",
+   "kategoria": "Usługi",
+   "rodzaj": "usluga",
+   "cena": 450,
+   "vat": 0.23,
+   "stan": 100,
+   "jednostka": "usł.",
+   "sku": "OF-USL-03",
+   "zdjecie": "",
+   "teksty": {
+    "pl": {
+     "name": "Demontaż po weselu",
+     "subtitle": "Usługi · cena za usługa",
+     "desc": "Rano po weselu nie musicie nic sprzątać — zabieramy wszystko sami."
+    }
+   }
+  }
+ ]
+}

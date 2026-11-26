@@ -1,13 +1,11 @@
-/* Poszła w las — typographie.
-   Deux voix : l'affichage, lourd et serré (−0,02em, interligne 0,92, lignes
-   courtes empilées, en minuscules comme le logo) ; le texte, Work Sans 15/1,6
-   jusqu'à 64 caractères. Le mono porte les prix, les sur-titres, les badges et
-   les métadonnées : c'est la voix « étiquette » du système. Jamais de texte
-   courant en titre, jamais de titre en Work Sans.
-   Polices de SUBSTITUTION (la spécification le dit) : Baloo 2 pour le lettrage
-   dessiné à la main, Work Sans, Space Mono. */
+/* Ola flora — typographie.
+   Poppins pour les titres et l'interface (600, serré −0,02em), Work Sans 15/1,6
+   pour le texte jusqu'à 64 caractères, Space Mono en minuscules, approche
+   large, pour les sur-titres et les métadonnées. Les titres gardent la casse
+   de la phrase (« Florystyka inspirowana naturą ») : OLA FLORA en capitales
+   est le logo, pas un style de titre. */
 :root {
-  --font-display: 'Baloo 2', 'Work Sans', system-ui, sans-serif;
+  --font-display: 'Poppins', 'Work Sans', system-ui, sans-serif;
   --font-sans:    'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono:    'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
@@ -25,9 +23,9 @@
   --weight-medium:   500;
   --weight-semibold: 600;
   --weight-bold:     700;
-  --weight-extra:    800;   /* Baloo 2 800 : l'affichage */
+  --weight-extra:    600;   /* Poppins 600 : l'affichage, léger et aéré */
 
-  --leading-tight:   0.92;  /* titres empilés */
+  --leading-tight:   1.12;  /* titres : Poppins a besoin d'air */
   --leading-snug:    1.2;
   --leading-normal:  1.5;
   --leading-relaxed: 1.6;
