@@ -555,7 +555,16 @@
 
   // Bouton « dodaj zdjęcie z dysku » sous la photothèque de chaque section photo du CMS.
   var WGRAJ = '<sc-if value="{{ sec.isPhoto }}" hint-placeholder-val="{{ false }}"><label style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: var(--fs-small); color: var(--brand-ink); border: 1px dashed var(--n-200); border-radius: 8px; padding: 8px 14px;"><input type="file" accept="image/jpeg,image/png,image/webp" data-of-wgraj="1" style="display: none;"><span>＋ dodaj zdjęcie z dysku</span></label></sc-if>';
+  // L'entrée « Integracje i SEO » du rail du back office (écran à part, _wsb/prive/app/ustawienia.php).
+  var USTAWIENIA_LINK = '<a data-of-ustawienia="1" href="_wsb/prive/app/ustawienia.php" style="display: flex; align-items: center; gap: var(--sp-2); text-decoration: none; font-size: var(--fs-small); color: var(--n-800); border: 1px solid var(--n-300); border-radius: 8px; padding: 8px 10px;">'
+    + '<span style="flex: 0 0 auto; width: 14px; text-align: center; font-family: var(--font-mono); font-size: 11px;">◎</span>Integracje i SEO</a>'
+    + '<a data-of-ustawienia="2" href="_wsb/prive/app/ustawienia.php?z=seo" style="display: flex; align-items: center; gap: var(--sp-2); text-decoration: none; font-size: var(--fs-small); color: var(--n-800); padding: 2px 10px;">'
+    + '<span style="flex: 0 0 auto; width: 14px; text-align: center; font-family: var(--font-mono); font-size: 11px;">↗</span>Pozycjonowanie (SEO)</a>';
   function poprawBo(tpl) {
+    if (tpl.indexOf('data-of-ustawienia') < 0) {
+      var stopka = tpl.indexOf('<div style="margin-top: auto; display: flex; flex-direction: column; gap: var(--sp-2); border-top: 1px solid var(--n-200)');
+      if (stopka >= 0) tpl = tpl.slice(0, stopka) + '<div style="display: flex; flex-direction: column; gap: 6px;">' + USTAWIENIA_LINK + '</div>' + tpl.slice(stopka);
+    }
     if (tpl.indexOf('data-of-wgraj') >= 0) return tpl;
     var znak = '<sc-if value="{{ sec.isText }}" hint-placeholder-val="{{ true }}">';
     var i = tpl.indexOf(znak);
@@ -666,11 +675,60 @@
     // Le formulaire : seul (FormularzWizard.dc.html) ou embarqué dans l'onglet « formularz » de la page.
     if (nazwa === 'FormularzWizard' && s.done && !c.__ofWyslane) {
       c.__ofWyslane = true;
-      poster('app/zapytanie.php', { vals: s.vals || {}, multi: s.multi || [], palette: s.palette || '', accents: s.accents || [], lang: jezyk });
+      poster('app/zapytanie.php', { vals: s.vals || {}, multi: s.multi || [], palette: s.palette || '', accents: s.accents || [], lang: jezyk },
+        function (r) { if (r && r.ok && window.__ofKonwersja) window.__ofKonwersja(); });
     }
     if (nazwa === 'FormularzWizard' && !s.done && c.__ofWyslane) c.__ofWyslane = false;   // « od nowa »
     if (nazwa === 'Back office' && dane.__cms) cmsGeste(c);
   }
+
+  /* ------------------------------------------------------------------ */
+  /* Google (Analytics 4, Ads) — RIEN ne se charge sans l'accord du       */
+  /* visiteur. Les identifiants viennent de seo.php (window.__ofGoogle),  */
+  /* réglés dans le back office → Integracje i SEO. Refus = aucun cookie. */
+  /* ------------------------------------------------------------------ */
+  (function google() {
+    var g = window.__ofGoogle || {};
+    if (prive || (!g.ga && !g.ads)) return;
+    var zgoda = (/(?:^|; )olaflora_zgoda=(tak|nie)/.exec(document.cookie) || [])[1];
+    function laduj() {
+      if (window.__ofGtag) return;
+      window.__ofGtag = true;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      if (g.ga) window.gtag('config', g.ga, { anonymize_ip: true });
+      if (g.ads) window.gtag('config', g.ads);
+      var sc = document.createElement('script'); sc.async = true;
+      sc.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(g.ga || g.ads);
+      document.head.appendChild(sc);
+    }
+    window.__ofKonwersja = function () {
+      if (!window.gtag) return;
+      if (g.ga) window.gtag('event', 'generate_lead', { lang: jezyk });
+      if (g.ads && g.adsLabel) window.gtag('event', 'conversion', { send_to: g.ads + '/' + g.adsLabel });
+    };
+    if (zgoda === 'tak') { laduj(); return; }
+    if (zgoda === 'nie') return;
+    var T = { pl: ['Ta strona używa plików cookies Google do mierzenia ruchu i skuteczności reklam.', 'Akceptuję', 'Odrzucam'],
+              en: ['This site uses Google cookies to measure traffic and ad performance.', 'Accept', 'Decline'],
+              de: ['Diese Seite verwendet Google-Cookies, um Besuche und Werbewirkung zu messen.', 'Akzeptieren', 'Ablehnen'] }[jezyk] || [];
+    function pasek() {
+      if (document.getElementById('of-zgoda')) return;
+      var d = document.createElement('div'); d.id = 'of-zgoda'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-live', 'polite');
+      d.setAttribute('style', 'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:560px;margin:0 auto;background:#fbf8f3;color:#2e2924;border:1px solid #d8cdbd;padding:16px 18px;font:400 14px/1.5 "Work Sans",system-ui,sans-serif;display:flex;flex-wrap:wrap;gap:12px;align-items:center;box-shadow:0 8px 28px rgba(46,41,36,.12)');
+      var btn = 'font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding:9px 16px;cursor:pointer;border:1px solid #2e2924;';
+      d.innerHTML = '<span style="flex:1 1 260px">' + T[0] + '</span><button type="button" data-z="nie" style="' + btn + 'background:transparent;color:#2e2924">' + T[2] + '</button><button type="button" data-z="tak" style="' + btn + 'background:#2e2924;color:#f4efe7">' + T[1] + '</button>';
+      d.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('[data-z]'); if (!b) return;
+        var v = b.getAttribute('data-z');
+        document.cookie = 'olaflora_zgoda=' + v + '; path=/; max-age=' + (v === 'tak' ? 31536000 : 15552000) + '; SameSite=Lax';
+        d.remove(); if (v === 'tak') laduj();
+      });
+      document.body.appendChild(d);
+    }
+    if (document.body) pasek(); else document.addEventListener('DOMContentLoaded', pasek);
+  })();
 
   window.__ofKlasa = function (Base, nazwa) {
     return class extends Base {

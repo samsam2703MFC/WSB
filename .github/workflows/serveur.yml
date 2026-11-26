@@ -188,6 +188,16 @@ jobs:
               c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$ch" || true)
               echo "https://<IP>/$BOUTIQUE/$ch → HTTP $c"
             done
+            # Le référencement (seo.php) : titre, description, hreflang et fiche JSON-LD dans la page,
+            # la mapa strony, l'écran « Integracje i SEO » (401 sans mot de passe), le webhook Meta.
+            h=$(curl -s --max-time 20 "https://$IP/$BOUTIQUE/")
+            if echo "$h" | grep -q 'SEO : back office'; then
+              echo "  SEO : $(echo "$h" | grep -o '<title>[^<]*</title>' | head -1 | sed 's/<[^>]*>//g') · description $(echo "$h" | grep -c 'name="description"') · hreflang $(echo "$h" | grep -c 'hreflang=') · JSON-LD $(echo "$h" | grep -c 'application/ld+json') · og:image $(echo "$h" | grep -c 'og:image')"
+              echo "  /$BOUTIQUE/?lang=de → $(curl -s --max-time 20 "https://$IP/$BOUTIQUE/?lang=de" | grep -o '<html[^>]*lang="[a-z]*"' | grep -o 'lang="[a-z]*"' | head -1)"
+            elif [ -n "$h" ]; then echo "  SEO : la page n'a PAS ses balises (seo.php non servi)"; fi
+            for ch in sitemap.xml "_wsb/prive/app/ustawienia.php" "_wsb/app/meta.php"; do
+              echo "  /$BOUTIQUE/$ch → HTTP $(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$ch" || true)"
+            done
             # Une vitrine logée dans le projet (ex. olaflora/sklep) : la page ET ses fiches.
             for d in sklep; do
               c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$d/" || true)

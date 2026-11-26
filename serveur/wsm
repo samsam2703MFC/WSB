@@ -371,6 +371,15 @@ ip_sites_ecrire() {
       # derrière le mot de passe du projet (Basic, la console passe en https).
       for n in $(projets_ip); do
         printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.html\n        SetEnv PROJET_CONFIG %s/%s/config.php\n' "$r" "$n" "$PROJ" "$n"
+        # Le référencement (projets/<nom>/app/seo.php) : l'accueil et les pages publiques passent par
+        # seo.php, qui ajoute titre, description, hreflang, Open Graph et la fiche JSON-LD au <head>.
+        if [ -f "$PROJ/$n/site/_wsb/app/seo.php" ]; then
+          printf '        <IfModule mod_rewrite.c>\n            RewriteEngine On\n            RewriteBase /%s/\n' "$n"
+          printf '            RewriteRule ^sitemap\\.xml$ _wsb/app/sitemap.php [L]\n'
+          printf '            RewriteRule ^(index\\.html)?$ _wsb/app/seo.php?f=home [L,QSA]\n'
+          printf '            RewriteRule ^Ola\\sflora\\s-\\s(wesela\\sv2|oferta\\slive)\\.dc\\.html$ _wsb/app/seo.php?f=$1 [L,QSA]\n'
+          printf '        </IfModule>\n'
+        fi
         printf '        <FilesMatch "^(Back office.*|Poczta|Super admin|Asystent rozmowy|Retroplan|Karta misji)\\.dc\\.html$">\n            AuthType Basic\n            AuthName "%s"\n            AuthUserFile %s/%s/htpasswd\n            Require valid-user\n        </FilesMatch>\n    </Directory>\n' "$n" "$PROJ" "$n"
         printf '    <Directory %s/%s/_wsb/prive>\n        AuthType Basic\n        AuthName "%s"\n        AuthUserFile %s/%s/htpasswd\n        Require valid-user\n    </Directory>\n' "$r" "$n" "$n" "$PROJ" "$n"
       done
