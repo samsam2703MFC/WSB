@@ -674,6 +674,8 @@ console_head('Produkty i zdjęcia', $me, <<<'CSS'
   label.f input { font-weight: 400; }
   label.f small { font-weight: 400; color: var(--text-muted); font-size: 12px; }
   label.f small.err { color: var(--danger); font-weight: 600; }
+  .kamera-pole { display: flex; flex-wrap: wrap; gap: 6px; }
+  .kamera-pole button { font-weight: 600; }
   label.chk { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; cursor: pointer; margin-bottom: 10px; }
   label.chk input { accent-color: var(--brand); }
   button.danger { background: transparent; border-color: color-mix(in srgb, var(--danger) 45%, transparent); color: var(--danger); }
@@ -1211,11 +1213,14 @@ $editB = isset($_GET['marka']) ? wsm_brand($pdo, (int) $_GET['marka']) : null;
   </form>
   <?php endif; ?>
 </div>
+<script src="<?= h(console_asset('kamera.js')) ?>"></script>
 <script>
 // Un lecteur de codes-barres « tape » le code puis Entrée : dans le champ EAN,
-// Entrée ne doit pas enregistrer toute la fiche.
+// Entrée ne doit pas enregistrer toute la fiche. Et le téléphone lit le code
+// à l'appareil photo (kamera.js) : pas besoin de le recopier.
 document.querySelectorAll('input[data-skaner]').forEach(function (i) {
   i.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+  if (window.wsmKameraPole) wsmKameraPole(i);
 });
 </script>
 <?php console_foot();

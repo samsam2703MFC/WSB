@@ -12,8 +12,9 @@
   Header always set X-Frame-Options "SAMEORIGIN"
   # Ne fuite pas l'URL complète vers les sites externes.
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  # Aucune API sensible du navigateur n'est utilisée par ce site.
-  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+  # Aucune API sensible du navigateur, sauf l'appareil photo — pour ce site
+  # seulement (self) : la console lit les codes EAN au téléphone (kamera.js).
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(self), payment=()"
 </IfModule>
 
 # Le back-office et son API ne doivent jamais être mis en cache par un

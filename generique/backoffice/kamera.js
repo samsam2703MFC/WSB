@@ -118,6 +118,7 @@
     });
 
     // 2. La vidéo en direct : seulement en contexte sécurisé (https).
+    if (!o.naZywo || !o.wideo) return;
     if (!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) return;
     o.naZywo.hidden = false;
     var flux = null, lecteurZ = null, dernier = '', quand = 0;
@@ -154,5 +155,31 @@
         }).catch(function () { arrete(); o.blad('Brak dostępu do aparatu — zezwól przeglądarce na użycie aparatu.'); });
       }
     });
+  };
+
+  /**
+   * Un champ « code EAN » de formulaire (fiche produit) : un bouton 📷 à côté
+   * remplit le champ avec le code lu sur la photo — et la vidéo en direct en https.
+   */
+  window.wsmKameraPole = function (champ) {
+    if (!champ || champ.disabled || champ.dataset.kamera) return;
+    champ.dataset.kamera = '1';
+    var boite = document.createElement('span'); boite.className = 'kamera-pole';
+    var zd = document.createElement('button'); zd.type = 'button'; zd.hidden = true; zd.textContent = '📷 Zeskanuj aparatem';
+    var nz = document.createElement('button'); nz.type = 'button'; nz.hidden = true; nz.textContent = '🎥 Skanuj na żywo';
+    var wi = document.createElement('video'); wi.setAttribute('playsinline', ''); wi.muted = true;
+    wi.style.cssText = 'display:none;width:100%;max-height:220px;border-radius:10px;margin-top:6px;background:#000;object-fit:cover';
+    var info = document.createElement('small'); info.className = 'kamera-info';
+    boite.appendChild(zd); boite.appendChild(nz);
+    champ.insertAdjacentElement('afterend', boite);
+    boite.insertAdjacentElement('afterend', wi);
+    wi.insertAdjacentElement('afterend', info);
+    window.wsmKamera({ zdjecie: zd, naZywo: nz, wideo: wi,
+      kod: function (k) {
+        champ.value = k; info.textContent = '✓ Odczytano kod ' + k + ' — zapisz produkt.'; info.style.color = '';
+        champ.dispatchEvent(new Event('input', { bubbles: true })); champ.dispatchEvent(new Event('change', { bubbles: true }));
+        if (wi.style.display !== 'none') nz.click();
+      },
+      blad: function (m) { info.textContent = m; info.style.color = 'var(--danger, #b42318)'; } });
   };
 })();
