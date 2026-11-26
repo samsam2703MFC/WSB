@@ -49,7 +49,8 @@ if ($ekran === 'Back office') {
     $out['__cms'] = ['pub' => (object) $pub, 'szkic' => (object) $szkic, 'stamp' => (object) $stamp,
                      'zdjecia' => (object) of_cms_wszystkie_zdjecia($pdo, 'published'),
                      'zdjeciaSzkic' => (object) of_cms_wszystkie_zdjecia($pdo, 'draft'),
-                     'biblioteka' => of_cms_biblioteka($pdo)];
+                     'biblioteka' => of_cms_biblioteka($pdo),
+                     'slownik' => (function () { $f = is_file(dirname(__DIR__) . '/slownik.php') ? dirname(__DIR__) . '/slownik.php' : dirname(__DIR__, 2) . '/app/slownik.php'; return is_file($f) ? require $f : []; })()];
 }
 
 of_json((object) $out);

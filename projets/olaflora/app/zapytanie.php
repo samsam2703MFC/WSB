@@ -7,6 +7,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { of_json(['error' => 'POST']
 $in = json_decode((string) file_get_contents('php://input'), true);
 if (!is_array($in)) { of_json(['error' => 'json'], 400); exit; }
 $v = is_array($in['vals'] ?? null) ? $in['vals'] : [];
+// Formulaire rempli en anglais ou en allemand : les réponses À CHOIX reviennent en polonais
+// (le dictionnaire relu, à l'envers) — le back office lit toujours les mêmes valeurs. Le texte
+// libre (noms, salle, remarques) reste tel qu'il a été écrit.
+$jezyk = in_array($in['lang'] ?? '', ['en', 'de'], true) ? (string) $in['lang'] : 'pl';
+if ($jezyk !== 'pl') {
+    $odwrotny = array_flip((require __DIR__ . '/slownik.php')[$jezyk] ?? []);
+    $pl = fn($x) => is_string($x) && isset($odwrotny[$x]) ? $odwrotny[$x] : $x;
+    foreach (['goscie', 'stoly', 'prezydialny', 'ceremonia', 'styl', 'budzet'] as $kk) if (isset($v[$kk])) $v[$kk] = $pl($v[$kk]);
+    $in['multi'] = array_map($pl, (array) ($in['multi'] ?? []));
+    $in['palette'] = $pl($in['palette'] ?? '');
+}
 $t = fn(string $k, int $max = 190): string => mb_substr(trim((string) ($v[$k] ?? '')), 0, $max);
 $mail = strtolower($t('mail')); $tel = preg_replace('/[^\d+]/', '', $t('tel', 40)) ?? '';
 if ($mail !== '' && !filter_var($mail, FILTER_VALIDATE_EMAIL)) $mail = '';
@@ -41,10 +52,11 @@ try {
         $cid = (int) $pdo->lastInsertId();
     }
     $no = of_numer($pdo, 'ZAP');
+    $zrodlo = $jezyk !== 'pl' ? 'formularz-' . $jezyk : 'formularz';
     $pdo->prepare("INSERT INTO of_inquiries (tenant_id, brand_id, number, client_id, source, status, received_at, event_date, venue_text, ceremony_text,
                    guests_range, tables_kind, head_table, style, palette_label, accents_json, colors_note, budget_range, extras_json, email, phone, ip, user_agent)
-                   VALUES (?,?,?,?,'formularz','nowe',NOW(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        ->execute([OF_TENANT, $brand, $no, $cid, $iso, $t('sala') ?: null, $t('ceremonia', 60) ?: null, $t('goscie', 30) ?: null, $t('stoly', 30) ?: null,
+                   VALUES (?,?,?,?,?,'nowe',NOW(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        ->execute([OF_TENANT, $brand, $no, $cid, $zrodlo, $iso, $t('sala') ?: null, $t('ceremonia', 60) ?: null, $t('goscie', 30) ?: null, $t('stoly', 30) ?: null,
                    $t('prezydialny', 40) ?: null, $t('styl', 40) ?: null, $pal ?: null, $acc ? json_encode($acc) : null, $t('kolory-txt', 2000) ?: null,
                    $t('budzet', 30) ?: null, $multi ? json_encode($multi, JSON_UNESCAPED_UNICODE) : null, $mail ?: null, $tel ?: null, $ip,
                    mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255)]);

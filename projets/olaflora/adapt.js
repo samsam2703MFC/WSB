@@ -31,9 +31,34 @@
   }
   function json(t) { try { return JSON.parse(t || '{}') || {}; } catch (e) { return {}; } }
 
+  var formularz = ekran === 'FormularzWizard';
+  // La langue de la page publique et du formulaire : ?lang=en|de|pl, puis le choix gardé
+  // (cookie — pas localStorage, que stockage.js envoie au serveur), sinon le polonais.
+  var JEZYKI = ['pl', 'en', 'de'];
+  var jezyk = (function () {
+    var q = (/[?&]lang=(pl|en|de)\b/.exec(location.search) || [])[1];
+    if (q) { try { document.cookie = 'olaflora_lang=' + q + '; path=/; max-age=31536000; SameSite=Lax'; } catch (e) {} }
+    else q = (/(?:^|; )olaflora_lang=(pl|en|de)/.exec(document.cookie) || [])[1];
+    return JEZYKI.indexOf(q) >= 0 ? q : 'pl';
+  })();
+  if (!publiczna && !formularz) jezyk = 'pl';
+
   var dane = prive ? json(pobierz(base + 'prive/app/dane.php?ekran=' + encodeURIComponent(ekran))) : {};
-  var cmsPub = publiczna ? json(pobierz(base + 'app/strona.php')) : null;   // { t: {k: tekst}, z: {k: [src]}, alt: {src: alt} }
+  // { t: {k: tekst PL}, tl: {k: tekst de la langue}, z: {k: [src]}, alt, kat, slownik: {PL: langue} }
+  var cmsPub = (publiczna || formularz) ? json(pobierz(base + 'app/strona.php?lang=' + jezyk)) : null;
+  if (publiczna || formularz) document.documentElement.lang = jezyk;
+  var SL = (cmsPub && cmsPub.slownik) || {};
   window.__of_dane = dane;
+
+  // Un texte polonais dans la langue de la page (dictionnaire relu) ; inconnu = tel quel.
+  function tr(s) {
+    if (jezyk === 'pl' || s == null) return s;
+    var x = String(s);
+    if (hasOwn(SL, x)) return SL[x];
+    var n = x.replace(/\s+/g, ' ').trim();
+    if (n !== x && hasOwn(SL, n)) { var m = /^(\s*)[\s\S]*?(\s*)$/.exec(x); return m[1] + SL[n] + m[2]; }
+    return x;
+  }
 
   function poster(url, corps, ok) {
     var y = new XMLHttpRequest();
@@ -133,7 +158,16 @@
        Une saison n'est visible qu'entre ses dates ET avec un lien ; sans saison visible, pas de bandeau.
        Les cartes sont TOUJOURS glissées (cachées au besoin) : les clés des photos restent les mêmes. */
     var SEZON_ZDJ = ['assets/photos/ola/firmy-recepcja-ostrokrzew.jpg', 'assets/photos/ola/firmy-hortensje-instalacja.jpg'];
-    var MIES = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+    var MIESIACE = { pl: ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'],
+                     en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                     de: ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'] };
+    var MIES = MIESIACE[jezyk] || MIESIACE.pl;
+    // Lien vers la boutique dans la langue de la page (la boutique parle pl / en : de → en).
+    function linkSklep(l) {
+      if (!l || jezyk === 'pl' || /[?&]lang=/.test(l)) return l;
+      var h = l.indexOf('#'), a = h >= 0 ? l.slice(0, h) : l, b = h >= 0 ? l.slice(h) : '';
+      return a + (a.indexOf('?') >= 0 ? '&' : '?') + 'lang=en' + b;
+    }
     function sezony(tekst) {
       return String(tekst || '').split(/\r?\n/).map(function (l) { return l.split('|').map(function (x) { return x.trim(); }); })
         .filter(function (c) { return c[0]; })
@@ -144,7 +178,7 @@
           var a = md(od), b = md(dl), d = new Date(), dz = (d.getMonth() + 1) * 100 + d.getDate();
           var teraz = a === null || b === null ? true : (a <= b ? dz >= a && dz <= b : dz >= a || dz <= b);
           var link = /^(https?:\/\/|\/|[a-z0-9_-]+\/)/i.test(c[3] || '') && !/^javascript:/i.test(c[3]) ? c[3] : '';
-          return { nazwa: c[0], okres: et(od) && et(dl) ? (od[2] === dl[2] ? (+od[1]) + ' – ' + et(dl) : et(od) + ' – ' + et(dl)) : '', teraz: teraz, link: link };
+          return { nazwa: tr(c[0]), okres: et(od) && et(dl) ? (od[2] === dl[2] ? (+od[1]) + ' – ' + et(dl) : et(od) + ' – ' + et(dl)) : '', teraz: teraz, link: linkSklep(link) };
         });
     }
     function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -161,7 +195,7 @@
           '<div style="position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #4a423a;"><img src="' + SEZON_ZDJ[i] + '" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;"></div>' +
           '<div data-of-cms="pomin" style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px;"><span style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 300;">' + esc(z.nazwa) + '</span>' +
           '<span style="font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #c9b99f; white-space: nowrap;">' + esc(z.okres) + '</span></div>' +
-          '<span data-of-cms="pomin" style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 1px solid #c9b99f; align-self: flex-start; padding-bottom: 4px;">w sklepie →</span></a>';
+          '<span data-of-cms="pomin" style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 1px solid #c9b99f; align-self: flex-start; padding-bottom: 4px;">' + esc(tr('w sklepie →')) + '</span></a>';
       });
       var w = document.createElement('section');
       w.setAttribute('style', 'background: #2e2924; color: #ebe3d6;' + (widac ? '' : ' display: none;'));
@@ -174,25 +208,76 @@
       sek.after(w);
       return widac > 0;
     }
+    function wstawJezyki(t) {
+      var nav = t.content.querySelector('header nav');
+      if (!nav) return false;
+      var sp = document.createElement('span');
+      sp.setAttribute('data-of-cms', 'pomin');
+      sp.setAttribute('style', 'flex: 0 0 auto; display: flex; gap: 12px; margin-left: 6px; padding-left: 14px; border-left: 1px solid #d8cdbd;');
+      sp.innerHTML = JEZYKI.map(function (j) {
+        return '<a href="?lang=' + j + '" data-of-lang="' + j + '" hreflang="' + j + '" style="font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; padding: 4px 0; color: #2e2924; border-bottom: 1px solid ' + (j === jezyk ? '#2e2924' : 'transparent') + ';">' + j + '</a>';
+      }).join('');
+      nav.appendChild(sp);
+      return true;
+    }
     var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 20.12 | sklep/#katalog\nWianki | 01.12 | 20.12 | sklep/#katalog';
+
+    // Tout texte et toute étiquette (placeholder, title, alt) d'un gabarit, dans la langue.
+    function tlumaczSzablon(html) {
+      if (jezyk === 'pl') return html;
+      var t = szablon(html), it = document.createTreeWalker(t.content, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT), n;
+      while ((n = it.nextNode())) {
+        if (n.nodeType === 3) {
+          if (wPomijanym(n.parentNode) || n.nodeValue.indexOf('{{') >= 0 || !n.nodeValue.trim()) continue;
+          n.nodeValue = tr(n.nodeValue);
+        } else ['placeholder', 'title', 'alt'].forEach(function (a) {
+          var v = n.getAttribute(a); if (v && v.indexOf('{{') < 0) n.setAttribute(a, tr(v));
+        });
+      }
+      return t.innerHTML;
+    }
+    // Les chaînes du code ('…') dans la langue — jamais un identifiant : ni après « id: »,
+    // « key: », ni dans une comparaison (=== / !==), que le serveur et la logique lisent.
+    function tlumaczJs(js) {
+      if (jezyk === 'pl') return js;
+      return js.replace(/'((?:[^'\\\n]|\\.)*)'/g, function (cale, w, off) {
+        var przed = js.slice(Math.max(0, off - 16), off);
+        if (/\b(id|key)\s*:\s*$/.test(przed) || /[!=]==?\s*$/.test(przed)) return cale;
+        var raw = w.replace(/\\(.)/g, '$1'), x = tr(raw);
+        return x === raw ? cale : "'" + x.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+      });
+    }
 
     function wyciagnij(html) { var out = [], t = szablon(html); wstawSezon(t, SEZON_DOMYSLNY, true); przejdz(t, function (i) { out.push(i); }); return out; }
 
     // Remplace dans le gabarit ce qui a été publié. pub = { t: {k: tekst}, z: {k: [src]}, alt: {src: alt} }
     function zastosuj(html, pub) {
       pub = pub || {};
-      var t = szablon(html), T = pub.t || {}, Z = pub.z || {}, A = pub.alt || {}, zmiana = false;
-      zmiana = wstawSezon(t, hasOwn(T, 'oferta:sezon') ? T['oferta:sezon'] : SEZON_DOMYSLNY, false);
+      var t = szablon(html), T = pub.t || {}, TL = pub.tl || {}, Z = pub.z || {}, A = pub.alt || {}, zmiana = false;
+      var pelny = function (o, k) { return hasOwn(o, k) && String(o[k]).trim() !== ''; };
+      var sez = jezyk !== 'pl' && pelny(TL, 'oferta:sezon') ? TL['oferta:sezon'] : (pelny(T, 'oferta:sezon') ? T['oferta:sezon'] : SEZON_DOMYSLNY);
+      zmiana = wstawSezon(t, sez, false);
+      zmiana = wstawJezyki(t) || zmiana;
       przejdz(t, function (i, n) {
-        if (i.kind === 'tekst' && hasOwn(T, i.k) && String(T[i.k]).trim() !== '') {
-          var m = /^(\s*)[\s\S]*?(\s*)$/.exec(n.nodeValue);
-          n.nodeValue = m[1] + T[i.k] + m[2]; zmiana = true;
-        } else if (i.kind === 'zdjęcie' && hasOwn(Z, i.k) && Z[i.k] && Z[i.k][0]) {
-          var src = Z[i.k][0];
-          n.setAttribute('src', src);
-          if (A[src]) n.setAttribute('alt', A[src]);
-          n.removeAttribute('ref');          // le héros était forcé par le réglage « hero » : la photo publiée l'emporte
-          zmiana = true;
+        if (i.kind === 'tekst') {
+          // PL : le publié, sinon le gabarit. EN / DE : la section de la langue, sinon la traduction
+          // du texte polonais publié, puis du texte d'origine, sinon le polonais.
+          var v = null;
+          if (jezyk === 'pl') { if (pelny(T, i.k)) v = T[i.k]; }
+          else if (pelny(TL, i.k)) v = TL[i.k];
+          else if (pelny(T, i.k) && hasOwn(SL, norm(T[i.k]))) v = SL[norm(T[i.k])];
+          else if (hasOwn(SL, i.def)) v = SL[i.def];
+          else if (pelny(T, i.k)) v = T[i.k];
+          if (v !== null) { var m = /^(\s*)[\s\S]*?(\s*)$/.exec(n.nodeValue); n.nodeValue = m[1] + v + m[2]; zmiana = true; }
+        } else if (i.kind === 'zdjęcie') {
+          if (hasOwn(Z, i.k) && Z[i.k] && Z[i.k][0]) {
+            var src = Z[i.k][0];
+            n.setAttribute('src', src);
+            if (A[src]) n.setAttribute('alt', A[src]);
+            n.removeAttribute('ref');          // le héros était forcé par le réglage « hero » : la photo publiée l'emporte
+            zmiana = true;
+          }
+          if (jezyk !== 'pl' && n.getAttribute('alt')) { n.setAttribute('alt', tr(n.getAttribute('alt'))); zmiana = true; }
         } else if (i.kind === 'link' && hasOwn(T, i.k) && /^(https?:\/\/|mailto:|tel:)\S+$/i.test(String(T[i.k]).trim())) {
           n.setAttribute('href', String(T[i.k]).trim()); zmiana = true;
         }
@@ -235,26 +320,40 @@
       var m = /zdjecie\.php\?id=(\d+)/.exec(src); if (m) return 'wgrane-' + m[1];
       return String(src).split('/').pop().replace(/\.[a-z0-9]+$/i, '');
     }
-    return { SEZON_DOMYSLNY: SEZON_DOMYSLNY, wyciagnij: wyciagnij, zastosuj: zastosuj, pole: pole, wartoscPola: wartoscPola, owin: owin, wycinek: wycinek, nazwaPliku: nazwaPliku, norm: norm };
+    return { tlumaczSzablon: tlumaczSzablon, tlumaczJs: tlumaczJs, SEZON_DOMYSLNY: SEZON_DOMYSLNY, wyciagnij: wyciagnij, zastosuj: zastosuj, pole: pole, wartoscPola: wartoscPola, owin: owin, wycinek: wycinek, nazwaPliku: nazwaPliku, norm: norm };
   })();
   window.__ofCms = ofCms;
   window.__ofPustyZap = { id: '', iso: '', who: '', when: '', venue: '', ceremony: '', guests: '', budget: '', style: '', palette: '',
     tables: '', head: '', extras: '', mail: '', tel: '', ago: '', state: '', day: [] };
 
   // Le runtime relit la page brute (fetch(location.href)) pour son gabarit : on lui rend la même version retouchée.
-  function przechwycFetch(popraw) {
+  // Le runtime relit la page brute (fetch(location.href)) pour son gabarit, et va chercher
+  // chaque composant embarqué (<dc-import name="FormularzWizard">) par fetch : on lui rend
+  // la même version retouchée — gabarit dans la langue, code avec ses gestes enregistrés.
+  function poprawKomponent(t, nazwa) {
+    var w = ofCms.wycinek(t);
+    if (w) t = t.slice(0, w[0]) + ofCms.tlumaczSzablon(t.slice(w[0], w[1])) + t.slice(w[1]);
+    return t.replace(/(<script type="text\/x-dc" data-dc-script[^>]*>)([\s\S]*?)(<\/script>)/, function (c, a, js, z) {
+      js = ofCms.tlumaczJs(js).replace(/class\s+Component\s+extends\s+DCLogic\b/, 'class Component extends window.__ofKlasa(DCLogic, ' + JSON.stringify(nazwa) + ')');
+      return a + js + z;
+    });
+  }
+  function przechwycFetch(popraw, komponenty) {
     var orig = window.fetch;
     if (!orig) return;
     var ici = location.href.split('#')[0];
     window.fetch = function (u, o) {
       var adr = typeof u === 'string' ? u : (u && u.url) || '';
-      var abs = ''; try { abs = new URL(adr, location.href).href.split('#')[0]; } catch (e) {}
-      if (abs !== ici) return orig.apply(this, arguments);
+      var abs = ''; try { abs = new URL(adr, location.href).href.split('#')[0].split('?')[0]; } catch (e) {}
+      var plik = decodeURIComponent(abs.split('/').pop() || '');
+      var nazwa = plik.replace(/\.dc\.html$/, '');
+      var tu = abs === ici.split('?')[0];
+      if (!(tu && popraw) && !(komponenty && komponenty.indexOf(nazwa) >= 0 && /\.dc\.html$/.test(plik))) return orig.apply(this, arguments);
       return orig.apply(this, arguments).then(function (res) {
         if (!res.ok) return res;
         return res.text().then(function (t) {
-          var w = ofCms.wycinek(t);
-          if (w) t = t.slice(0, w[0]) + popraw(t.slice(w[0], w[1])) + t.slice(w[1]);
+          if (tu) { var w = ofCms.wycinek(t); if (w) t = t.slice(0, w[0]) + popraw(t.slice(w[0], w[1])) + t.slice(w[1]); }
+          else t = poprawKomponent(t, nazwa);
           return new Response(t, { status: res.status, statusText: res.statusText, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
         });
       });
@@ -269,27 +368,33 @@
   function srcZ(f) { f = String(f || ''); return f.indexOf('../../') === 0 ? f.slice(6) : 'assets/photos/' + f; }
 
   function listyPubliczne(js, pub) {
-    var T = (pub && pub.t) || {}, Z = (pub && pub.z) || {}, A = (pub && pub.alt) || {}, K = (pub && pub.kat) || {}, o = {};
+    var T = (pub && pub.t) || {}, TL = (pub && pub.tl) || {}, Z = (pub && pub.z) || {}, A = (pub && pub.alt) || {}, K = (pub && pub.kat) || {}, o = {};
     var TABS = ofCms.wartoscPola(js, 'TABS'), CATS = ofCms.wartoscPola(js, 'CATS'), P = ofCms.wartoscPola(js, 'P');
-    if (TABS && T['wspolne:menu']) {
-      var l = linie(T['wspolne:menu']);
-      o.TABS = TABS.map(function (t, i) { return { id: t.id, label: l[i] || t.label }; });
-    }
-    if (CATS && T['portfolio:kategorie']) {
-      var lk = linie(T['portfolio:kategorie']);
-      o.CATS = CATS.map(function (c, i) { return { id: c.id, label: lk[i] || c.label }; });
-    }
-    if (P && (Z['portfolio:galeria'] || T['portfolio:podpisy'])) {
-      var opis = {};
-      linie(T['portfolio:podpisy']).forEach(function (s) {
+    var pelny = function (x, k) { return hasOwn(x, k) && String(x[k]).trim() !== ''; };
+    var obca = jezyk !== 'pl';
+    // Le texte d'une liste : celui de la langue (déjà traduit), sinon le polonais publié (à traduire).
+    var zrodlo = function (k) {
+      if (obca && pelny(TL, k)) return { txt: TL[k], gotowy: true };
+      if (pelny(T, k)) return { txt: T[k], gotowy: !obca };
+      return null;
+    };
+    var etykiety = function (lista, k) {
+      var z = zrodlo(k), l = z ? linie(z.txt) : [];
+      return lista.map(function (x, i) { return { id: x.id, label: l[i] ? (z.gotowy ? l[i] : tr(l[i])) : tr(x.label) }; });
+    };
+    if (TABS && (obca || zrodlo('wspolne:menu'))) o.TABS = etykiety(TABS, 'wspolne:menu');
+    if (CATS && (obca || zrodlo('portfolio:kategorie'))) o.CATS = etykiety(CATS, 'portfolio:kategorie');
+    if (P && (obca || Z['portfolio:galeria'] || zrodlo('portfolio:podpisy'))) {
+      var opis = {}, zp = zrodlo('portfolio:podpisy');
+      if (zp) linie(zp.txt).forEach(function (s) {
         var p = s.split('|').map(function (x) { return x.trim(); });
-        if (p[0]) opis[p[0]] = { a: p[1] || '', c: p[2] || '' };
+        if (p[0]) opis[p[0]] = { a: p[1] ? (zp.gotowy ? p[1] : tr(p[1])) : '', c: p[2] || '' };
       });
       var przezNazwe = {}; P.forEach(function (p) { przezNazwe[ofCms.nazwaPliku(p.src)] = p; });
       var lista = Z['portfolio:galeria'] ? Z['portfolio:galeria'] : P.map(function (p) { return p.src; });
       o.P = lista.map(function (src) {
         var nz = ofCms.nazwaPliku(src), d = przezNazwe[nz] || {}, op = opis[nz] || {};
-        return { src: src, a: op.a || d.a || A[src] || nz.replace(/-/g, ' '), c: op.c || d.c || K[src] || '', sc: d.sc || 1 };
+        return { src: src, a: op.a || tr(d.a || A[src] || nz.replace(/-/g, ' ')), c: op.c || d.c || K[src] || '', sc: d.sc || 1 };
       });
     }
     if (Z['home:pasek']) o.STRIP = Z['home:pasek'].map(function (src) { return ofCms.nazwaPliku(src); });
@@ -359,7 +464,46 @@
         })
       };
     });
-    dane.CMS = [{ id: 'of', label: 'ola flora', dot: 'var(--of-linen-400)', file: STRONA, pages: pages }];
+    dane.CMS = [{ id: 'of', label: 'ola flora · PL', dot: 'var(--of-linen-400)', file: STRONA + '?lang=pl', pages: pages }];
+    // EN et DE : les mêmes textes et listes (photos et adresses sont communes), clé « en:… » / « de:… ».
+    // La version de départ = la traduction du dictionnaire (du texte polonais publié, sinon d'origine).
+    ['en', 'de'].forEach(function (L) {
+      var sl = (C.slownik && C.slownik[L]) || {};
+      var t1 = function (x, zapas) {
+        var n = ofCms.norm(x);
+        if (hasOwn(sl, n)) return sl[n];
+        if (zapas != null && hasOwn(sl, ofCms.norm(zapas))) return sl[ofCms.norm(zapas)];
+        return x;
+      };
+      var trLista = function (i, txt) {
+        return String(txt).split(/\r?\n/).map(function (l) {
+          var p = l.split('|');
+          if (i.k === 'portfolio:podpisy' && p.length > 1) { p[1] = ' ' + t1(p[1].trim()) + ' '; return p.join('|'); }
+          if (i.k === 'oferta:sezon' && p.length > 1) { p[0] = t1(p[0].trim()) + ' '; return p.join('|'); }
+          return t1(l.trim());
+        }).join('\n');
+      };
+      var pagesL = STRONY.map(function (st) {
+        var tytulyL = {};
+        var secs = items.filter(function (i) { return i.page === st[0] && (i.kind === 'tekst' || i.kind === 'lista'); });
+        return {
+          id: st[0], label: st[1], tab: st[0] === 'wspolne' ? 'home' : st[0],
+          sections: secs.map(function (i, n) {
+            var t = tytul(i), b = t, kk = 2;
+            while (tytulyL[t]) t = b + ' (' + (kk++) + ')';
+            tytulyL[t] = 1;
+            var k = L + ':' + i.k, sk = 'of-' + L + ':' + st[0] + ':' + n;
+            var plv = C.pub && hasOwn(C.pub, i.k) ? C.pub[i.k] : i.def;
+            var v = i.kind === 'lista' ? trLista(i, plv) : t1(plv, i.def);
+            cmsIdx[sk] = { k: k, page: i.page, kind: i.kind, title: t + ' · ' + L.toUpperCase(), def: v };
+            if (C.pub && hasOwn(C.pub, k)) { stan.cmsPub[sk] = C.pub[k]; stan.cmsStamp[sk] = C.stamp[k] || ''; }
+            if (C.szkic && hasOwn(C.szkic, k) && C.szkic[k] !== (hasOwn(stan.cmsPub, sk) ? stan.cmsPub[sk] : v)) stan.cmsDraft[sk] = C.szkic[k];
+            return { t: t, kind: i.kind, v: v };
+          })
+        };
+      });
+      dane.CMS.push({ id: 'of-' + L, label: 'ola flora · ' + L.toUpperCase(), dot: 'var(--of-linen-400)', file: STRONA + '?lang=' + L, pages: pagesL });
+    });
     dane.PH_DEF = PH_DEF;
     bo.init = stan;
     bo.bib = C.biblioteka || [];
@@ -491,24 +635,35 @@
   }
 
   // Les gestes à enregistrer, par écran.
-  function geste(c) {
+  function geste(c, nazwa) {
     var s = c.state || {};
-    if (ekran === 'FormularzWizard' && s.done && !c.__ofWyslane) {
+    // Le formulaire : seul (FormularzWizard.dc.html) ou embarqué dans l'onglet « formularz » de la page.
+    if (nazwa === 'FormularzWizard' && s.done && !c.__ofWyslane) {
       c.__ofWyslane = true;
-      poster('app/zapytanie.php', { vals: s.vals || {}, multi: s.multi || [], palette: s.palette || '', accents: s.accents || [] });
+      poster('app/zapytanie.php', { vals: s.vals || {}, multi: s.multi || [], palette: s.palette || '', accents: s.accents || [], lang: jezyk });
     }
-    if (!s.done && c.__ofWyslane && ekran === 'FormularzWizard') c.__ofWyslane = false;   // « od nowa »
-    if (ekran === 'Back office' && dane.__cms) cmsGeste(c);
+    if (nazwa === 'FormularzWizard' && !s.done && c.__ofWyslane) c.__ofWyslane = false;   // « od nowa »
+    if (nazwa === 'Back office' && dane.__cms) cmsGeste(c);
   }
 
-  window.__ofKlasa = function (Base) {
+  window.__ofKlasa = function (Base, nazwa) {
     return class extends Base {
       setState(u, cb) {
         var self = this;
-        return super.setState(u, function () { if (cb) cb(); try { geste(self); } catch (e) { if (window.console) console.error(e); } });
+        return super.setState(u, function () { if (cb) cb(); try { geste(self, nazwa || ekran); } catch (e) { if (window.console) console.error(e); } });
       }
     };
   };
+
+  // Le sélecteur PL · EN · DE : garde l'onglet affiché (#oferta…).
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-of-lang]') : null;
+    if (!a) return;
+    e.preventDefault();
+    var l = a.getAttribute('data-of-lang');
+    try { document.cookie = 'olaflora_lang=' + l + '; path=/; max-age=31536000; SameSite=Lax'; } catch (er) {}
+    location.href = location.pathname + '?lang=' + l + location.hash;
+  });
 
   document.addEventListener('DOMContentLoaded', function () {
     var el = document.querySelector('script[data-dc-script]');
@@ -520,7 +675,12 @@
       var l = listyPubliczne(js, cmsPub);
       Object.keys(l).forEach(function (k) { dane[k] = l[k]; });
       if (dc) { var stary = dc.innerHTML, nowy = ofCms.zastosuj(stary, cmsPub); if (nowy !== stary) dc.innerHTML = nowy; }
-      przechwycFetch(function (tpl) { return ofCms.zastosuj(tpl, cmsPub); });
+      przechwycFetch(function (tpl) { return ofCms.zastosuj(tpl, cmsPub); }, ['FormularzWizard']);
+    }
+    if (formularz) {
+      js = ofCms.tlumaczJs(js);
+      if (dc && jezyk !== 'pl') dc.innerHTML = ofCms.tlumaczSzablon(dc.innerHTML);
+      przechwycFetch(jezyk !== 'pl' ? ofCms.tlumaczSzablon : null, null);
     }
     if (ekran === 'Back office') {
       // Base sans aucune demande : l'écran « zapytania » lisait this.ZAP[0].id et tout le back office tombait.
@@ -531,7 +691,7 @@
       if (dc) dc.innerHTML = poprawBo(dc.innerHTML);
       przechwycFetch(poprawBo);
     }
-    js = js.replace(/class\s+Component\s+extends\s+DCLogic\b/, 'class Component extends window.__ofKlasa(DCLogic)');
+    js = js.replace(/class\s+Component\s+extends\s+DCLogic\b/, 'class Component extends window.__ofKlasa(DCLogic, ' + JSON.stringify(ekran) + ')');
     Object.keys(dane).forEach(function (k) {
       if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)) return;
       js = js.replace(new RegExp('^(\\s{2})' + k + '\\s*=\\s*', 'm'),

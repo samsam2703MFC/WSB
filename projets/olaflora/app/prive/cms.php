@@ -32,7 +32,10 @@ if ($akcja === 'wgraj') {
 $k = (string) ($in['k'] ?? '');
 $slug = (string) ($in['strona'] ?? '');
 $rodzaj = (string) ($in['rodzaj'] ?? '');
-if (!preg_match('~^[a-z]+:[a-z0-9.]{1,32}$~', $k) || strpos($k, $slug . ':') !== 0 || !isset(OF_CMS_STRONY[$slug]) || !in_array($rodzaj, OF_CMS_RODZAJE, true)) {
+// « home:t1a2… » (PL) ou « en:home:t1a2… » / « de:… » : la même section dans une autre langue (textes et listes seulement).
+$kBez = preg_replace('~^(en|de):~', '', $k);
+if (!preg_match('~^(?:(?:en|de):)?[a-z]+:[a-z0-9.]{1,32}$~', $k) || strpos($kBez, $slug . ':') !== 0 || !isset(OF_CMS_STRONY[$slug])
+    || !in_array($rodzaj, OF_CMS_RODZAJE, true) || ($kBez !== $k && of_cms_foto($rodzaj))) {
     of_json(['error' => 'sekcja'], 422); exit;
 }
 $dom = $in['domyslna'] ?? '';

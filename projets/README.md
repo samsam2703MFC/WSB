@@ -58,3 +58,22 @@ ordre, légendes, catégories, noms des filtres) et le bandeau de la page d'accu
   cartes s'éditent comme le reste de la page. D'office : Dekoracje świąteczne
   01.11–20.12 et Wianki 01.12–20.12, vers `sklep/#katalog` (la boutique
   `olaflora-sklep`, servie à /olaflora/sklep/).
+
+## Ola flora — la page publique en PL · EN · DE
+
+- Sélecteur « PL · EN · DE » dans le menu (`?lang=en`, gardé dans le cookie
+  `olaflora_lang` — pas dans localStorage, que `stockage.js` envoie au serveur).
+- `app/slownik.php` : le dictionnaire PL → EN / DE, écrit à la main (291 textes :
+  page, légendes et `alt` des photos, menu, filtres, bandeau, formulaire). Clé = le
+  texte polonais d'origine.
+- CMS : trois sites dans « strony » (`ola flora · PL / EN / DE`). EN et DE éditent les
+  textes et les listes (photos et adresses sont communes) sous la clé `en:…` / `de:…`
+  de `of_page_sections`. Ordre à l'affichage : la section de la langue, sinon la
+  traduction du texte polonais publié, puis du texte d'origine, sinon le polonais.
+- Le formulaire (seul ou embarqué dans l'onglet « formularz ») est traduit au
+  chargement (gabarit + chaînes du code, jamais un identifiant) ; ses réponses à choix
+  reviennent en polonais au serveur, la langue est notée dans `of_inquiries.source`
+  (`formularz-en`, `formularz-de`). Le formulaire embarqué enregistre désormais ses
+  demandes (avant : seulement `FormularzWizard.dc.html` ouvert seul).
+- Le bandeau « sezonowo » renvoie la version anglaise vers `sklep/?lang=en` (la
+  boutique parle pl / en).

@@ -88,6 +88,31 @@
    "info.darmowa": "Odbiór w pracowni bez opłat",
    "checkout.note": "Termin odbioru lub dostawy, rozmiar, wstążka, bilecik — napiszcie tutaj",
    "checkout.phone_hint": "Na ten numer potwierdzimy termin odbioru lub dostawy."
+  },
+  "en": {
+   "brand": "Ola flora",
+   "meta.title": "Ola flora — shop: Christmas decorations and wreaths",
+   "meta.desc": "Advent wreaths, centrepieces, garlands and wreaths handmade in the Ola flora studio. Pickup at the studio or delivery.",
+   "catalog.title": "Christmas decorations and wreaths",
+   "catalog.sub": "Handmade to order — ready in 3 days. Pickup at the studio or delivery.",
+   "promise.title": "From the studio, not a warehouse.",
+   "promise.sub": "I make every decoration for you, from whatever the season brings.",
+   "promise.1.t": "Handmade",
+   "promise.1.d": "Every wreath and centrepiece is made in the studio — no two are alike.",
+   "promise.2.t": "Seasonal greenery",
+   "promise.2.d": "Fir, eucalyptus, holly and dried flowers that last through the holidays.",
+   "promise.3.t": "Pickup or delivery",
+   "promise.3.d": "Free pickup at the studio or local delivery, at an agreed time.",
+   "home.title": "Christmas in flowers",
+   "checkout.note": "Pickup or delivery date, size, ribbon, gift card — write it here",
+   "checkout.phone_hint": "We'll confirm the pickup or delivery date on this number.",
+   "info.darmowa": "Free pickup at the studio",
+   "footer.tagline": "Floral studio — floristry inspired by nature",
+   "footer.rights": "All rights reserved. Photos: Ola flora.",
+   "story.pro.eyebrow": "Flowers for businesses",
+   "story.pro.title": "We green interiors and create floral styling for corporate events.",
+   "story.pro.text": "Receptions, regular arrangements, events — write to me and I will prepare a proposal.",
+   "story.pro.cta": "Write to Ola flora"
   }
  },
  "slajdy": [
@@ -100,6 +125,12 @@
      "title": "Święta w kwiatach",
      "tekst": "Wieńce, stroiki i dekoracje świąteczne robione ręcznie w pracowni — z jodły, suszonych kwiatów i tego, co akurat daje sezon. Każda sztuka jest trochę inna.",
      "cta_label": "Zobacz dekoracje"
+    },
+    "en": {
+     "eyebrow": "seasonal shop",
+     "title": "Christmas in flowers",
+     "tekst": "Wreaths, centrepieces and Christmas decorations handmade in the studio — from fir, dried flowers and whatever the season brings. Every piece is a little different.",
+     "cta_label": "See the decorations"
     }
    }
   }
@@ -120,6 +151,11 @@
      "name": "Wieniec adwentowy z suszonych hortensji",
      "subtitle": "Ø 40 cm · 4 świece",
      "desc": "Okrągły wieniec na jodłowej bazie z suszonymi hortensjami, eukaliptusem i lnianą wstążką. Cztery świece w komplecie. Wytrzyma cały adwent, a hortensje — dłużej. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Advent wreath with dried hydrangeas",
+     "subtitle": "Ø 40 cm · 4 candles",
+     "desc": "A round wreath on a fir base with dried hydrangeas, eucalyptus and a linen ribbon. Four candles included. It lasts all through Advent — and the hydrangeas even longer. Write the size, ribbon colour and pickup date in the order notes."
     }
    },
    "waga_g": 1500
@@ -139,6 +175,11 @@
      "name": "Stroik na stół, jodła i świece",
      "subtitle": "ok. 60 cm · 3 świece",
      "desc": "Długi stroik na stół wigilijny: jodła, szyszki, suszone kwiaty i bursztynowe szkło. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Table centrepiece, fir and candles",
+     "subtitle": "approx. 60 cm · 3 candles",
+     "desc": "A long centrepiece for the Christmas Eve table: fir, cones, dried flowers and amber glass. Write the size, ribbon colour and pickup date in the order notes."
     }
    },
    "waga_g": 1200
@@ -158,6 +199,11 @@
      "name": "Bukiet świąteczny z ostrokrzewem",
      "subtitle": "ostrokrzew · jodła · wstążki",
      "desc": "Bukiet z ostrokrzewu, gałązek jodły i eukaliptusa, z czerwonymi wstążkami. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Christmas bouquet with holly",
+     "subtitle": "holly · fir · ribbons",
+     "desc": "A bouquet of holly, fir and eucalyptus branches with red ribbons. Write the size, ribbon colour and pickup date in the order notes."
     }
    },
    "waga_g": 900,
@@ -178,6 +224,11 @@
      "name": "Girlanda na kominek, 150 cm",
      "subtitle": "150 cm · żywe gałązki",
      "desc": "Girlanda z jodły, bluszczu i suszonych kwiatów — na kominek, schody lub stół. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Mantelpiece garland, 150 cm",
+     "subtitle": "150 cm · fresh greenery",
+     "desc": "A garland of fir, ivy and dried flowers — for a mantelpiece, staircase or table. Write the size, ribbon colour and pickup date in the order notes."
     }
    },
    "waga_g": 2000
@@ -197,6 +248,11 @@
      "name": "Dekoracja świąteczna na recepcję",
      "subtitle": "dla firm · z montażem",
      "desc": "Kompozycja świąteczna dla recepcji, witryny lub biura, z dowozem i montażem na miejscu. Cena od — wycenę potwierdzimy po rozmowie. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Christmas decoration for a reception",
+     "subtitle": "for businesses · with installation",
+     "desc": "A Christmas arrangement for a reception, shop window or office, delivered and installed on site. Price from — we confirm the quote after a conversation. Write the size, ribbon colour and pickup date in the order notes."
     }
    }
   },
@@ -215,6 +271,11 @@
      "name": "Wianek na drzwi, eukaliptus i jodła",
      "subtitle": "Ø 35 cm",
      "desc": "Wianek na drzwi z eukaliptusa i jodły, z lnianą wstążką do zawieszenia. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Door wreath, eucalyptus and fir",
+     "subtitle": "Ø 35 cm",
+     "desc": "A door wreath of eucalyptus and fir, with a linen ribbon for hanging. Write the size, ribbon colour and pickup date in the order notes."
     }
    },
    "waga_g": 900
@@ -234,6 +295,11 @@
      "name": "Wianek z gipsówki i róż",
      "subtitle": "Ø 40 cm",
      "desc": "Jasny wianek z suszonej gipsówki i róż — na drzwi, ścianę lub jako dekoracja stołu. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Gypsophila and rose wreath",
+     "subtitle": "Ø 40 cm",
+     "desc": "A light wreath of dried gypsophila and roses — for a door, a wall or as a table decoration. Write the size, ribbon colour and pickup date in the order notes."
     }
    },
    "waga_g": 800
@@ -253,6 +319,11 @@
      "name": "Wianek mini na prezent",
      "subtitle": "Ø 20 cm",
      "desc": "Mały wianek z suszonych kwiatów, zapakowany na prezent. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    },
+    "en": {
+     "name": "Mini gift wreath",
+     "subtitle": "Ø 20 cm",
+     "desc": "A small wreath of dried flowers, gift-wrapped. Write the size, ribbon colour and pickup date in the order notes."
     }
    },
    "waga_g": 300
