@@ -188,6 +188,14 @@ jobs:
               c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$ch" || true)
               echo "https://<IP>/$BOUTIQUE/$ch → HTTP $c"
             done
+            # Une vitrine logée dans le projet (ex. olaflora/sklep) : la page ET ses fiches.
+            for d in sklep; do
+              c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$d/" || true)
+              [ "$c" = 404 ] && continue
+              n=$(curl -s --max-time 20 "https://$IP/$BOUTIQUE/$d/" | grep -c 'class="card' || true)
+              k=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$d/koszyk" || true)
+              echo "https://<IP>/$BOUTIQUE/$d/ → HTTP $c, $n fiches produit ; /$d/koszyk → HTTP $k"
+            done
           fi
           if [ "$A" = push ]; then
             for site in sandbox:shop admin:siege; do
