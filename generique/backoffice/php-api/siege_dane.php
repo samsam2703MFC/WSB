@@ -46,7 +46,6 @@ function wsb_sklepy_serwera(): array {
         $out[$slug] = [
             'slug' => $slug, 'domena' => (string) ($m['DOMAINE'] ?? ''), 'alias' => (string) ($m['ALIAS'] ?? ''),
             'webshop' => (string) ($m['WEBSHOP'] ?? ''), 'od' => (string) ($m['CREEE'] ?? ''),
-            'port' => (int) ($m['PORT_IP'] ?? 0),
             'wersja' => $wersja, 'commit' => $commit, 'config' => dirname($conf) . '/config.php',
         ];
     }
@@ -56,13 +55,13 @@ function wsb_sklepy_serwera(): array {
 
 /**
  * L'adresse d'une boutique, vue d'où l'on est : ouvert par l'IP du serveur, le
- * superadmin envoie sur http://<IP>:<port de la boutique> (pas de nom à
- * résoudre ni de certificat) ; sinon sur https://<son domaine>.
+ * superadmin envoie sur http://<IP>/<boutique>/… (pas de nom à résoudre ni de
+ * certificat — client : « sans sslip.io ») ; sinon sur https://<son domaine>.
  */
 function wsb_adres_sklepu(array $s, string $sciezka): string {
     $host = (string) preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? ''));
-    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && (int) ($s['port'] ?? 0) > 0) {
-        return 'http://' . $host . ':' . (int) $s['port'] . $sciezka;
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        return 'http://' . $host . '/' . rawurlencode((string) $s['slug']) . $sciezka;
     }
     return ($s['domena'] ?? '') !== '' ? 'https://' . $s['domena'] . $sciezka : '';
 }

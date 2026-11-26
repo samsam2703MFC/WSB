@@ -205,11 +205,23 @@ function wsm_is_https(): bool {
     return ((int) ($_SERVER['SERVER_PORT'] ?? 0)) === 443;
 }
 
+/**
+ * L'empreinte de CETTE boutique. Plusieurs boutiques partagent le même serveur
+ * (et, servies par l'adresse IP — http://<IP>/szoko/, /mycobot/… — le même
+ * hôte : leurs cookies se mêlent). Sans elle, une connexion à la console d'une
+ * boutique ouvrait celle d'à côté (même numéro d'utilisateur, autre base).
+ */
+function wsm_instance(): string {
+    $f = (string) (getenv('WSM_CONFIG_FILE') ?: ($_SERVER['WSM_CONFIG_FILE'] ?? ''));
+    return $f === '' ? '' : substr(hash('sha256', $f), 0, 10);
+}
+
 function wsm_session_start(): void {
     if (session_status() === PHP_SESSION_ACTIVE) return;
     if (PHP_SAPI === 'cli') return;                 // migrate.php / tests hors HTTP
     ini_set('session.use_strict_mode', '1');        // refuse un identifiant de session non émis par nous
-    session_name(WSM_SESSION_NAME);
+    $inst = wsm_instance();
+    session_name($inst === '' ? WSM_SESSION_NAME : WSM_SESSION_NAME . '_' . $inst);
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
@@ -218,6 +230,9 @@ function wsm_session_start(): void {
         'samesite' => 'Lax',
     ]);
     session_start();
+    // Une session ouverte pour une AUTRE boutique ne vaut rien ici.
+    if ($inst !== '' && isset($_SESSION['uid']) && ($_SESSION['wsm_inst'] ?? '') !== $inst) $_SESSION = [];
+    if ($inst !== '') $_SESSION['wsm_inst'] = $inst;
 }
 
 function wsm_logout(): void {

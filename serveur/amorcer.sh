@@ -144,9 +144,9 @@ case "$ACTION" in
       fi
     fi
     "$W" deployer sandbox siege
-    # Chaque boutique sur son port de l'adresse IP (http://<IP>:8101/…) :
-    # sans nom provisoire, rien que le réseau mobile puisse intercepter.
-    "$W" ports
+    # Chaque boutique sous l'adresse IP (http://<IP>/<boutique>/shop/) : sans
+    # nom provisoire, rien que le réseau mobile puisse intercepter.
+    "$W" ip
     # La console de la sandbox aussi par l'adresse IP du serveur (client : « je veux
     # voir <IP>/backoffice ») : /backoffice et /shop seulement, la racine de l'IP
     # reste à ce qui la sert déjà.

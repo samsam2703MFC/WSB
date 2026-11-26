@@ -15,7 +15,7 @@
 #    wsm sante <boutique>                    la boutique et sa console répondent-elles ?
 #    wsm sauvegarde <boutique> | --toutes    copie de la base dans sauvegardes/ (14 gardées)
 #    wsm importer-base <boutique> <dump.sql[.gz]>   remplace la base (après sauvegarde)
-#    wsm ports                               chaque boutique sur son port de l'IP (http://<IP>:8101/…)
+#    wsm ip                                  le site de l'IP : http://<IP>/<boutique>/shop/ · /backoffice/ · /admin
 #    wsm demenager <boutique> <archive.tgz>         base + photos + données + clés d'une ancienne boutique
 #    wsm https <boutique>                    certificat Let's Encrypt (le DNS doit pointer ici)
 #    wsm apache <boutique>                   réécrit son site Apache depuis le modèle
@@ -253,44 +253,97 @@ PHP
 # la vitrine de cette boutique (/backoffice, /shop) et, s'il existe, le
 # superadmin BuddyCorp sous /admin. En http (pas de certificat pour une IP) :
 # ServerName sans « https:// », pour que les redirections d'Apache y restent.
-# Le port de la boutique sur l'adresse IP du serveur (http://<IP>:<port>/) : sans
-# nom de domaine, donc sans DNS ni certificat — le chemin qui marche partout,
-# même sur un réseau mobile qui intercepte les noms provisoires. Attribué une
-# fois (8101, 8102…) et gardé dans boutique.conf. Le siège n'en a pas : il est
-# sous /admin sur le port 80.
-PORT_PREMIER=8101; PORT_DERNIER=8199
-port_ip() {
-  local b="$1" p; p=$(meta "$b" PORT_IP)
-  if [ -z "$p" ]; then
-    p=$PORT_PREMIER
-    while grep -qx "PORT_IP=$p" "$BOUT"/*/boutique.conf 2>/dev/null; do p=$((p + 1)); done
-    [ "$p" -le "$PORT_DERNIER" ] || mourir "plus de port libre entre $PORT_PREMIER et $PORT_DERNIER"
-    echo "PORT_IP=$p" >> "$BOUT/$b/boutique.conf"
-  fi
-  echo "$p"
-}
+# L'adresse IP du serveur, sans nom de domaine (rien à résoudre ni certificat :
+# aucun réseau mobile ne peut l'intercepter) :
+#   http://<IP>/<boutique>/shop/        la vitrine     /<boutique>/backoffice/  la console
+#   http://<IP>/admin                   le superadmin  /shop/ · /backoffice/   la boutique de l'IP (sandbox)
+# Une racine faite de liens (ip-racine/<boutique> → boutiques/<boutique>/current) :
+# le code se sait servi sous un sous-dossier (wsm_shop_base_url), comme sur
+# l'ancien serveur (/mrszoko/). Chaque dossier reçoit la configuration de SA boutique.
+IP_RACINE_NOM=ip-racine
 
-# Un site Apache par port (Listen + VirtualHost), boutique par boutique.
-ports_ecrire() {
-  dk_on || return 0
-  local d b p f
-  rm -f "$RACINE"/apache/wsm-port-*.conf
+# Les boutiques servies par l'IP (le siège à part : il est sous /admin).
+boutiques_ip() {
+  local d b
   for d in "$BOUT"/*/; do
     [ -f "$d/boutique.conf" ] || continue
     b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
-    p=$(port_ip "$b"); f="$RACINE/apache/wsm-port-$b.conf"
-    { echo "Listen $p"
-      sed -e "s#<VirtualHost \*:80>#<VirtualHost *:$p>#" -e "s#__DOMAINE__#wsm-port-$b#g" -e "s#__ALIAS__##g" \
-          -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#port-$b#g" -e "s#__ACCUEIL__#/shop/#g" -e "s#__RESTRICTION__##g" \
-          "$DEPOT/serveur/apache-boutique.conf"; } > "$f"
+    case "$b" in admin|shop|backoffice|landing) continue;; esac   # noms réservés de l'IP
+    echo "$b"
   done
 }
 
-# wsm ports : ouvre (ou rouvre) chaque boutique sur son port de l'adresse IP.
-cmd_ports() {
+ip_sites_ecrire() {
+  dk_on || return 0
+  local d b ip alias f r="$RACINE/$IP_RACINE_NOM" defaut=""
+  IPS_SERVEUR=""
+  rm -f "$RACINE"/apache/wsm-ip-*.conf "$RACINE"/apache/wsm-port-*.conf
+  # La boutique de l'IP (/shop, /backoffice à la racine) : celle qui porte l'IP en alias.
+  for d in "$BOUT"/*/; do
+    [ -f "$d/boutique.conf" ] || continue
+    b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
+    alias=$(meta "$b" ALIAS)
+    for ip in ${alias//,/ }; do
+      [[ "$ip" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || continue
+      [ -n "$defaut" ] || defaut="$b"
+      IPS_SERVEUR+="${IPS_SERVEUR:+ }$ip"
+    done
+  done
+  [ -n "$defaut" ] || return 0
+  # La racine de liens, réécrite à chaque fois (un lien par boutique).
+  mkdir -p "$r"; find "$r" -mindepth 1 -maxdepth 1 -type l -delete
+  for b in $(boutiques_ip); do ln -sfn "$BOUT/$b/current" "$r/$b"; done
+  ln -sfn "$BOUT/$defaut/current/shop" "$r/shop"; ln -sfn "$BOUT/$defaut/current/backoffice" "$r/backoffice"
+  [ -f "$BOUT/siege/config.php" ] && ln -sfn "$BOUT/siege/current/siege" "$r/admin"
+
+  # Un bloc par dossier : la configuration, le journal et les photos de SA boutique.
+  bloc() { # <dossier sous la racine> <boutique>
+    printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride All\n        Require all granted\n' "$r" "$1"
+    printf '        SetEnv WSM_CONFIG_FILE %s/%s/config.php\n        SetEnv WSM_DATA_DIR    %s/%s/data\n        SetEnv WSM_MEDIA_DIR   %s/%s/media\n    </Directory>\n' "$BOUT" "$2" "$BOUT" "$2" "$BOUT" "$2"
+  }
+  media() { # <préfixe d'URL> <boutique>
+    printf '    Alias %s/shop/media/ %s/%s/media/\n' "$1" "$BOUT" "$2"
+  }
+  for ip in $IPS_SERVEUR; do
+    f="$RACINE/apache/wsm-ip-${ip//./-}.conf"
+    [ -f "$f" ] && continue
+    {
+      echo "# Écrit par wsm (ip_sites_ecrire) — ne pas éditer."
+      echo "<VirtualHost *:80>"
+      echo "    ServerName $ip"
+      echo "    DocumentRoot $r"
+      echo "    <Directory $r>"
+      echo "        Options -Indexes +FollowSymLinks"
+      echo "        AllowOverride None"
+      echo "        Require all granted"
+      echo "    </Directory>"
+      # Les photos d'abord (un Alias plus précis passe avant).
+      for b in $(boutiques_ip); do media "/$b" "$b"; done
+      media "" "$defaut"
+      for b in $(boutiques_ip); do bloc "$b" "$b"; done
+      bloc shop "$defaut"; bloc backoffice "$defaut"
+      for b in $(boutiques_ip $defaut); do
+        printf '    <Directory %s/%s/media>\n        Options -Indexes\n        AllowOverride None\n        Require all granted\n        php_admin_flag engine off\n        <FilesMatch "\\.(php|phtml|php[0-9]|phps|cgi|pl|py|sh|htaccess)$">\n            Require all denied\n        </FilesMatch>\n    </Directory>\n' "$BOUT" "$b"
+      done
+      if [ -f "$BOUT/siege/config.php" ]; then
+        printf '    <Directory %s/admin>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.php\n' "$r"
+        printf '        SetEnv WSM_CONFIG_FILE %s/siege/config.php\n        SetEnv WSM_DATA_DIR    %s/siege/data\n        SetEnv WSM_MEDIA_DIR   %s/siege/media\n    </Directory>\n' "$BOUT" "$BOUT" "$BOUT"
+      fi
+      # « /szoko » et « /szoko/ » mènent à sa vitrine ; la racine de l'IP reste à ce qui la sert déjà.
+      local liste; liste=$(boutiques_ip | paste -sd'|')
+      [ -n "$liste" ] && echo "    RedirectMatch 302 ^/($liste)/?\$ /\$1/shop/"
+      echo "    ErrorLog \${APACHE_LOG_DIR}/wsm-ip-error.log"
+      echo "    CustomLog \${APACHE_LOG_DIR}/wsm-ip-access.log combined"
+      echo "</VirtualHost>"
+    } > "$f"
+  done
+}
+
+# wsm ip : réécrit le site de l'adresse IP (une boutique créée y apparaît).
+cmd_ip() {
   racine_seulement
   dk_on || mourir "réservé au mode Docker"
-  ports_ecrire
+  ip_sites_ecrire
   local avant; avant=$(sha256sum "$DK/compose.yml" 2>/dev/null | cut -c1-16)
   compose_ecrire
   if [ "$(sha256sum "$DK/compose.yml" | cut -c1-16)" != "$avant" ]; then
@@ -298,52 +351,7 @@ cmd_ports() {
     attendre_web
   fi
   recharger_apache
-  # Le pare-feu de la machine (Docker passe en général devant, mais on ne compte pas dessus).
-  command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q '^Status: active' && \
-    ufw allow "$PORT_PREMIER:$PORT_DERNIER/tcp" >/dev/null 2>&1 || true
-  local d b
-  for d in "$BOUT"/*/; do
-    [ -f "$d/boutique.conf" ] || continue
-    b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
-    dire "$b : port $(meta "$b" PORT_IP)"
-  done
-}
-
-ip_sites_ecrire() {
-  dk_on || return 0
-  ports_ecrire
-  local d b ip alias f
-  rm -f "$RACINE"/apache/wsm-ip-*.conf
-  for d in "$BOUT"/*/; do
-    [ -f "$d/boutique.conf" ] || continue
-    b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
-    alias=$(meta "$b" ALIAS)
-    for ip in ${alias//,/ }; do
-      [[ "$ip" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || continue
-      f="$RACINE/apache/wsm-ip-${ip//./-}.conf"
-      [ -f "$f" ] && continue                      # une IP = une seule boutique (la première)
-      sed -e "s#__DOMAINE__#$ip#g" -e "s#__ALIAS__##g" -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#ip-$b#g" \
-          -e "s#__ACCUEIL__#/backoffice/#g" -e "s#__RESTRICTION__##g" \
-          "$DEPOT/serveur/apache-boutique.conf" > "$f"
-      if [ -f "$BOUT/siege/config.php" ]; then
-        # /admin = le superadmin BuddyCorp, avec SA configuration (elle l'emporte
-        # sur celle de la boutique dans ce dossier).
-        local bloc
-        bloc="    Alias /admin $BOUT/siege/current/siege
-    <Directory $BOUT/siege/current/siege>
-        Options -Indexes +FollowSymLinks
-        AllowOverride None
-        Require all granted
-        DirectoryIndex index.php
-        SetEnv WSM_CONFIG_FILE $BOUT/siege/config.php
-        SetEnv WSM_DATA_DIR    $BOUT/siege/data
-        SetEnv WSM_MEDIA_DIR   $BOUT/siege/media
-    </Directory>"
-        BLOC="$bloc" php -r '$f = $argv[1]; $t = file_get_contents($f);
-          $t = preg_replace("#</VirtualHost>\s*$#", getenv("BLOC") . "\n</VirtualHost>\n", $t, 1); file_put_contents($f, $t);' "$f"
-      fi
-    done
-  done
+  local b; for b in $(boutiques_ip); do dire "http://<IP>/$b/shop/ · /$b/backoffice/"; done
 }
 
 cmd_apache() {
@@ -649,7 +657,9 @@ compose_ecrire() {
     if [ -n "$ips" ]; then
       ri=""
       for ip in $ips; do ri+="${ri:+ || }Host(\`$ip\`)"; done
-      ri="($ri) && (PathPrefix(\`/backoffice\`) || PathPrefix(\`/shop\`) || PathPrefix(\`/admin\`))"
+      local pp="PathPrefix(\`/backoffice\`) || PathPrefix(\`/shop\`) || PathPrefix(\`/admin\`)" bb
+      for bb in $(boutiques_ip); do pp+=" || PathPrefix(\`/$bb\`)"; done
+      ri="($ri) && ($pp)"
       L+=("traefik.http.routers.wsb-$b-ip.rule=$ri" "traefik.http.routers.wsb-$b-ip.entrypoints=$EP_HTTP"
           "traefik.http.routers.wsb-$b-ip.priority=100" "traefik.http.routers.wsb-$b-ip.service=wsb"
           "traefik.http.routers.wsb-$b-ip.middlewares=wsb-ip-slash"
@@ -667,7 +677,8 @@ compose_ecrire() {
   # /backoffice → /backoffice/ en http (Apache le ferait vers https:// : certificat refusé
   # pour une IP). « $$ » : compose lit un « $ » seul comme une variable.
   if [ "$IP_SLASH" = 1 ]; then
-    L+=('traefik.http.middlewares.wsb-ip-slash.redirectregex.regex=^http://([^/]+)/(backoffice|shop|admin)$$'
+    local alt="backoffice|shop|admin" bb; for bb in $(boutiques_ip); do alt+="|$bb"; done
+    L+=("traefik.http.middlewares.wsb-ip-slash.redirectregex.regex=^http://([^/]+)/($alt)\$\$"
         'traefik.http.middlewares.wsb-ip-slash.redirectregex.replacement=http://$${1}/$${2}/')
   fi
   {
@@ -692,15 +703,8 @@ services:
     volumes:
       - $RACINE:$RACINE
     networks: [interne, traefik]
+    labels:
 YML
-    local pts="" d2 b2 p2
-    for d2 in "$BOUT"/*/; do
-      [ -f "$d2/boutique.conf" ] || continue
-      b2=$(basename "$d2"); [ "$(type_de "$b2")" = siege ] && continue
-      p2=$(meta "$b2" PORT_IP); [ -n "$p2" ] && pts+="      - \"$p2:$p2\"\n"
-    done
-    [ -n "$pts" ] && printf '    ports:\n%b' "$pts"
-    echo "    labels:"
     local l; for l in "${L[@]}"; do printf '      - "%s"\n' "$l"; done
     cat <<YML
 networks:
@@ -820,7 +824,7 @@ case "$cmd" in
   sante) cmd_sante "${1:?usage : wsm sante <boutique>}";;
   sauvegarde) cmd_sauvegarde "${1:?usage : wsm sauvegarde <boutique>|--toutes}";;
   importer-base) cmd_importer_base "${1:?usage : wsm importer-base <boutique> <dump>}" "${2:?usage : wsm importer-base <boutique> <dump>}";;
-  ports) cmd_ports;;
+  ip) cmd_ip;;
   demenager) cmd_demenager "${1:?usage : wsm demenager <boutique> <archive.tgz>}" "${2:?usage : wsm demenager <boutique> <archive.tgz>}";;
   https) cmd_https "${1:?usage : wsm https <boutique>}";;
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
