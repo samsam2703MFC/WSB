@@ -1,0 +1,39 @@
+*{box-sizing:border-box}body{margin:0;font-family:var(--font-sans);color:var(--text-body);background:var(--bg-page)}
+a{color:inherit;text-decoration:none}
+.hd{display:flex;align-items:center;gap:28px;padding:14px 48px;border-bottom:1px solid var(--paper-200);background:var(--bg-page);position:sticky;top:0;z-index:3}
+.hd img{height:30px}.hd b{font:700 18px var(--font-display);color:var(--text-strong)}.hd nav{display:flex;gap:22px;font-size:15px;margin-left:24px}.hd .sp{flex:1}
+.hd .cart{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--text-strong)}
+.cats{display:flex;gap:8px;padding:14px 48px;border-bottom:1px solid var(--paper-200);background:var(--bg-page);position:sticky;top:59px;z-index:2;overflow-x:auto}
+.cats a{padding:7px 14px;border-radius:999px;border:1px solid var(--paper-300);font-size:14px;white-space:nowrap}
+.cats a.on{background:var(--brand-800);border-color:var(--brand-800);color:#fff}
+.cats a i{font-style:normal;color:var(--ink-500);margin-left:5px}.cats a.on i{color:var(--brand-200)}
+.sec{padding:36px 48px 8px;max-width:1340px;margin:0 auto}
+.sec h2{font:800 30px/1.15 var(--font-display);color:var(--text-strong);margin:0 0 4px;letter-spacing:-.01em}
+.sec p.lead{margin:0 0 24px;color:var(--ink-500)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:28px 22px}
+.pc .im{aspect-ratio:4/5;border-radius:10px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:14px}
+.pc .im span{font:600 12px var(--font-sans);color:#fff;background:rgba(0,0,0,.28);padding:3px 8px;border-radius:4px}
+.pc .add{position:absolute;right:12px;bottom:12px;width:42px;height:42px;border-radius:50%;background:var(--white);display:grid;place-items:center;font:600 22px/1 var(--font-sans);color:var(--brand-800);box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.pc h3{font:700 17px/1.25 var(--font-display);color:var(--text-strong);margin:12px 0 2px}
+.pc .meta{font-size:14px;color:var(--ink-500)}
+.pc .pr{display:flex;align-items:baseline;gap:8px;margin-top:6px}.pc .pr b{font:700 17px var(--font-sans);color:var(--text-strong)}.pc .pr small{font-size:13px;color:var(--ink-500)}
+.pc .low{font-size:13px;color:var(--accent-600);margin-top:2px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:48px auto 0;max-width:1244px;border-top:1px solid var(--paper-300);border-bottom:1px solid var(--paper-300)}
+.facts div{padding:20px 24px;border-left:1px solid var(--paper-300)}.facts div:first-child{border-left:0}
+.facts b{display:block;font:700 17px var(--font-display);color:var(--text-strong)}.facts span{font-size:14px;color:var(--ink-500)}
+.cap{font-size:12px;color:var(--ink-500);padding:24px 48px}
+/* mobile product */
+.mp{max-width:390px;margin:0 auto;padding-bottom:96px}
+.mp .im{aspect-ratio:1/1;background:linear-gradient(150deg,#7A4E36,#241009)}
+.mp .bd{padding:18px 18px}
+.mp .crumb{font-size:13px;color:var(--ink-500)}
+.mp h1{font:800 26px/1.15 var(--font-display);color:var(--text-strong);margin:6px 0 4px}
+.mp .meta{color:var(--ink-500);font-size:14px}
+.mp .pr{font:700 24px var(--font-sans);color:var(--text-strong);margin:14px 0 2px}.mp .pr small{font:400 14px var(--font-sans);color:var(--ink-500)}
+.mp .packs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.mp .packs a{border:1px solid var(--paper-300);border-radius:8px;padding:9px 10px;font-size:14px}.mp .packs a b{display:block;color:var(--text-strong)}
+.mp .packs a.on{border:2px solid var(--brand-800);padding:8px 9px}
+.mp dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:14px;margin:18px 0;border-top:1px solid var(--paper-200);padding-top:14px}.mp dt{color:var(--ink-500)}.mp dd{margin:0;color:var(--text-strong)}
+.buy{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:390px;display:flex;gap:10px;align-items:center;padding:12px 16px 18px;background:var(--bg-page);border-top:1px solid var(--paper-300)}
+.buy .q{display:flex;border:1px solid var(--paper-300);border-radius:999px;align-items:center}.buy .q span{width:34px;text-align:center;font-weight:600}
+.buy .go{flex:1;background:var(--brand-800);color:#fff;border-radius:999px;padding:13px 16px;font-weight:700;display:flex;justify-content:space-between}
