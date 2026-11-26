@@ -1,0 +1,38 @@
+*{box-sizing:border-box} body{margin:0;background:#f4efe7;color:#2e2924;font-family:var(--font-body);font-weight:300;font-size:16px;line-height:1.7}
+a{color:inherit;text-decoration:none}
+.w{max-width:1240px;margin:0 auto;padding:0 28px}
+.pasek{background:#2e2924;color:#ebe3d6;font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-align:center;padding:9px 16px}
+header{border-bottom:1px solid #d8cdbd;background:#f4efe7}
+header .w{display:flex;align-items:center;gap:28px;padding-top:18px;padding-bottom:18px}
+header img{height:30px;opacity:.86;display:block}
+header nav{margin-left:auto;display:flex;gap:clamp(14px,2.4vw,34px);align-items:center}
+header nav a{font-size:12px;letter-spacing:.18em;text-transform:uppercase;padding:4px 0;border-bottom:1px solid transparent;white-space:nowrap}
+header nav a.on{border-bottom-color:#2e2924}
+.kosz{display:inline-flex;align-items:center;gap:8px;border:1px solid #2e2924;padding:7px 14px;font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+.kosz b{font-weight:400;background:#2e2924;color:#f4efe7;min-width:20px;height:20px;display:inline-grid;place-items:center;font-size:11px;letter-spacing:0}
+.nad{font-family:var(--font-display);font-style:italic;font-size:1.5rem;color:#8a7d6c}
+h1,h2,h3{font-family:var(--font-display);font-weight:300;margin:0;line-height:1.08}
+.okres{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#465802}
+.siatka{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:40px 24px}
+.karta .fot{position:relative;aspect-ratio:4/5;overflow:hidden;background:#ebe3d6}
+.karta .fot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.karta .tag{position:absolute;left:12px;top:12px;background:#f4efe7;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px}
+.karta h3{font-size:1.35rem;font-weight:400;margin-top:14px}
+.karta .cena{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;color:#4a423a;font-size:15px}
+.karta .cena span:last-child{font-size:12px;letter-spacing:.14em;text-transform:uppercase;border-bottom:1px solid #2e2924;color:#2e2924}
+.filtry{display:flex;gap:28px;border-bottom:1px solid #d8cdbd;margin:40px 0 36px}
+.filtry a{font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding:0 0 12px;border-bottom:1px solid transparent;margin-bottom:-1px;color:#6a6157}
+.filtry a.on{border-bottom-color:#2e2924;color:#2e2924}
+.filtry small{color:#8a7d6c;margin-left:6px;letter-spacing:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;background:#2e2924;color:#f4efe7;border:1px solid #2e2924;padding:15px 26px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-family:var(--font-body)}
+.btn.jasny{background:transparent;color:#2e2924}
+footer{border-top:1px solid #d8cdbd;margin-top:96px}
+footer .w{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;padding-top:36px;padding-bottom:48px;font-size:14px;color:#6a6157}
+.linia{border-top:1px solid #d8cdbd}
+.opcje{display:flex;gap:8px;flex-wrap:wrap}
+.opcje span{border:1px solid #c9b99f;padding:9px 16px;font-size:14px}
+.opcje span.on{border-color:#2e2924;background:#2e2924;color:#f4efe7}
+.etykieta{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6a6157;display:block;margin-bottom:10px}
+.pole{border:1px solid #c9b99f;background:#fbf8f3;padding:12px 14px;font-size:15px;width:100%;display:flex;justify-content:space-between}
+@media (max-width:760px){header nav a.zw{display:none} .filtry{gap:18px;overflow-x:auto} .w{padding:0 20px} .siatka{grid-template-columns:1fr 1fr;gap:28px 14px} .karta h3{font-size:1.05rem} .karta .cena{flex-direction:column}}
+@media (max-width:900px){.dwa{grid-template-columns:1fr!important}.dwa>div,.dwa>aside{position:static!important}}
