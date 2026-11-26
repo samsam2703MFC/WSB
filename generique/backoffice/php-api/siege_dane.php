@@ -46,6 +46,7 @@ function wsb_sklepy_serwera(): array {
         $out[$slug] = [
             'slug' => $slug, 'domena' => (string) ($m['DOMAINE'] ?? ''), 'alias' => (string) ($m['ALIAS'] ?? ''),
             'webshop' => (string) ($m['WEBSHOP'] ?? ''), 'od' => (string) ($m['CREEE'] ?? ''),
+            'chemin' => (string) (($m['CHEMIN_IP'] ?? '') ?: $slug),
             'wersja' => $wersja, 'commit' => $commit, 'config' => dirname($conf) . '/config.php',
         ];
     }
@@ -61,7 +62,7 @@ function wsb_sklepy_serwera(): array {
 function wsb_adres_sklepu(array $s, string $sciezka): string {
     $host = (string) preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? ''));
     if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-        return 'http://' . $host . '/' . rawurlencode((string) $s['slug']) . $sciezka;
+        return 'http://' . $host . '/' . rawurlencode((string) ($s['chemin'] ?? $s['slug'])) . $sciezka;
     }
     return ($s['domena'] ?? '') !== '' ? 'https://' . $s['domena'] . $sciezka : '';
 }

@@ -15,6 +15,7 @@
 #    wsm sante <boutique>                    la boutique et sa console répondent-elles ?
 #    wsm sauvegarde <boutique> | --toutes    copie de la base dans sauvegardes/ (14 gardées)
 #    wsm importer-base <boutique> <dump.sql[.gz]>   remplace la base (après sauvegarde)
+#    wsm chemin <boutique> <nom>             son dossier sur l'IP : http://<IP>/<nom>/
 #    wsm ip                                  le site de l'IP : http://<IP>/<boutique>/shop/ · /backoffice/ · /admin
 #    wsm demenager <boutique> <archive.tgz>         base + photos + données + clés d'une ancienne boutique
 #    wsm https <boutique>                    certificat Let's Encrypt (le DNS doit pointer ici)
@@ -262,13 +263,17 @@ PHP
 # l'ancien serveur (/mrszoko/). Chaque dossier reçoit la configuration de SA boutique.
 IP_RACINE_NOM=ip-racine
 
+# Le dossier d'une boutique sur l'IP : CHEMIN_IP de boutique.conf (wsm chemin),
+# sinon son identifiant. Ex. szoko → /mrszoko, mycobot → /coboty.
+chemin_ip() { local c; c=$(meta "$1" CHEMIN_IP); echo "${c:-$1}"; }
+
 # Les boutiques servies par l'IP (le siège à part : il est sous /admin).
 boutiques_ip() {
   local d b
   for d in "$BOUT"/*/; do
     [ -f "$d/boutique.conf" ] || continue
     b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
-    case "$b" in admin|shop|backoffice|landing) continue;; esac   # noms réservés de l'IP
+    case "$(chemin_ip "$b")" in admin|shop|backoffice|landing) continue;; esac   # noms réservés de l'IP
     echo "$b"
   done
 }
@@ -292,7 +297,7 @@ ip_sites_ecrire() {
   [ -n "$defaut" ] || return 0
   # La racine de liens, réécrite à chaque fois (un lien par boutique).
   mkdir -p "$r"; find "$r" -mindepth 1 -maxdepth 1 -type l -delete
-  for b in $(boutiques_ip); do ln -sfn "$BOUT/$b/current" "$r/$b"; done
+  for b in $(boutiques_ip); do ln -sfn "$BOUT/$b/current" "$r/$(chemin_ip "$b")"; done
   ln -sfn "$BOUT/$defaut/current/shop" "$r/shop"; ln -sfn "$BOUT/$defaut/current/backoffice" "$r/backoffice"
   [ -f "$BOUT/siege/config.php" ] && ln -sfn "$BOUT/siege/current/siege" "$r/admin"
 
@@ -318,9 +323,9 @@ ip_sites_ecrire() {
       echo "        Require all granted"
       echo "    </Directory>"
       # Les photos d'abord (un Alias plus précis passe avant).
-      for b in $(boutiques_ip); do media "/$b" "$b"; done
+      for b in $(boutiques_ip); do media "/$(chemin_ip "$b")" "$b"; done
       media "" "$defaut"
-      for b in $(boutiques_ip); do bloc "$b" "$b"; done
+      for b in $(boutiques_ip); do bloc "$(chemin_ip "$b")" "$b"; done
       bloc shop "$defaut"; bloc backoffice "$defaut"
       for b in $(boutiques_ip $defaut); do
         printf '    <Directory %s/%s/media>\n        Options -Indexes\n        AllowOverride None\n        Require all granted\n        php_admin_flag engine off\n        <FilesMatch "\\.(php|phtml|php[0-9]|phps|cgi|pl|py|sh|htaccess)$">\n            Require all denied\n        </FilesMatch>\n    </Directory>\n' "$BOUT" "$b"
@@ -330,13 +335,29 @@ ip_sites_ecrire() {
         printf '        SetEnv WSM_CONFIG_FILE %s/siege/config.php\n        SetEnv WSM_DATA_DIR    %s/siege/data\n        SetEnv WSM_MEDIA_DIR   %s/siege/media\n    </Directory>\n' "$BOUT" "$BOUT" "$BOUT"
       fi
       # « /szoko » et « /szoko/ » mènent à sa vitrine ; la racine de l'IP reste à ce qui la sert déjà.
-      local liste; liste=$(boutiques_ip | paste -sd'|')
+      local liste; liste=$(for b in $(boutiques_ip); do chemin_ip "$b"; done | paste -sd'|')
       [ -n "$liste" ] && echo "    RedirectMatch 302 ^/($liste)/?\$ /\$1/shop/"
       echo "    ErrorLog \${APACHE_LOG_DIR}/wsm-ip-error.log"
       echo "    CustomLog \${APACHE_LOG_DIR}/wsm-ip-access.log combined"
       echo "</VirtualHost>"
     } > "$f"
   done
+}
+
+# wsm chemin <boutique> <nom> : son dossier sur l'IP (http://<IP>/<nom>/).
+cmd_chemin() {
+  racine_seulement
+  local b="${1:-}" n="${2:-}"; existe "$b"
+  [[ "$n" =~ ^[a-z0-9][a-z0-9-]{1,39}$ ]] || mourir "nom de dossier invalide : $n"
+  case "$n" in admin|shop|backoffice|landing) mourir "« $n » est réservé";; esac
+  local d o
+  for d in "$BOUT"/*/; do
+    o=$(basename "$d"); [ "$o" = "$b" ] && continue
+    [ "$(chemin_ip "$o")" = "$n" ] && mourir "« $n » est déjà le dossier de $o"
+  done
+  if grep -q '^CHEMIN_IP=' "$BOUT/$b/boutique.conf"; then sed -i "s/^CHEMIN_IP=.*/CHEMIN_IP=$n/" "$BOUT/$b/boutique.conf"
+  else echo "CHEMIN_IP=$n" >> "$BOUT/$b/boutique.conf"; fi
+  dire "$b : dossier /$n sur l'IP"
 }
 
 # wsm ip : réécrit le site de l'adresse IP (une boutique créée y apparaît).
@@ -351,7 +372,7 @@ cmd_ip() {
     attendre_web
   fi
   recharger_apache
-  local b; for b in $(boutiques_ip); do dire "http://<IP>/$b/shop/ · /$b/backoffice/"; done
+  local b; for b in $(boutiques_ip); do dire "$b : http://<IP>/$(chemin_ip "$b")/shop/ · /$(chemin_ip "$b")/backoffice/"; done
 }
 
 cmd_apache() {
@@ -658,7 +679,7 @@ compose_ecrire() {
       ri=""
       for ip in $ips; do ri+="${ri:+ || }Host(\`$ip\`)"; done
       local pp="PathPrefix(\`/backoffice\`) || PathPrefix(\`/shop\`) || PathPrefix(\`/admin\`)" bb
-      for bb in $(boutiques_ip); do pp+=" || PathPrefix(\`/$bb\`)"; done
+      for bb in $(boutiques_ip); do pp+=" || PathPrefix(\`/$(chemin_ip "$bb")\`)"; done
       ri="($ri) && ($pp)"
       L+=("traefik.http.routers.wsb-$b-ip.rule=$ri" "traefik.http.routers.wsb-$b-ip.entrypoints=$EP_HTTP"
           "traefik.http.routers.wsb-$b-ip.priority=100" "traefik.http.routers.wsb-$b-ip.service=wsb"
@@ -677,7 +698,7 @@ compose_ecrire() {
   # /backoffice → /backoffice/ en http (Apache le ferait vers https:// : certificat refusé
   # pour une IP). « $$ » : compose lit un « $ » seul comme une variable.
   if [ "$IP_SLASH" = 1 ]; then
-    local alt="backoffice|shop|admin" bb; for bb in $(boutiques_ip); do alt+="|$bb"; done
+    local alt="backoffice|shop|admin" bb; for bb in $(boutiques_ip); do alt+="|$(chemin_ip "$bb")"; done
     L+=("traefik.http.middlewares.wsb-ip-slash.redirectregex.regex=^http://([^/]+)/($alt)\$\$"
         'traefik.http.middlewares.wsb-ip-slash.redirectregex.replacement=http://$${1}/$${2}/')
   fi
@@ -825,6 +846,7 @@ case "$cmd" in
   sauvegarde) cmd_sauvegarde "${1:?usage : wsm sauvegarde <boutique>|--toutes}";;
   importer-base) cmd_importer_base "${1:?usage : wsm importer-base <boutique> <dump>}" "${2:?usage : wsm importer-base <boutique> <dump>}";;
   ip) cmd_ip;;
+  chemin) cmd_chemin "${1:-}" "${2:-}";;
   demenager) cmd_demenager "${1:?usage : wsm demenager <boutique> <archive.tgz>}" "${2:?usage : wsm demenager <boutique> <archive.tgz>}";;
   https) cmd_https "${1:?usage : wsm https <boutique>}";;
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;

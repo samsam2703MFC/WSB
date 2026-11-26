@@ -146,6 +146,14 @@ case "$ACTION" in
     "$W" deployer sandbox siege
     # Chaque boutique sous l'adresse IP (http://<IP>/<boutique>/shop/) : sans
     # nom provisoire, rien que le réseau mobile puisse intercepter.
+    # Le dossier de chaque boutique sur l'IP (serveur/chemins-ip.conf : boutique=nom).
+    if [ -f "$ICI/chemins-ip.conf" ]; then
+      while IFS='=' read -r cb cn; do
+        case "$cb" in ''|\#*) continue;; esac
+        [ -d "/srv/webshops/boutiques/$cb" ] || continue
+        [ "$(sed -n 's/^CHEMIN_IP=//p' "/srv/webshops/boutiques/$cb/boutique.conf")" = "$cn" ] || "$W" chemin "$cb" "$cn"
+      done < "$ICI/chemins-ip.conf"
+    fi
     "$W" ip
     # La console de la sandbox aussi par l'adresse IP du serveur (client : « je veux
     # voir <IP>/backoffice ») : /backoffice et /shop seulement, la racine de l'IP
