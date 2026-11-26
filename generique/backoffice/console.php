@@ -522,6 +522,7 @@ function console_crumbs(array $crumbs): void {
 }
 
 function console_head(string $title, array $me, string $extraCss = '', string $badge = ''): void {
+    $GLOBALS['wk_me'] = $me;                    // pour la barre du téléphone, posée par console_foot()
     $file = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
     ?><!DOCTYPE html>
 <html lang="pl">
@@ -535,6 +536,7 @@ function console_head(string $title, array $me, string $extraCss = '', string $b
 <link rel="stylesheet" href="_ds/mister-szoko/brand.css">
 <link rel="stylesheet" href="<?= h(console_ds_colors_href()) ?>">
 <link rel="stylesheet" href="<?= h(console_asset('console.css')) ?>">
+<link rel="stylesheet" href="<?= h(console_asset('warsztat.css')) ?>">
 <?php if ($extraCss !== ''): ?><style><?= $extraCss ?></style><?php endif; ?>
 </head>
 <body>
@@ -605,9 +607,35 @@ function console_head(string $title, array $me, string $extraCss = '', string $b
 <?php
 }
 
+/**
+ * La barre d'onglets du téléphone (Warsztat) : les quatre écrans qu'on ouvre
+ * debout, en magasin — et « Więcej », qui ouvre le tiroir complet. Un écran
+ * fermé au profil n'y figure pas : on ne montre pas une porte fermée.
+ */
+function console_tabbar(?array $me): string {
+    $file = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    $ic = [
+        'pulpit.php'     => '<path d="M4 11l8-7 8 7v9H4z"/>',
+        'zamowienia.php' => '<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',
+        'skaner.php'     => '<path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M8 8v8M11 8v8M14 8v8M17 8v8"/>',
+        'produkty.php'   => '<path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8"/>',
+    ];
+    $nom = ['pulpit.php' => 'Pulpit', 'zamowienia.php' => 'Zamówienia', 'skaner.php' => 'Skaner', 'produkty.php' => 'Produkty'];
+    $out = '';
+    foreach ($ic as $f => $path) {
+        if (!console_ouvre($me, $f)) continue;
+        $cls = trim(($f === 'skaner.php' ? 'wk-scan ' : '') . ($f === $file ? 'on' : ''));
+        $out .= '<a href="' . $f . '"' . ($cls !== '' ? ' class="' . $cls . '"' : '') . ($f === $file ? ' aria-current="page"' : '')
+              . '><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true">' . $path . '</svg></span>' . $nom[$f] . '</a>';
+    }
+    $out .= '<label for="wsm-menu"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></span>Więcej</label>';
+    return '<nav class="wk-tabbar" aria-label="Skróty">' . $out . '</nav>';
+}
+
 function console_foot(): void {
     ?>    </main>
   </div>
+  <?= console_tabbar(is_array($GLOBALS['wk_me'] ?? null) ? $GLOBALS['wk_me'] : null) ?>
 </div>
 </body>
 </html>

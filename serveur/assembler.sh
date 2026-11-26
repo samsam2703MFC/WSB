@@ -38,7 +38,8 @@ cp "$G/shop/media/.htaccess" "$SITE/shop/media/.htaccess"
 
 # -- La console : tout le PHP du dossier (jamais une liste à la main : sept
 #    écrans y ont déjà été oubliés), ses feuilles et son logo d'origine.
-cp "$G/backoffice/"*.php "$G/backoffice/console.css" "$SITE/backoffice/"
+cp "$G/backoffice/"*.php "$G/backoffice/console.css" "$G/backoffice/warsztat.css" "$SITE/backoffice/"
+cp -r "$G/backoffice/fonts" "$SITE/backoffice/"           # Archivo, la police de la console (warsztat.css)
 cp -r "$G/backoffice/_ds" "$SITE/backoffice/"
 # Scripts de la console (kamera.js : lecture des codes à l'appareil photo) et
 # bibliothèques tierces (_vendor/ : ZXing, licence MIT).

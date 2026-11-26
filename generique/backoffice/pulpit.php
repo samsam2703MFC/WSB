@@ -65,85 +65,149 @@ $bledy = $bledyWidac ? wsm_journal_lire(15) : ['wpisy' => [], 'razem' => 0, 'tyd
 $statusLabel = ['nowe' => 'Nowe', 'oplacone' => 'Opłacone', 'w_realizacji' => 'W realizacji',
                 'wyslane' => 'Wysłane', 'dostarczone' => 'Dostarczone', 'anulowane' => 'Anulowane'];
 
+// ─── LE PASSAGE DES COMMANDES, AUJOURD'HUI ──────────────────────────────────
+//
+// Huit tuiles de même poids ne disaient pas ce qui presse. Une seule bande
+// suit le chemin d'une commande — payer, préparer, expédier — avec, en rouge,
+// ce qui a dépassé l'échéance. Chaque étape ouvre la file de Zamówienia qui
+// porte EXACTEMENT le même ensemble (mêmes statuts, même seuil d'échéance) :
+// un chiffre qui annonce 7 et ouvre 5 lignes fait chercher les deux autres.
+require_once $API . '/invoice.php';
+$compte = function (array $sts) use ($pdo): int {
+    return (int) $pdo->query("SELECT COUNT(*) FROM wsm_orders WHERE status IN ('" . implode("','", $sts) . "')")->fetchColumn();
+};
+$seuilTermin = date('Y-m-d H:i:s', wsm_db_now($pdo) - wsm_ship_delai_h() * 3600);
+$stT = $pdo->prepare("SELECT COUNT(*) FROM wsm_orders WHERE status IN ('nowe','oplacone','w_realizacji') AND "
+    . wsm_sql_avec_date($pdo, 'paid_at') . ' AND paid_at < ? AND ' . wsm_sql_sans_date($pdo, 'shipped_at'));
+$stT->execute([$seuilTermin]);
+$przeplyw = [
+    ['nowe',     'Czeka na płatność', $compte(['nowe']),                   'przygotowanie', 'wait'],
+    ['oplacone', 'Do spakowania',     $compte(['oplacone']),               'przygotowanie', ''],
+    ['wysylka',  'Do wysłania',       $compte(['w_realizacji']),           'wysylka',       ''],
+    ['wyslane',  'Wysłane',           $compte(['wyslane', 'dostarczone']), 'wyslane',       'mute'],
+    ['termin',   'Po terminie',       (int) $stT->fetchColumn(),           'termin',        'hot'],
+];
+$zamLink = console_ouvre($me, 'zamowienia.php');
+$kolor = ['nowe' => '#C99A45', 'oplacone' => 'var(--success)', 'wysylka' => 'var(--info)', 'wyslane' => 'var(--wk-rule)'];
+$sumaBar = array_sum(array_map(fn($k) => $k[2], array_slice($przeplyw, 0, 4)));
+$jours = ['niedziela','poniedziałek','wtorek','środa','czwartek','piątek','sobota'];
+$mois  = ['','stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
+$teraz = wsm_db_now($pdo);
+$dzis  = $jours[(int) date('w', $teraz)] . ' ' . (int) date('j', $teraz) . ' ' . $mois[(int) date('n', $teraz)];
+
+// ─── CE QUI ATTEND QUELQU'UN, DU PLUS PRESSANT AU MOINS PRESSANT ────────────
+// Une seule liste au lieu de quatre panneaux : le retard, puis ce qu'un client
+// attend, puis ce qui gêne la vente, puis ce qu'il est bon de savoir.
+$zadania = [];
+$poTerm = $przeplyw[4][2];
+if ($poTerm > 0) $zadania[] = ['alert', $poTerm, 'Wyślij zaległe paczki', 'Obiecane klientom — termin minął', 'zamowienia.php?kolejka=termin', 'Pokaż', true];
+if ($toConfirm > 0) $zadania[] = ['info', $toConfirm, 'Potwierdź zamówienia ponad stan', 'Klient czeka na wiadomość z terminem', 'zamowienia.php?kolejka=przygotowanie', 'Przejrzyj', false];
+if ((int) $mail['failed'] > 0) $zadania[] = ['alert', (int) $mail['failed'], 'Wiadomości, które nie wyszły', 'Klient ich nie dostał — sprawdź pocztę', 'poczta.php', 'Poczta', false];
+if ($noPhoto > 0) $zadania[] = ['wait', $noPhoto, 'Dodaj zdjęcia produktów', 'Klient widzi teraz tylko kolorowy kafelek', 'produkty.php', 'Dodaj', false];
+if ($lowStock) $zadania[] = ['wait', count($lowStock), 'Produkty na wyczerpaniu', implode(', ', array_map(fn($p) => $p['nom'] . ' (' . (int) $p['stock'] . ')', array_slice($lowStock, 0, 3))), 'magazyn.php', 'Magazyn', false];
+foreach ($alertes as $a) $zadania[] = ['mute', '', (string) $a['nom'], $a['texte'] . ' ' . $a['geste'], (string) $a['href'], 'Klient', false];
+
 console_head('Pulpit', $me, <<<'CSS'
-  .lead { font-size: 14px; line-height: 1.6; color: var(--text-muted); max-width: 80ch; margin: 0 0 20px; }
-  .kpi.hot b { color: var(--danger); }
-  .quick { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
   .bledy td.co { font-family: var(--font-mono, monospace); font-size: 12.5px; line-height: 1.5; word-break: break-word; }
   .bledy td.kiedy { white-space: nowrap; font-size: 13px; }
   .bledy-ok { font-size: 13px; color: var(--text-muted); margin-top: 18px; }
-  .quick a {
-    display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px;
-    border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600;
-    background: var(--surface-card); border: 1px solid var(--border-subtle); color: var(--text-strong);
-  }
 CSS);
 ?>
 
-<?php if ($alertes): ?>
-<div class="panel">
-  <h2>Klienci — co czeka na człowieka <span class="code"><?= count($alertes) ?></span></h2>
-  <p class="lead" style="margin-bottom:12px">
-    Nikt nie zauważa nieobecności — zauważa się tylko obecność. Dlatego stały klient,
-    który przestał kupować, znika po cichu, a jest droższy od nowego.
-  </p>
-  <table class="rwd">
-    <thead><tr><th>Klient</th><th>Co się dzieje</th><th>Co zrobić</th></tr></thead>
-    <tbody>
-    <?php foreach ($alertes as $a): ?>
-      <tr>
-        <?php // Le lien ne s'affiche que si l'écran s'ouvre : sinon on
-              // envoie contre une porte fermée quelqu'un qui lisait juste
-              // son tableau de bord. ?>
-        <td data-l="Klient"><?= console_lien($me, (string) $a['href'], $a['nom']) ?: '<b>' . h($a['nom']) . '</b>' ?></td>
-        <td data-l="Co się dzieje"><?= h($a['texte']) ?></td>
-        <td data-l="Co zrobić" style="color:var(--text-muted)"><?= h($a['geste']) ?></td>
-      </tr>
-    <?php endforeach; ?>
-    </tbody>
-  </table>
-  <?php $lienAnalyse = console_lien($me, 'klienci.php?widok=analiza', 'Cała analiza klientów →', 'code');
-        if ($lienAnalyse !== ''): ?>
-  <p style="margin-top:10px"><?= $lienAnalyse ?></p>
-  <?php endif; ?>
-</div>
-<?php endif; ?>
-
 <?php
-// L'ASSISTANT DE DÉMARRAGE, résumé : tant que la boutique n'est pas prête,
-// le tableau de bord dit où on en est et quelle est la prochaine étape.
-// Rien quand tout est fait — un bandeau qui reste après l'ouverture n'est
-// plus lu par personne.
 require_once $API . '/start.php';
 $startAv = wsm_start_avancement($pdo);
 $startLien = $startAv['nastepny'] !== null
-    ? console_lien($me, 'start.php#' . $startAv['nastepny'], wsm_start_etapy()[$startAv['nastepny']]['tytul'] . ' →')
+    ? console_lien($me, 'start.php#' . $startAv['nastepny'], wsm_start_etapy()[$startAv['nastepny']]['tytul'])
     : '';
 if ($startLien !== ''): ?>
-<p class="warnbox">
-  Start sklepu: <b><?= (int) $startAv['fait'] ?> z <?= (int) $startAv['razem'] ?></b> kroków gotowe.
-  Następny: <?= $startLien ?>
-</p>
+<p class="wk-note"><b>Start sklepu: <?= (int) $startAv['fait'] ?> z <?= (int) $startAv['razem'] ?></b>
+  <span>Następny krok: <?= $startLien ?></span></p>
 <?php endif; ?>
 
 <?php if ($missing): ?>
-<p class="warnbox">
-  Sklep działa, ale te integracje czekają na dane:
-  <b><?= h(implode(' · ', $missing)) ?></b>.
-  <?php $lienUst = console_lien($me, 'ustawienia.php', 'Integracjach'); ?>
-  <?= $lienUst !== '' ? 'Uzupełnij je w ' . $lienUst . ' — pola są wypełnione „xxxx”.'
-                      : 'Uzupełnia je administrator w Ustawieniach — pola są wypełnione „xxxx”.' ?>
-</p>
+<p class="wk-note"><b><?= count($missing) === 1 ? 'Integracja czeka' : count($missing) . ' integracje czekają' ?> na dane</b>
+  <span><?= h(implode(' · ', $missing)) ?> — pola są wypełnione „xxxx”.</span>
+  <?php $lienUst = console_lien($me, 'ustawienia.php', 'Uzupełnij'); ?>
+  <?= $lienUst !== '' ? $lienUst : '<span>Uzupełnia je administrator.</span>' ?></p>
 <?php endif; ?>
+
+<section class="wk-flow">
+  <div class="wk-flow-h">
+    <h2>Dziś, <?= h($dzis) ?></h2>
+    <span class="muted"><?= (int) $kpis['orders'] ?> zamówień w sklepie</span>
+    <div class="wk-sum">
+      <div><b><?= h(pln((int) $kpis['revenue_gross'])) ?></b>obrót brutto</div>
+      <div><b><?= h(pln((int) $kpis['basket_avg'])) ?></b>średni koszyk</div>
+      <div><b><?= $visible ?></b>produktów w sklepie</div>
+    </div>
+  </div>
+  <?php if ($sumaBar > 0): ?>
+  <div class="wk-bar" aria-hidden="true">
+    <?php foreach (array_slice($przeplyw, 0, 4) as [$k, , $n]): if ($n <= 0) continue; ?>
+    <i style="flex:<?= $n ?>;background:<?= $kolor[$k] ?>"></i>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+  <div class="wk-steps">
+    <?php foreach ($przeplyw as [$k, $nazwa, $n, $kol, $ton]):
+      $cls = 'wk-step' . ($ton === 'hot' && $n > 0 ? ' hot' : '') . ($ton === 'wait' && $n > 0 ? ' wait' : '') . ($n === 0 ? ' zero' : '');
+      $tag = $zamLink ? 'a href="zamowienia.php?kolejka=' . h($kol) . '"' : 'div'; ?>
+    <<?= $tag ?> class="<?= $cls ?>"><b><?= $n ?></b><span><?= h($nazwa) ?></span></<?= $zamLink ? 'a' : 'div' ?>>
+    <?php endforeach; ?>
+  </div>
+</section>
+
+<div class="wk-cols">
+  <section class="panel wk-panel">
+    <header><h2>Do zrobienia teraz</h2><span class="muted small">od najpilniejszego</span></header>
+    <?php if (!$zadania): ?>
+    <p class="wk-pusto">Nic nie czeka. Nowe zamówienia i sprawy klientów pojawią się tutaj.</p>
+    <?php else: ?>
+    <ul class="wk-todo">
+      <?php foreach ($zadania as [$ton, $n, $tyt, $opis, $href, $akcja, $pri]):
+        $lien = console_ouvre($me, (string) strtok($href, '?')) ? $href : ''; ?>
+      <li>
+        <span class="wk-n t-<?= $ton ?>"><?= $n === '' ? '·' : (int) $n ?></span>
+        <div><b><?= h($tyt) ?></b><small><?= h($opis) ?></small></div>
+        <?php if ($lien !== ''): ?><a class="btn<?= $pri ? ' btn--brand' : '' ?>" href="<?= h($lien) ?>"><?= h($akcja) ?></a><?php endif; ?>
+      </li>
+      <?php endforeach; ?>
+    </ul>
+    <?php endif; ?>
+  </section>
+
+  <section class="panel wk-panel">
+    <header><h2>Ostatnie zamówienia</h2><?= console_lien($me, 'zamowienia.php', 'Wszystkie') ?></header>
+    <?php if (!$orders): ?>
+    <p class="wk-pusto">Jeszcze żadnego zamówienia. Pierwsze pojawi się tutaj w chwili złożenia.</p>
+    <?php else: ?>
+    <div class="tablewrap">
+    <table class="rwd">
+      <thead><tr><th>Numer</th><th>Klient</th><th class="num">Brutto</th><th>Stan</th></tr></thead>
+      <tbody>
+      <?php foreach ($orders as $o): ?>
+      <tr>
+        <td data-l="Numer"><?= console_lien($me, 'zamowienia.php?id=' . (int) $o['id'], (string) $o['code'], 'code')
+                                 ?: '<span class="code">' . h((string) $o['code']) . '</span>' ?></td>
+        <td data-l="Klient"><?= h($o['client']) ?></td>
+        <td data-l="Brutto" class="num"><?= h(pln((int) $o['total_gross'])) ?></td>
+        <td data-l="Stan"><span class="stan s-<?= h((string) $o['status']) ?>"><i class="kropka"></i><?= h($statusLabel[$o['status']] ?? $o['status']) ?></span>
+          <?php if (!empty($o['backorder'])): ?> <span class="tag no">ponad stan</span><?php endif; ?></td>
+      </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+    <?php endif; ?>
+  </section>
+</div>
 
 <?php if ($bledyWidac && ($bledy['razem'] > 0 || $bledyNota !== '')): ?>
 <div class="panel bledy" id="bledy">
   <h2>Dziennik błędów <span class="code"><?= (int) $bledy['razem'] ?></span></h2>
-  <p class="lead" style="margin-bottom:12px">
-    Każde zapytanie odrzucone przez bazę i każdy nieprzewidziany błąd strony — od <?= h((string) $bledy['od']) ?>,
-    w tym <b><?= (int) $bledy['tydzien'] ?></b> z ostatnich 7 dni. Jeśli coś się powtarza, prześlij te wiersze —
-    mówią, co i gdzie nie zadziałało.
-  </p>
+  <p class="muted small">Każde zapytanie odrzucone przez bazę i każdy nieprzewidziany błąd strony — od <?= h((string) $bledy['od']) ?>,
+    w tym <b><?= (int) $bledy['tydzien'] ?></b> z ostatnich 7 dni. Jeśli coś się powtarza, prześlij te wiersze.</p>
   <?php if ($bledyNota !== ''): ?><p class="warnbox"><?= h($bledyNota) ?></p><?php endif; ?>
   <div class="tablewrap">
   <table class="rwd">
@@ -170,81 +234,6 @@ if ($startLien !== ''): ?>
 </div>
 <?php endif; ?>
 
-<div class="kpis">
-  <div class="kpi"><b><?= (int) $kpis['orders'] ?></b><span>Zamówienia</span></div>
-  <div class="kpi"><b><?= (int) $kpis['orders_paid'] ?></b><span>Opłacone</span></div>
-  <div class="kpi<?= $kpis['orders_pending'] ? ' hot' : '' ?>"><b><?= (int) $kpis['orders_pending'] ?></b><span>Czeka na płatność</span></div>
-  <div class="kpi<?= $toConfirm ? ' hot' : '' ?>"><b><?= $toConfirm ?></b><span>Do potwierdzenia</span></div>
-  <div class="kpi"><b><?= h(pln((int) $kpis['revenue_gross'])) ?></b><span>Obrót brutto</span></div>
-  <div class="kpi"><b><?= h(pln((int) $kpis['basket_avg'])) ?></b><span>Średni koszyk</span></div>
-  <div class="kpi<?= $mail['failed'] ? ' hot' : '' ?>"><b><?= (int) $mail['queued'] + (int) $mail['failed'] ?></b><span>Poczta do wysłania</span></div>
-  <div class="kpi"><b><?= $visible ?></b><span>Produkty w sklepie</span></div>
-</div>
-
-<?php // LES RACCOURCIS SUIVENT LE PROFIL. Ils étaient écrits en dur : un
-      // compte « Sprzedaż » y trouvait « Poczta », « Produkty » et
-      // « Ustawienia », et recevait 403 sur les trois. Le rail, lui,
-      // filtrait déjà — deux endroits décidaient du même accès. ?>
-<p class="quick">
-  <?= console_lien($me, 'zamowienia.php', 'Zamówienia →') ?>
-  <?= console_lien($me, 'poczta.php', 'Poczta →') ?>
-  <?= console_lien($me, 'produkty.php', 'Produkty →') ?>
-  <a href="../shop/" target="_blank" rel="noopener">Zobacz sklep ↗</a>
-</p>
-
-<div class="cols" style="margin-top:22px">
-  <div class="panel">
-    <h2>Ostatnie zamówienia</h2>
-    <?php if (!$orders): ?>
-    <p class="muted small">Jeszcze żadnego zamówienia. Pierwsze pojawi się tutaj w chwili złożenia.</p>
-    <?php else: ?>
-    <div class="tablewrap">
-    <table class="rwd">
-      <thead><tr><th>Numer</th><th>Klient</th><th>Status</th><th class="num">Brutto</th></tr></thead>
-      <tbody>
-      <?php foreach ($orders as $o): ?>
-      <tr>
-        <td data-l="Numer"><?= console_lien($me, 'zamowienia.php?id=' . (int) $o['id'], (string) $o['code'], 'code')
-                                 ?: '<span class="code">' . h((string) $o['code']) . '</span>' ?></td>
-        <td data-l="Klient"><?= h($o['client']) ?></td>
-        <td data-l="Status"><span class="tag"><?= h($statusLabel[$o['status']] ?? $o['status']) ?></span>
-          <?php if (!empty($o['backorder'])): ?> <span class="tag no">do potwierdzenia</span><?php endif; ?></td>
-        <td data-l="Brutto" class="num"><?= h(pln((int) $o['total_gross'])) ?></td>
-      </tr>
-      <?php endforeach; ?>
-      </tbody>
-    </table>
-    </div>
-    <?php endif; ?>
-  </div>
-
-  <div class="panel">
-    <h2>Magazyn i witryna</h2>
-    <?php if ($noPhoto): ?>
-    <p class="small"><b><?= $noPhoto ?></b> produkt(ów) w sprzedaży <b>bez zdjęcia</b> — klient widzi tylko kolorowy kafelek.
-      <?= console_lien($me, 'produkty.php', 'Dodaj zdjęcia →', 'code') ?></p>
-    <?php endif; ?>
-    <?php if (!$lowStock): ?>
-    <p class="muted small">Żaden produkt nie schodzi poniżej 3 sztuk.</p>
-    <?php else: ?>
-    <p class="muted small">Produkty na wyczerpaniu. Zamówienie ponad stan nadal przechodzi —
-      klient dostaje wiadomość „skontaktujemy się mailowo”.</p>
-    <div class="tablewrap">
-    <table class="rwd">
-      <thead><tr><th>Produkt</th><th class="num">Stan</th></tr></thead>
-      <tbody>
-      <?php foreach ($lowStock as $p): ?>
-      <tr>
-        <td data-l="Produkt"><?= h((string) $p['nom']) ?></td>
-        <td data-l="Stan" class="num"><span class="tag <?= (int) $p['stock'] <= 0 ? 'bad' : 'wait' ?>"><?= (int) $p['stock'] ?></span></td>
-      </tr>
-      <?php endforeach; ?>
-      </tbody>
-    </table>
-    </div>
-    <?php endif; ?>
-  </div>
-</div>
 <?php if ($bledyWidac && !$bledy['zapis']): ?>
 <p class="warnbox" id="bledy">Dziennik błędów: serwer <b>nie może zapisywać</b> do katalogu api/data —
   błędy nie są notowane, więc pusty dziennik nic nie znaczy. Trzeba nadać serwerowi WWW prawo zapisu do api/data.</p>

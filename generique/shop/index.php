@@ -720,6 +720,16 @@ if ($page === '') {
           <?= product_visual($p, 'card-photo') ?>
           <?php if ($p['badge'] !== ''): ?><span class="badge"><?= e($p['badge']) ?></span><?php endif; ?>
         </a>
+        <?php // LE « + » DU TÉLÉPHONE. Deux cartes par ligne ne laissent plus la
+              // place d'un bouton « Dodaj do koszyka » lisible : le geste passe
+              // sur la photo, là où le pouce tombe. Le même formulaire que le
+              // bouton — un seul chemin vers le panier. Caché au bureau. ?>
+        <form class="card-plus" method="post" action="<?= e(u('koszyk')) ?>" data-add data-cena="<?= (int) $p['price'] ?>">
+          <?= csrf_field() ?>
+          <input type="hidden" name="add" value="<?= e($p['id']) ?>">
+          <input type="hidden" name="qty" value="1">
+          <button type="submit" aria-label="<?= e(($S['product.add'] ?? '') . ': ' . $p['name']) ?>">+</button>
+        </form>
         <div class="card-body">
           <?php if ($p['brand']): ?><?= brand_mark($p['brand']) ?><?php endif; ?>
           <p class="card-meta mono"><?= e($p['subtitle']) ?></p>

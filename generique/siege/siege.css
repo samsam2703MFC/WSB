@@ -287,3 +287,34 @@ input:focus, select:focus, textarea:focus { outline: none; background: #fff; bor
 
 /* Les champs cachés d'un formulaire en liste ne comptent pas comme une ligne. */
 .lista > input[type="hidden"] + *, .lista > input[type="hidden"] + input[type="hidden"] + * { border-top: 0; }
+
+/* ============================================================================
+   Warsztat (26.11.2026) — la siège parle la même langue que la console des
+   boutiques : Archivo, gris froids, colonne sombre, filets au lieu d'ombres,
+   un seul rayon. La prune BuddyCorp reste la couleur de l'action.
+   ============================================================================ */
+@font-face { font-family: "WSB Archivo"; src: url(fonts/archivo-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2190-21FF, U+2212; }
+@font-face { font-family: "WSB Archivo"; src: url(fonts/archivo-latin-ext-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap;
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+:root {
+  --ui: "WSB Archivo", system-ui, sans-serif; --ui-titre: "WSB Archivo", system-ui, sans-serif;
+  --font-mono: "WSB Archivo", system-ui, sans-serif;
+  --fond: #EDEFEA; --encre: #1B1E1A; --encre-2: #5F665C; --encre-3: #8A9086;
+  --filet: #E7EAE3; --filet-fort: #D9DDD4;
+  --r-carte: 6px; --r-champ: 6px; --ombre: none;
+}
+body { letter-spacing: 0; font-feature-settings: "tnum" 1; }
+.lista, .karta { border: 1px solid var(--filet-fort); box-shadow: none; }
+.logo { border-radius: 50%; box-shadow: none; }
+h1 { letter-spacing: -.01em; font-weight: 600; }
+@media (min-width: 861px) {
+  .menu { background: #1B1E1A; border-right: 0; -webkit-backdrop-filter: none; backdrop-filter: none; color: #D3D8CF; }
+  .marka { color: #fff; } .marka small { color: #8B9387; }
+  .menu nav a { color: #D3D8CF; border-radius: 6px; }
+  .menu nav a:hover { background: #262A25; color: #fff; }
+  .menu nav a.on { background: #F4F5F1; color: #1B1E1A; font-weight: 600; }
+  .menu nav a.on .ik { color: var(--prune); }
+  .ja { border-top-color: #30352F; } .ja-tel { color: #8B9387; }
+  .menu .ikonowy { color: #D3D8CF; }
+}

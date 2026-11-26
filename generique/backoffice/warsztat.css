@@ -1,0 +1,176 @@
+/* ===========================================================================
+   warsztat.css — l'habit « Warsztat » de la console (26.11.2026, maquette A).
+   Posée APRÈS console.css : elle ne change pas la structure des écrans, elle
+   change le ton. Une famille (Archivo), des gris froids, la couleur de la
+   boutique réservée à l'action principale. Le crème, les ombres et les
+   pastilles rondes de partout faisaient de chaque bloc une carte de même
+   poids ; ici le poids va à ce qui presse.
+   =========================================================================== */
+@font-face { font-family: "WSB Archivo"; src: url(fonts/archivo-latin-wght-normal.woff2) format("woff2");
+  font-weight: 100 900; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2190-21FF, U+2212; }
+@font-face { font-family: "WSB Archivo"; src: url(fonts/archivo-latin-ext-wght-normal.woff2) format("woff2");
+  font-weight: 100 900; font-display: swap;
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --wk-ink: #1B1E1A; --wk-ink2: #2B2F29; --wk-side: #1B1E1A; --wk-side-2: #262A25; --wk-side-txt: #D3D8CF; --wk-side-dim: #8B9387;
+  --wk-canvas: #EDEFEA; --wk-rule: #D9DDD4; --wk-rule2: #E7EAE3; --wk-hover: #F6F7F3;
+  --font-sans: "WSB Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "WSB Archivo", system-ui, sans-serif;
+  --font-mono: "WSB Archivo", system-ui, sans-serif;
+  --bg-page: var(--wk-canvas); --bg-page-alt: var(--wk-canvas);
+  --surface-card: #fff; --surface-raised: #F6F7F3; --surface-sunken: #ECEEE8;
+  --text-strong: var(--wk-ink); --text-body: var(--wk-ink2); --text-muted: #5F665C;
+  --border-subtle: var(--wk-rule2); --border-default: var(--wk-rule);
+  --paper-50: #F7F8F5; --paper-100: #EEF0EB; --paper-200: #E3E6DF;
+  --shadow-xs: none;
+  --info: #2F5E8C;
+}
+body { font-feature-settings: "tnum" 1; background: var(--wk-canvas); color: var(--wk-ink2); }
+
+/* --- Colonne : sombre, neutre, pleine hauteur ------------------------------- */
+.side, .side-foot { background: var(--wk-side) !important; color: var(--wk-side-txt); }
+.side .brand { border-bottom-color: #30352F; }
+.side .brand span { color: var(--wk-side-dim); text-transform: none; letter-spacing: 0; font-size: 12px; }
+.side .brand b { color: #fff; font-size: 15px; }
+.menu { gap: 1px; }
+.menu a { color: var(--wk-side-txt); font-weight: 500; font-size: 14px; padding: 8px 11px; min-height: 38px; border-radius: 6px; }
+.menu a:hover { background: var(--wk-side-2); color: #fff; }
+.menu a.on { background: #F4F5F1; color: var(--wk-ink); font-weight: 600; }
+.menu .sep { text-transform: none; letter-spacing: 0; font: 500 12px/1 var(--font-sans); color: var(--wk-side-dim); padding: 16px 11px 6px; }
+.side-foot { border-top-color: #30352F; color: var(--wk-side-dim); }
+.side-foot b { color: #E9ECE6; }
+.side-foot button { border-color: #3A4038; color: var(--wk-side-txt); border-radius: 6px; min-height: 36px; }
+.side-close { background: var(--wk-side-2); color: #fff; }
+
+/* --- En-tête : clair, sur la toile ------------------------------------------ */
+header.bar { background: var(--wk-canvas); color: var(--wk-ink); border-bottom: 1px solid var(--wk-rule); }
+header.bar h1 { font-weight: 600; font-size: 21px; letter-spacing: -.01em; }
+header.bar h1 .badge { background: var(--wk-ink); color: #fff; border-radius: 4px; font-weight: 500; }
+.menu-btn { background: var(--wk-ink); color: #fff; border-radius: 6px; }
+@media (min-width: 980px) { header.bar { height: 64px; padding: 0 32px; } .wrap { padding: 24px 32px 72px; } }
+.wrap { max-width: 1280px; }
+
+/* --- Blocs : filet, pas d'ombre ; un seul rayon -------------------------------- */
+.panel, .kpi, table, .tablica .kol, .karta { border-radius: 6px; box-shadow: none; border-color: var(--wk-rule); }
+.panel { border: 1px solid var(--wk-rule); }
+.panel h2 { font-weight: 600; font-size: 17px; }
+.panel h3 { font-weight: 600; }
+.kpi b { font-weight: 600; letter-spacing: -.01em; }
+.kpi span, th, .field > span, .inne-l, table.rwd td::before, .kolejki a span { text-transform: none !important; letter-spacing: 0 !important; }
+th { background: #fff; font-weight: 500; font-size: 13px; color: var(--text-muted); border-bottom-color: var(--wk-rule); }
+tbody tr:hover td { background: var(--wk-hover); }
+a.code, td.num, th.num { font-family: var(--font-sans); }
+a.code { color: var(--wk-ink); font-weight: 600; }
+a.code:hover { color: var(--brand); }
+.tag { border-radius: 4px; font-weight: 500; }
+.crumbs a { color: var(--text-muted); font-weight: 500; }
+
+/* Bandeaux : un filet à gauche et une ligne, pas un pavé coloré */
+.warnbox, .flash { border-radius: 0 6px 6px 0; border-left: 3px solid var(--warning); background: #FBF2E2; color: #6B4A12; }
+.flash.ok { border-left-color: var(--success); background: #E6F2EA; color: #1F5A37; }
+.flash.err { border-left-color: var(--danger); background: #F9E6E2; color: #8A2A1F; }
+
+/* Contrôles : 6 px partout, l'action principale à la couleur de la boutique */
+input, select, textarea, button, a.btn { border-radius: 6px; border-color: var(--wk-rule); }
+button.primary, a.btn--brand { background: var(--brand-700, var(--brand)); border-color: var(--brand-700, var(--brand)); color: #fff; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--wk-ink); outline-offset: 2px; }
+
+/* Onglets : une ligne soulignée, pas des pilules */
+.tabs { gap: 0; border-bottom: 1px solid var(--wk-rule); }
+.tabs a { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; margin-bottom: -1px;
+  color: var(--text-muted); font-weight: 500; padding: 0 14px; min-height: 42px; }
+.tabs a.on { background: transparent; color: var(--wk-ink); border-bottom-color: var(--brand-700, var(--brand)); font-weight: 600; }
+
+/* Les files de Zamówienia : le même langage que les onglets */
+.kolejki { gap: 0; border-bottom: 1px solid var(--wk-rule); flex-wrap: nowrap; overflow-x: auto; }
+.kolejki a { background: transparent !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important;
+  display: inline-flex !important; flex-direction: row-reverse; align-items: baseline; gap: 7px; padding: 10px 14px !important; margin-bottom: -1px; white-space: nowrap; }
+.kolejki a b { font-size: 14px; font-weight: 600; color: var(--wk-ink); }
+.kolejki a span { font-size: 14px !important; color: var(--text-muted) !important; }
+.kolejki a.on { border-bottom-color: var(--brand-700, var(--brand)) !important; color: var(--wk-ink) !important; }
+.kolejki a.on span { color: var(--wk-ink) !important; font-weight: 600; }
+.widoki { border-radius: 6px; } .widoki a { border-radius: 4px; }
+.etap { border-radius: 6px !important; }
+.etap.teraz { background: var(--wk-ink); border-color: var(--wk-ink); }
+
+/* --- Pulpit « Dziś » ----------------------------------------------------------- */
+.wk-note { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin: 0 0 12px; padding: 9px 14px;
+  border-left: 3px solid var(--warning); background: #FBF2E2; border-radius: 0 6px 6px 0; font-size: 14px; color: #5A3F10; }
+.wk-note b { font-weight: 600; } .wk-note a { margin-left: auto; color: #5A3F10; font-weight: 600; }
+.wk-flow { background: #fff; border: 1px solid var(--wk-rule); border-radius: 6px; padding: 18px 20px 14px; margin: 8px 0 20px; }
+.wk-flow-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 14px; }
+.wk-flow-h h2 { margin: 0; font-size: 18px; font-weight: 600; color: var(--wk-ink); }
+.wk-flow-h .muted { font-size: 14px; }
+.wk-sum { display: flex; gap: 26px; margin-left: auto; font-size: 13px; color: var(--text-muted); }
+.wk-sum b { display: block; font-size: 17px; font-weight: 600; color: var(--wk-ink); }
+.wk-bar { display: flex; gap: 2px; height: 9px; border-radius: 5px; overflow: hidden; margin-bottom: 12px; background: var(--wk-rule2); }
+.wk-bar i { display: block; min-width: 4px; }
+.wk-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.wk-step { display: block; padding: 2px 14px 4px; border-left: 1px solid var(--wk-rule2); text-decoration: none; color: inherit; }
+.wk-step:first-child { border-left: 0; padding-left: 0; }
+.wk-step b { display: block; font-size: 32px; line-height: 1.1; font-weight: 600; letter-spacing: -.02em; color: var(--wk-ink); }
+.wk-step span { font-size: 14px; color: var(--text-muted); }
+a.wk-step:hover span { text-decoration: underline; color: var(--wk-ink); }
+.wk-step.hot b { color: var(--danger); } .wk-step.wait b { color: #A86400; } .wk-step.zero b { color: #B3B8AE; }
+.wk-cols { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+@media (min-width: 1100px) { .wk-cols { grid-template-columns: 1.2fr 1fr; } }
+.wk-panel { padding: 0 !important; overflow: hidden; }
+.wk-panel > header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--wk-rule2); }
+.wk-panel > header h2 { margin: 0; font-size: 16px; }
+.wk-panel > header a { font-size: 14px; color: var(--text-muted); }
+.wk-panel table { border: 0; border-radius: 0; }
+.wk-pusto { margin: 0; padding: 18px; color: var(--text-muted); font-size: 14px; }
+.wk-todo { list-style: none; margin: 0; padding: 0; }
+.wk-todo li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--wk-rule2); }
+.wk-todo li:first-child { border-top: 0; }
+.wk-todo b { display: block; font-weight: 600; color: var(--wk-ink); }
+.wk-todo small { display: block; font-size: 13px; color: var(--text-muted); overflow-wrap: anywhere; }
+.wk-n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 600; background: var(--wk-rule2); color: var(--text-muted); }
+.wk-n.t-alert { background: #F6E0DC; color: var(--danger); } .wk-n.t-info { background: #E3ECF5; color: var(--info); }
+.wk-n.t-wait { background: #FBEFD9; color: #A86400; }
+@media (max-width: 760px) {
+  .wk-steps { display: flex; overflow-x: auto; gap: 8px; scrollbar-width: none; }
+  .wk-step, .wk-step:first-child { flex: 0 0 128px; border: 1px solid var(--wk-rule2); border-radius: 6px; padding: 8px 10px; }
+  .wk-step b { font-size: 24px; }
+  .wk-sum { margin-left: 0; width: 100%; }
+  .wk-todo li { padding: 12px 14px; }
+}
+
+/* --- Téléphone : la barre d'onglets du bas -------------------------------- */
+.wk-tabbar { display: none; }
+@media (max-width: 979px) {
+  .wk-tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+    background: #fff; border-top: 1px solid var(--wk-rule); padding: 6px 0 calc(8px + env(safe-area-inset-bottom)); }
+  .wk-tabbar a, .wk-tabbar label { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; justify-content: center;
+    font-size: 11.5px; color: #5F665C; text-decoration: none; cursor: pointer; }
+  .wk-tabbar svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .wk-tabbar .on { color: var(--wk-ink); font-weight: 600; }
+  .wk-tabbar .wk-scan span.ic { width: 46px; height: 46px; border-radius: 50%; background: var(--brand-700, var(--wk-ink)); color: #fff;
+    display: grid; place-items: center; margin-top: -20px; box-shadow: 0 0 0 4px #fff; }
+  .wrap { padding-bottom: 96px; }
+  .lot { bottom: calc(64px + env(safe-area-inset-bottom)); }
+}
+.s-nowe .kropka { background: var(--info); }
+@media (min-width: 980px) { .shell { background: linear-gradient(to right, var(--wk-side) 268px, transparent 268px); } }
+.side-foot button { background: transparent !important; color: var(--wk-side-txt) !important; opacity: 1 !important; }
+.wk-todo a.btn { background: #fff; color: var(--wk-ink); border: 1px solid var(--wk-rule); white-space: nowrap; }
+.wk-todo a.btn.btn--brand { background: var(--brand-700, var(--brand)); color: #fff; border-color: var(--brand-700, var(--brand)); }
+
+/* Les indicateurs : une bande, pas des tuiles */
+.kpis { display: flex !important; flex-wrap: wrap; gap: 0 !important; background: #fff; border: 1px solid var(--wk-rule); border-radius: 6px; padding: 4px 0; }
+.kpis .kpi { flex: 1 1 150px; background: transparent; border: 0; border-left: 1px solid var(--wk-rule2); border-radius: 0; padding: 8px 18px; }
+.kpis .kpi:first-child { border-left: 0; }
+.kpi b { font-size: 22px; }
+@media (max-width: 760px) {
+  .kpis { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; }
+  .kpis .kpi { flex: 0 0 auto; display: block; padding: 6px 14px; }
+  .kpi b { font-size: 17px; }
+}
+/* L'action de la ligne : nette, pas criarde — la couleur reste au geste principal de l'écran */
+.etap.nastepny { background: #fff !important; border: 1px solid var(--wk-ink) !important; color: var(--wk-ink) !important; }
+.etap.nastepny:hover { background: var(--wk-ink) !important; color: #fff !important; }
+.lot button:not([disabled]) { background: var(--brand-700, var(--wk-ink)); border-color: var(--brand-700, var(--wk-ink)); color: #fff; border-radius: 6px; }
+@media (max-width: 979px) { .menu-btn { display: none !important; } header.bar { padding-left: 16px; } }
