@@ -31,6 +31,27 @@ function wsb_meta(string $conf): array {
     return $out;
 }
 
+/**
+ * Les projets à part du serveur (wsm projet) : nom, adresse, accès. Le mot de
+ * passe vient de ADMIN.txt (root:www-data 640), montré au seul superadmin.
+ */
+function wsb_projekty_serwera(): array {
+    $dir = wsb_boutiques_dir();
+    if ($dir === '') return [];
+    $out = [];
+    foreach (glob(dirname($dir) . '/projets/*/projet.conf') ?: [] as $conf) {
+        $m = wsb_meta($conf);
+        $a = (string) @file_get_contents(dirname($conf) . '/ADMIN.txt');
+        $login = preg_match('/^Login\s*:\s*(\S+)/mi', $a, $x) ? $x[1] : '';
+        $haslo = preg_match('/^Has(?:ło|lo)\s*:\s*(\S+)/mui', $a, $y) ? $y[1] : '';
+        $nom = basename(dirname($conf));
+        $out[$nom] = ['nom' => $nom, 'baza' => (string) ($m['BASE'] ?? ''), 'od' => (string) ($m['CREE'] ?? ''),
+                      'login' => $login, 'haslo' => $haslo];
+    }
+    ksort($out);
+    return $out;
+}
+
 /** Les boutiques du serveur (sans le siège), avec leur version. */
 function wsb_sklepy_serwera(): array {
     $dir = wsb_boutiques_dir();

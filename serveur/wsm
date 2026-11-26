@@ -52,6 +52,7 @@ DEPOT="$RACINE/depot"
 REL="$RACINE/releases"
 BOUT="$RACINE/boutiques"
 SAV="$RACINE/sauvegardes"
+PROJ="$RACINE/projets"   # projets à part (wsm projet) : pas des boutiques
 APACHE_SITES="${WSM_APACHE_SITES:-/etc/apache2/sites-available}"
 WEB_USER="${WSM_WEB_USER:-www-data}"
 GARDER_VERSIONS="${GARDER_VERSIONS:-8}"
@@ -270,6 +271,16 @@ IP_RACINE_NOM=ip-racine
 
 # Le dossier d'une boutique sur l'IP : CHEMIN_IP de boutique.conf (wsm chemin),
 # sinon son identifiant. Ex. szoko → /mrszoko, mycobot → /coboty.
+# Les projets à part (wsm projet), sauf un nom pris par une boutique sur l'IP.
+projets_ip() {
+  local d n pris; pris=" $(for b in $(boutiques_ip); do chemin_ip "$b"; done | tr '\n' ' ') "
+  for d in "$PROJ"/*/; do
+    [ -f "$d/projet.conf" ] || continue
+    n=$(basename "$d")
+    case "$pris" in *" $n "*) continue;; esac
+    echo "$n"
+  done 2>/dev/null
+}
 chemin_ip() { local c; c=$(meta "$1" CHEMIN_IP); echo "${c:-$1}"; }
 
 # Les boutiques servies par l'IP (le siège à part : il est sous /admin).
@@ -305,6 +316,7 @@ ip_sites_ecrire() {
   for b in $(boutiques_ip); do ln -sfn "$BOUT/$b/current" "$r/$(chemin_ip "$b")"; done
   ln -sfn "$BOUT/$defaut/current/shop" "$r/shop"; ln -sfn "$BOUT/$defaut/current/backoffice" "$r/backoffice"
   [ -f "$BOUT/siege/config.php" ] && ln -sfn "$BOUT/siege/current/siege" "$r/admin"
+  for n in $(projets_ip); do ln -sfn "$PROJ/$n/site" "$r/$n"; done
 
   # Un bloc par dossier : la configuration, le journal et les photos de SA boutique.
   bloc() { # <dossier sous la racine> <boutique>
@@ -339,6 +351,13 @@ ip_sites_ecrire() {
         printf '    <Directory %s/admin>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.php\n' "$r"
         printf '        SetEnv WSM_CONFIG_FILE %s/siege/config.php\n        SetEnv WSM_DATA_DIR    %s/siege/data\n        SetEnv WSM_MEDIA_DIR   %s/siege/media\n    </Directory>\n' "$BOUT" "$BOUT" "$BOUT"
       fi
+      # Les projets à part : fichiers tels quels ; écrans internes et API privée
+      # derrière le mot de passe du projet (Basic, la console passe en https).
+      for n in $(projets_ip); do
+        printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.html\n        SetEnv PROJET_CONFIG %s/%s/config.php\n' "$r" "$n" "$PROJ" "$n"
+        printf '        <FilesMatch "^(Back office.*|Poczta|Super admin|Asystent rozmowy|Retroplan|Karta misji)\\.dc\\.html$">\n            AuthType Basic\n            AuthName "%s"\n            AuthUserFile %s/%s/htpasswd\n            Require valid-user\n        </FilesMatch>\n    </Directory>\n' "$n" "$PROJ" "$n"
+        printf '    <Directory %s/%s/_wsb/prive>\n        AuthType Basic\n        AuthName "%s"\n        AuthUserFile %s/%s/htpasswd\n        Require valid-user\n    </Directory>\n' "$r" "$n" "$n" "$PROJ" "$n"
+      done
       # Le défi Let's Encrypt du certificat de l'IP (wsm https-ip).
       if [ -d "$RACINE/acme/.well-known/acme-challenge" ]; then
         printf '    Alias /.well-known/acme-challenge/ %s/acme/.well-known/acme-challenge/\n' "$RACINE"
@@ -737,6 +756,7 @@ compose_ecrire() {
       for ip in $ips; do ri+="${ri:+ || }Host(\`$ip\`)"; done
       local pp="PathPrefix(\`/backoffice\`) || PathPrefix(\`/shop\`) || PathPrefix(\`/admin\`)" bb
       for bb in $(boutiques_ip); do pp+=" || PathPrefix(\`/$(chemin_ip "$bb")\`)"; done
+      for bb in $(projets_ip); do pp+=" || PathPrefix(\`/$bb\`)"; done
       ri="($ri) && ($pp)"
       L+=("traefik.http.routers.wsb-$b-ip.rule=$ri" "traefik.http.routers.wsb-$b-ip.entrypoints=$EP_HTTP"
           "traefik.http.routers.wsb-$b-ip.priority=100" "traefik.http.routers.wsb-$b-ip.service=wsb"
@@ -750,6 +770,7 @@ compose_ecrire() {
       if [ -f "$HTTPS_IP_OK" ]; then
         local pb="PathPrefix(\`/backoffice\`)"
         for bb in $(boutiques_ip); do pb+=" || PathPrefix(\`/$(chemin_ip "$bb")/backoffice\`)"; done
+        for bb in $(projets_ip); do pb+=" || PathPrefix(\`/$bb\`)"; done   # un projet : tout en https
         local rb="" ; for ip in $ips; do rb+="${rb:+ || }Host(\`$ip\`)"; done
         L+=("traefik.http.routers.wsb-$b-ipbo.rule=($rb) && ($pb)" "traefik.http.routers.wsb-$b-ipbo.entrypoints=$EP_HTTP"
             "traefik.http.routers.wsb-$b-ipbo.priority=110" "traefik.http.routers.wsb-$b-ipbo.service=wsb"
@@ -766,6 +787,7 @@ compose_ecrire() {
   # pour une IP). « $$ » : compose lit un « $ » seul comme une variable.
   if [ "$IP_SLASH" = 1 ]; then
     local alt="backoffice|shop|admin" bb; for bb in $(boutiques_ip); do alt+="|$(chemin_ip "$bb")"; done
+    for bb in $(projets_ip); do alt+="|$bb"; done
     L+=("traefik.http.middlewares.wsb-ip-slash.redirectregex.regex=^http://([^/]+)/($alt)\$\$"
         'traefik.http.middlewares.wsb-ip-slash.redirectregex.replacement=http://$${1}/$${2}/')
   fi
@@ -1028,6 +1050,100 @@ cmd_importer_sql() {
   sql_root -N -e "SELECT CONCAT('    ', table_name, ' : ', table_rows, ' lignes') FROM information_schema.tables WHERE table_schema='$base' ORDER BY table_name"
 }
 
+# ---------------------------------------------------------------------------
+# wsm projet <nom> <lien du zip> : un projet À PART (pas une boutique), livré
+# en zip (ex. un projet Claude Design : pages .dc.html, support.js, design
+# system, photos), servi TEL QUEL sous http(s)://<IP>/<nom>/ avec SA base
+# MySQL <nom>. Une seule ligne ajoutée en tête de chaque page : _wsb/stockage.js
+# (projets/_wsb du dépôt) fait aller ce que la page range dans le navigateur
+# dans la base du projet. Écrans internes derrière un mot de passe (ADMIN.txt,
+# visible dans le superadmin → Projekty). Relancer = nouvelle version des
+# fichiers, la base et le mot de passe restent.
+cmd_projet() {
+  racine_seulement
+  dk_on || mourir "réservé au mode Docker"
+  local n="${1:-}" url="${2:-}"
+  [[ "$n" =~ ^[a-z][a-z0-9-]{1,30}$ ]] || mourir "nom de projet invalide : $n"
+  case "$n" in admin|shop|backoffice|landing|siege) mourir "« $n » est réservé";; esac
+  local b; for b in $(boutiques_ip); do [ "$(chemin_ip "$b")" = "$n" ] && mourir "/$n est déjà le dossier de la boutique $b (wsm supprimer $b, ou un autre nom)"; done
+  [[ "$url" =~ ^https://[A-Za-z0-9.-]+/ ]] || mourir "lien https du zip attendu"
+  local id; id=$(printf '%s' "$url" | sed -nE 's#.*drive\.google\.com/(file/d/|open\?id=|uc\?(export=download&)?id=)([A-Za-z0-9_-]{20,}).*#\3#p')
+  [ -n "$id" ] && url="https://drive.usercontent.google.com/download?id=$id&export=download&confirm=t"
+  titre "projet $n"
+  local d="$PROJ/$n" t; install -d -m 755 "$PROJ" "$d"; t=$(mktemp -d); chmod 700 "$t"
+  curl -fsSL --max-time 1800 -o "$t/z" "$url" || { rm -rf "$t"; mourir "téléchargement impossible (partage « tous les utilisateurs disposant du lien » ?)"; }
+  [ "$(head -c 4 "$t/z" | od -An -tx1 | tr -d ' \n')" = 504b0304 ] || { rm -rf "$t"; mourir "ce n'est pas un zip"; }
+  dire "zip : $(du -h "$t/z" | cut -f1)"
+  rm -rf "$d/site.nouveau"; mkdir -p "$d/site.nouveau"
+  unzip -q "$t/z" -d "$d/site.nouveau" || { rm -rf "$t" "$d/site.nouveau"; mourir "zip illisible"; }
+  rm -rf "$t"
+  # Un seul dossier racine dans le zip : c'est lui le site.
+  local seul; seul=$(find "$d/site.nouveau" -mindepth 1 -maxdepth 1 | head -2)
+  if [ "$(printf '%s\n' "$seul" | wc -l)" = 1 ] && [ -d "$seul" ]; then
+    mv "$seul" "$d/site.racine" && rm -rf "$d/site.nouveau" && mv "$d/site.racine" "$d/site.nouveau"
+  fi
+  # Aucun script serveur venu du zip ; le nôtre seulement.
+  find "$d/site.nouveau" \( -iname '*.php' -o -iname '*.phtml' -o -iname '*.phar' -o -name '.htaccess' \) -delete
+  rm -rf "$d/site.nouveau/_wsb"; cp -r "$DEPOT/projets/_wsb" "$d/site.nouveau/_wsb"
+  local f k=0
+  while IFS= read -r -d '' f; do
+    grep -q '_wsb/stockage.js' "$f" || { sed -i '0,/<head>/s#<head>#<head>\n<script src="./_wsb/stockage.js"></script>#' "$f"; k=$((k+1)); }
+  done < <(find "$d/site.nouveau" -maxdepth 1 -name '*.html' -print0)
+  dire "pages reliées à la base : $k"
+  if [ ! -f "$d/site.nouveau/index.html" ]; then
+    { echo '<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
+      echo "<title>$n</title><style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#2e2924;background:#f4efe7}a{display:block;padding:12px 14px;margin:6px 0;background:#fbf8f3;border:1px solid #d8cdbd;border-radius:12px;color:#2e2924;text-decoration:none}a:hover{border-color:#465802}</style></head><body><h1>$n</h1>"
+      find "$d/site.nouveau" -maxdepth 1 -name '*.html' ! -name index.html -printf '%f\n' | sort | while IFS= read -r f; do
+        printf '<a href="%s">%s</a>\n' "$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$f")" "${f%.dc.html}"
+      done
+      echo '</body></html>'; } > "$d/site.nouveau/index.html"
+  fi
+  # La base du projet (gardée d'une version à l'autre).
+  local base="${n//-/_}" dbh dbd mdp
+  for b in $(ls "$BOUT"); do [ "$(meta "$b" BASE)" = "$base" ] && mourir "la base « $base » est celle de la boutique $b"; done
+  dbh=$(db_hote); dbd=$(db_depuis)
+  if [ ! -f "$d/config.php" ]; then
+    mdp=$(openssl rand -hex 18)
+    sql_root -e "CREATE DATABASE IF NOT EXISTS \`$base\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+                 CREATE USER IF NOT EXISTS '$base'@'$dbd' IDENTIFIED BY '$mdp'; ALTER USER '$base'@'$dbd' IDENTIFIED BY '$mdp';
+                 GRANT ALL PRIVILEGES ON \`$base\`.* TO '$base'@'$dbd'; FLUSH PRIVILEGES;"
+    ( umask 027; printf "<?php return ['dsn' => 'mysql:host=%s;dbname=%s;charset=utf8mb4', 'user' => '%s', 'pass' => '%s'];\n" "$dbh" "$base" "$base" "$mdp" > "$d/config.php" )
+    dire "base MySQL « $base » créée"
+  else dire "base MySQL « $base » : gardée"; fi
+  if [ ! -f "$d/htpasswd" ]; then
+    local pa; pa=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-14)
+    ( umask 027; php -r 'echo $argv[1], ":", password_hash($argv[2], PASSWORD_BCRYPT), "\n";' "$n" "$pa" > "$d/htpasswd"
+      printf 'Projet : %s\nLogin : %s\nHasło : %s\n' "$n" "$n" "$pa" > "$d/ADMIN.txt" )
+    dire "mot de passe des écrans internes : superadmin → Projekty (ou sudo cat $d/ADMIN.txt)"
+  fi
+  printf 'BASE=%s\nCREE=%s\n' "$base" "$(grep -s '^CREE=' "$d/projet.conf" | cut -d= -f2- || true)" > "$d/projet.conf"
+  grep -q '^CREE=.' "$d/projet.conf" || printf 'BASE=%s\nCREE=%s\n' "$base" "$(date '+%F %T')" > "$d/projet.conf"
+  rm -rf "$d/site.poprzednia"; [ -d "$d/site" ] && mv "$d/site" "$d/site.poprzednia"
+  mv "$d/site.nouveau" "$d/site"
+  chown -R root:"$WEB_USER" "$d"; chmod 640 "$d/config.php" "$d/htpasswd" "$d/ADMIN.txt"
+  find "$d/site" -type d -exec chmod 755 {} + ; find "$d/site" -type f -exec chmod 644 {} +
+  cmd_ip >/dev/null
+  dire "projet $n : http(s)://<IP>/$n/ — $(find "$d/site" -maxdepth 1 -name '*.html' | wc -l) pages"
+}
+
+# wsm supprimer <boutique> : retire une boutique du serveur, APRÈS une
+# sauvegarde de sa base et de son dossier (sauvegardes/<b>/).
+cmd_supprimer() {
+  racine_seulement
+  local b="${1:-}"; existe "$b"
+  [ "$(type_de "$b")" = siege ] && mourir "le siège ne se supprime pas"
+  titre "suppression de la boutique $b"
+  cmd_sauvegarde "$b"
+  local base dbd; base=$(meta "$b" BASE); dbd=$(db_depuis)
+  local dest; dest="$SAV/$b/supprimee-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$SAV/$b"
+  mv "$BOUT/$b" "$dest"
+  rm -f "$RACINE/apache/wsm-$b.conf" "${APACHE_SITES:-/nonexistent}/wsm-$b.conf"
+  sql_root -e "DROP DATABASE IF EXISTS \`$base\`; DROP USER IF EXISTS '$base'@'$dbd';" || true
+  sql_root -e "DROP VIEW IF EXISTS wsb.\`v_$base\`; DELETE FROM wsb.wsb_boutiques WHERE slug = '$b'; DELETE FROM wsb.wsb_integracje WHERE boutique = '$b';" 2>/dev/null || true
+  cmd_ip >/dev/null
+  dire "boutique $b retirée — base sauvegardée et dossier gardé dans $dest"
+}
+
 cmd_docker_init() {
   racine_seulement
   command -v docker >/dev/null || mourir "docker absent"
@@ -1145,6 +1261,8 @@ case "$cmd" in
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
   docker-init) cmd_docker_init;;
   traefik-info) cmd_traefik_info;;
+  projet) cmd_projet "${1:-}" "${2:-}";;
+  supprimer) cmd_supprimer "${1:-}";;
   importer-sql) cmd_importer_sql "${1:-}" "${2:-}";;
   https-ip) cmd_https_ip "${1:-}";;
   https-ip-poser) cmd_https_ip_poser;;

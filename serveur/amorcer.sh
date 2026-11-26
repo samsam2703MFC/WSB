@@ -206,6 +206,8 @@ case "$ACTION" in
     "$W" katalog "$BOUTIQUE"
     ;;
   traefik-info) "$W" traefik-info ;;
+  projet)    [[ "$BOUTIQUE" =~ ^[a-z][a-z0-9-]{1,30}$ ]] || { echo "nom de projet invalide" >&2; exit 2; }; "$W" projet "$BOUTIQUE" "$DOMAINE" ;;
+  supprimer) [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide" >&2; exit 2; }; "$W" supprimer "$BOUTIQUE" ;;
   importer-sql) [[ "$BOUTIQUE" =~ ^[a-z][a-z0-9_]{1,40}$ ]] || { echo "base invalide" >&2; exit 2; }; "$W" importer-sql "$BOUTIQUE" "$DOMAINE" ;;
   https-ip) [ -n "$IP" ] || { echo "adresse IP inconnue" >&2; exit 1; }; "$W" https-ip "$IP" ;;
   valider)  "$W" valider ;;

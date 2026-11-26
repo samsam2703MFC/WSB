@@ -49,7 +49,7 @@ on:
       action:
         description: "Que faire"
         type: choice
-        options: [mettre-a-jour, creer, valider, deployer, retour, liste, demenager, katalog, transfert-cle, demenager-url, traefik-info, https-ip, importer-sql]
+        options: [mettre-a-jour, creer, valider, deployer, retour, liste, demenager, katalog, transfert-cle, demenager-url, traefik-info, https-ip, importer-sql, projet, supprimer]
         default: liste
       boutique:
         description: "Boutique (pour creer / deployer / retour / demenager / katalog)"
@@ -136,7 +136,7 @@ jobs:
               "$(printf '%s' "$SMSAPI_NADAWCA" | tr -d '\r\n')" > "$RUNNER_TEMP/wsb-secrets.env" )
           if [ "$A" = demenager-url ]; then
             [[ "${DOMAINE:-}" =~ ^https?://[A-Za-z0-9.:-]+/[A-Za-z0-9._/-]*/$ ]] || { echo "adresse de l'archive invalide"; exit 1; }
-          elif [ "$A" = importer-sql ]; then
+          elif [ "$A" = importer-sql ] || [ "$A" = projet ]; then
             [[ "${DOMAINE:-}" =~ ^https://[A-Za-z0-9.-]+/[A-Za-z0-9._/?=\&%:-]*$ ]] || { echo "lien du fichier invalide (https attendu)"; exit 1; }
             echo "::add-mask::$DOMAINE"
           else

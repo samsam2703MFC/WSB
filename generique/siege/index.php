@@ -62,6 +62,7 @@ function ikona(string $n): string {
         'klucze'   => '<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3m-4 4 3 3m-6 0 2 2"/>',
         'sklepy'   => '<path d="M4 9h16l-1.2-4.2A1 1 0 0 0 17.8 4H6.2a1 1 0 0 0-1 .8z"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 20v-5h4v5"/>',
         'dziennik' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        'projekty' => '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
         'wyjscie'  => '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
         'strzalka' => '<path d="M7 17 17 7M9 7h8v8"/>',
         'ok'       => '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.5L16 9.5"/>',
@@ -270,6 +271,26 @@ if ($p === 'sklepy') {
     exit;
 }
 
+if ($p === 'projekty') {
+    $projekty = wsb_projekty_serwera();
+    $host = (string) preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? ''));
+    strona('Projekty', function () use ($h, $projekty, $host) { ?>
+      <div class="naglowek"><div><p class="nadtytul">Na tym serwerze, poza sklepami</p><h1>Projekty</h1></div></div>
+      <section class="lista">
+        <?php if (!$projekty): ?><div class="pusto">Brak projektów. Instaluje je <code>wsm projet</code>.</div><?php endif; ?>
+        <?php foreach ($projekty as $pr): $url = 'https://' . $host . '/' . rawurlencode($pr['nom']) . '/'; ?>
+        <div class="wiersz-lista">
+          <span class="awatar"><?= $h(inicjaly($pr['nom'])) ?></span>
+          <span class="rozciag"><b><?= $h($pr['nom']) ?></b><small>baza MySQL <?= $h($pr['baza']) ?><?= $pr['od'] ? ' · od ' . $h(substr($pr['od'], 0, 10)) : '' ?></small></span>
+          <span class="szary">login <code><?= $h($pr['login']) ?></code> · hasło <code><?= $h($pr['haslo']) ?></code></span>
+          <a class="glowny maly" href="<?= $h($url) ?>" target="_blank" rel="noopener">Otwórz <?= ikona('strzalka') ?></a>
+        </div>
+        <?php endforeach; ?>
+      </section>
+    <?php });
+    exit;
+}
+
 if ($p === 'dziennik') {
     $rows = $pdo->query("SELECT kiedy, kto, boutique, akcja, szczegoly FROM wsb_dziennik ORDER BY id DESC LIMIT 300")->fetchAll();
     strona('Dziennik', function () use ($h, $rows) {
@@ -384,7 +405,7 @@ function strona(string $tytul, callable $tresc): void {
 <aside class="menu">
   <div class="marka"><span class="logo">B</span><span>BuddyCorp<small>Superadmin</small></span></div>
   <nav>
-    <?php foreach (['przeglad' => 'Przegląd', 'klucze' => 'Klucze', 'sklepy' => 'Sklepy', 'dziennik' => 'Dziennik'] as $k => $l): ?>
+    <?php foreach (['przeglad' => 'Przegląd', 'klucze' => 'Klucze', 'sklepy' => 'Sklepy', 'projekty' => 'Projekty', 'dziennik' => 'Dziennik'] as $k => $l): ?>
       <a href="?p=<?= $k ?>" class="<?= $p === $k ? 'on' : '' ?>"><?= ikona($k) ?><span><?= $l ?></span></a>
     <?php endforeach; ?>
   </nav>
