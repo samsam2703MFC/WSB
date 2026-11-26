@@ -1122,8 +1122,9 @@ cmd_projet() {
   mv "$d/site.nouveau" "$d/site"
   chown -R root:"$WEB_USER" "$d"; chmod 640 "$d/config.php" "$d/htpasswd" "$d/ADMIN.txt"
   find "$d/site" -type d -exec chmod 755 {} + ; find "$d/site" -type f -exec chmod 644 {} +
+  local pages; pages=$(find "$d/site" -maxdepth 1 -name '*.html' | wc -l)
   cmd_ip >/dev/null
-  dire "projet $n : http(s)://<IP>/$n/ — $(find "$d/site" -maxdepth 1 -name '*.html' | wc -l) pages"
+  dire "projet $n : https://<IP>/$n/ — $pages pages"
 }
 
 # wsm supprimer <boutique> : retire une boutique du serveur, APRÈS une

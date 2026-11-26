@@ -181,6 +181,14 @@ jobs:
               echo "$BOUTIQUE : $ADR → HTTP $c"
             done
           fi
+          if [ "$A" = projet ]; then
+            # Le projet en https (certificat de l'IP) : pages publiques, écran interne
+            # sans mot de passe (401 attendu), API publique, fichier d'images.
+            for ch in "" "Ola%20flora%20-%20wesela%20v2.dc.html" "Back%20office.dc.html" "_wsb/stockage.php" "_wsb/prive/stockage.php" ".image-slots.state.json" "_ds/"; do
+              c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$ch" || true)
+              echo "https://<IP>/$BOUTIQUE/$ch → HTTP $c"
+            done
+          fi
           if [ "$A" = push ]; then
             for site in sandbox:shop admin:siege; do
               h="${site%%:*}"; [ "$h" = admin ] && [ -n "$SIEGE_DOMAINE" ] && continue
