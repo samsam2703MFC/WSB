@@ -93,7 +93,9 @@
    "story.pro.eyebrow": "Dla integratorów",
    "story.pro.title": "Wdrażasz coboty u klientów? Mamy dla Ciebie warunki partnerskie.",
    "story.pro.text": "Napisz do MyCobotBuddy — odpowiadamy tego samego dnia roboczego.",
-   "story.pro.cta": "Napisz do MyCobotBuddy"
+   "story.pro.cta": "Napisz do MyCobotBuddy",
+   "home.title": "Twój cobot. Gotowy do pracy.",
+   "footer.rights": "Wszelkie prawa zastrzeżone. Zdjęcie główne: Shixart1985, CC BY 2.0 (Wikimedia Commons)."
   },
   "en": {
    "brand": "MyCobotBuddy",
@@ -107,12 +109,14 @@
    "promise.2.t": "Licence right away",
    "promise.2.d": "Software is activated remotely — access details arrive by e-mail.",
    "promise.3.t": "Trained by engineers",
-   "promise.3.d": "Training on real cobots, in small groups, with a certificate."
+   "promise.3.d": "Training on real cobots, in small groups, with a certificate.",
+   "home.title": "Your cobot. Ready to work.",
+   "footer.rights": "All rights reserved. Main photo: Shixart1985, CC BY 2.0 (Wikimedia Commons)."
   }
  },
  "slajdy": [
   {
-   "zdjecie": "zdjecia/hero.webp",
+   "zdjecie": "zdjecia/hero-foto.webp",
    "link": "#katalog",
    "teksty": {
     "pl": {

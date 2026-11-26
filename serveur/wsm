@@ -15,6 +15,7 @@
 #    wsm sante <boutique>                    la boutique et sa console répondent-elles ?
 #    wsm sauvegarde <boutique> | --toutes    copie de la base dans sauvegardes/ (14 gardées)
 #    wsm importer-base <boutique> <dump.sql[.gz]>   remplace la base (après sauvegarde)
+#    wsm katalog <boutique>                  réimporte son catalogue (textes, slajdy, produits)
 #    wsm chemin <boutique> <nom>             son dossier sur l'IP : http://<IP>/<nom>/
 #    wsm ip                                  le site de l'IP : http://<IP>/<boutique>/shop/ · /backoffice/ · /admin
 #    wsm demenager <boutique> <archive.tgz>         base + photos + données + clés d'une ancienne boutique
@@ -342,6 +343,21 @@ ip_sites_ecrire() {
       echo "</VirtualHost>"
     } > "$f"
   done
+}
+
+# wsm katalog <boutique> : réimporte le catalogue de son webshop (textes, slajdy,
+# produits, prix) depuis la version du dépôt — après une retouche du fichier
+# ou de ses photos. Les photos des slajdy sont remplacées ; celles des produits
+# seulement si le produit n'en a pas (une photo déposée en console reste).
+cmd_katalog() {
+  racine_seulement
+  local b="${1:-}"; existe "$b"
+  local ws kat; ws=$(meta "$b" WEBSHOP); kat=$(webshop_json "$ws" katalog)
+  [ -n "$ws" ] && [ -n "$kat" ] || mourir "$b : pas de catalogue (webshops/<webshop>/boutique.json)"
+  titre "catalogue webshops/$ws/$kat → $b"
+  cmd_sauvegarde "$b"
+  php_boutique "$b" --import-katalog "$DEPOT/webshops/$ws/$kat" | sed 's/^/  /'
+  chown -R "$WEB_USER":"$WEB_USER" "$BOUT/$b/media"
 }
 
 # wsm chemin <boutique> <nom> : son dossier sur l'IP (http://<IP>/<nom>/).
@@ -846,6 +862,7 @@ case "$cmd" in
   sauvegarde) cmd_sauvegarde "${1:?usage : wsm sauvegarde <boutique>|--toutes}";;
   importer-base) cmd_importer_base "${1:?usage : wsm importer-base <boutique> <dump>}" "${2:?usage : wsm importer-base <boutique> <dump>}";;
   ip) cmd_ip;;
+  katalog) cmd_katalog "${1:-}";;
   chemin) cmd_chemin "${1:-}" "${2:-}";;
   demenager) cmd_demenager "${1:?usage : wsm demenager <boutique> <archive.tgz>}" "${2:?usage : wsm demenager <boutique> <archive.tgz>}";;
   https) cmd_https "${1:?usage : wsm https <boutique>}";;

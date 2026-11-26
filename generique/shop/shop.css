@@ -1306,6 +1306,7 @@ h3 { font-weight: var(--weight-bold); }
    dessous, l'iPhone zoome sur le formulaire et le client perd la page. */
 .foot-nl { background: var(--brand-900); border-bottom: 1px solid var(--brand-800); }
 .foot-nl-in { display: grid; gap: var(--space-5); padding-top: var(--space-8); padding-bottom: var(--space-8); }
+.foot-nl-in > * { min-width: 0; }   /* sans lui, la bande débordait de 4 px au téléphone */
 @media (min-width: 900px) { .foot-nl-in { grid-template-columns: 1fr 1.25fr; align-items: start; } }
 .foot-nl h2 { margin: 0 0 6px; font-size: var(--text-xl); color: var(--paper-50); }
 .foot-nl p { margin: 0; color: var(--brand-300); line-height: 1.6; }

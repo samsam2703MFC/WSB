@@ -9,6 +9,7 @@ name: Nouveau serveur (wsm)
 #       deployer   → une boutique précise (champ « boutique »)
 #       retour     → une boutique revient à sa version précédente
 #       liste      → l'état du serveur
+#       katalog    → réimporte le catalogue d'une boutique (webshops/<…>/katalog)
 #       demenager  → reprend une boutique de l'ANCIEN serveur (base, photos,
 #                    données, clés → table centrale) dans la boutique choisie
 #                    (défaut szoko). Secrets OLD_SSH_HOST / OLD_SSH_USER (root par
@@ -48,10 +49,10 @@ on:
       action:
         description: "Que faire"
         type: choice
-        options: [mettre-a-jour, creer, valider, deployer, retour, liste, demenager]
+        options: [mettre-a-jour, creer, valider, deployer, retour, liste, demenager, katalog]
         default: liste
       boutique:
-        description: "Boutique (pour creer / deployer / retour / demenager)"
+        description: "Boutique (pour creer / deployer / retour / demenager / katalog)"
         required: false
         default: ""
       domaine:
@@ -135,7 +136,7 @@ jobs:
               "$(printf '%s' "$SMSAPI_NADAWCA" | tr -d '\r\n')" > "$RUNNER_TEMP/wsb-secrets.env" )
           case "${DOMAINE:-}" in ''|*[!a-z0-9.-]*) DOMAINE="";; esac
           [ "$A" = demenager ] && BOUTIQUE="${BOUTIQUE:-szoko}"
-          if [ "$A" = deployer ] || [ "$A" = retour ] || [ "$A" = creer ] || [ "$A" = demenager ]; then
+          if [ "$A" = deployer ] || [ "$A" = retour ] || [ "$A" = creer ] || [ "$A" = demenager ] || [ "$A" = katalog ]; then
             [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide"; exit 1; }
           fi
           sshpass -e scp -P "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \

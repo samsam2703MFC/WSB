@@ -861,7 +861,14 @@ function wsm_content_applique_forces(PDO $pdo, array $livre): array {
     $forces = wsm_content_forces();
     $maj = 0; $sup = 0; $st = [];
 
+    // Les textes forcés sont ceux de la vitrine Szoko. Une autre boutique (son
+    // design system n'est pas « szoko ») a les siens, posés par son catalogue :
+    // les forcer ramenait « Napisz do Szoko Shop » sur MyCobotBuddy à chaque
+    // mise en ligne.
+    $ds = strtolower(trim((string) (wsm_config()['design_system'] ?? '')));
+    $vitrineSzoko = $ds === '' || $ds === 'szoko';
     foreach ($livre['i18n'] as [$table, $lang, $k, $v]) {
+        if (!$vitrineSzoko) break;
         $force = false;
         foreach ($forces[$table]['force'] ?? [] as $p) {
             if (str_starts_with($k, $p)) { $force = true; break; }

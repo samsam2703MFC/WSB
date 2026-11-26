@@ -193,6 +193,10 @@ case "$ACTION" in
     [ -s /tmp/wsb-demenagement.tgz ] || { echo "archive de l'ancien serveur absente ou vide" >&2; exit 1; }
     "$W" demenager "$BOUTIQUE" /tmp/wsb-demenagement.tgz
     ;;
+  katalog)
+    [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide" >&2; exit 2; }
+    "$W" katalog "$BOUTIQUE"
+    ;;
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;
   retour)   "$W" retour "$BOUTIQUE" ;;
