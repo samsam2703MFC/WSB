@@ -91,6 +91,54 @@ function wsm_ean_assign(PDO $pdo, string $pid, string $saisie, string $actor = '
     return null;
 }
 
+/**
+ * Un produit NOUVEAU né d'un scan : le code est sur l'étiquette, le produit pas
+ * encore dans la base. Créé en brouillon (« Szkic », pas en boutique) avec son
+ * EAN, son nom, sa catégorie et, s'il est donné, son prix brut : la photo et la
+ * description se complètent ensuite dans Produkty. Même identifiant et même
+ * adresse que la création depuis Produkty (wsm_slug_libre).
+ * @return array{0:string,1:?string} [id du produit, erreur en polonais]
+ */
+function wsm_ean_nowy_produkt(PDO $pdo, string $nazwa, int $kat, string $cena, string $saisie, string $actor = ''): array {
+    $nazwa = trim($nazwa);
+    if ($nazwa === '') return ['', 'podaj nazwę produktu'];
+    if (mb_strlen($nazwa) > WSM_PRODUCT_NAME_MAX) return ['', 'nazwa może mieć najwyżej ' . WSM_PRODUCT_NAME_MAX . ' znaków'];
+    $st = $pdo->prepare("SELECT 1 FROM wsm_categories WHERE id = ?");
+    $st->execute([$kat]);
+    if ($kat <= 0 || !$st->fetchColumn()) return ['', 'wybierz kategorię'];
+    $prix = 0.0;
+    if (trim($cena) !== '') {
+        $pr = wsm_parse_price($cena);
+        if ($pr === null || $pr < 0) return ['', 'nie rozumiem tej ceny'];
+        $prix = $pr;
+    }
+    [$ean, $err] = wsm_ean_check($pdo, $saisie, '');
+    if ($err !== null) return ['', $err];
+    if ($ean === '') return ['', 'pusty kod'];
+    $id = wsm_slug_libre($pdo, wsm_slugify($nazwa, 'produkt'), 'id');
+    $slug = wsm_slug_libre($pdo, wsm_slugify($nazwa, $id), 'slug', $id);
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare("INSERT INTO wsm_products
+                (id, category_id, nom, slug, statut, active, shop_visible, sort_order, rodzaj, ean, prix)
+                VALUES (?,?,?,?,'Szkic',1,0,?,'towar',?,?)")
+            ->execute([$id, $kat, $nazwa, $slug,
+                       (int) $pdo->query("SELECT COALESCE(MAX(sort_order),0)+1 FROM wsm_products")->fetchColumn(), $ean, $prix]);
+        $insT = $pdo->prepare("INSERT INTO wsm_shop_i18n (lang, k, v) VALUES (?,?,?)");
+        foreach (['name' => $nazwa, 'subtitle' => '', 'desc' => ''] as $suf => $v) {
+            try { $insT->execute([defined('WSM_CMS_BASE_LANG') ? WSM_CMS_BASE_LANG : 'pl', 'product.' . $id . '.' . $suf, $v]); }
+            catch (Throwable $e) { /* déjà là */ }
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('ean: nowy produkt: ' . $e->getMessage());
+        return ['', 'nie udało się utworzyć produktu'];
+    }
+    if (function_exists('wsm_audit')) wsm_audit($pdo, $actor, 'Dodanie produktu (skaner)', 'wsm_products ' . $id . ' EAN ' . $ean, 'Sieć');
+    return [$id, null];
+}
+
 /** schema.org : gtin8, gtin12, gtin13 ou gtin14 selon la longueur. */
 function wsm_ean_schema_key(string $ean): string {
     return 'gtin' . (in_array(strlen($ean), [8, 12, 13, 14], true) ? strlen($ean) : 13);

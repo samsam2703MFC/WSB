@@ -28,6 +28,22 @@ $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 $order = $id > 0 ? wsm_order_by_id($pdo, $id) : null;
 $actor = (string) ($me['nom'] ?? '');
 
+// Un code inconnu scanné en emballant : c'est l'un des produits de la commande
+// qui n'avait pas encore d'EAN. Il reçoit le code (une fois pour toutes).
+if ($order && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_POST['akcja'] ?? '') === 'przypisz') {
+    header('Content-Type: application/json');
+    if (!console_csrf_ok()) { echo json_encode(['err' => 'Formularz wygasł — odśwież stronę.']); exit; }
+    if (!$isAdmin) { echo json_encode(['err' => 'Tylko rola Centrala może przypisywać kody.']); exit; }
+    $pid = (string) ($_POST['product_id'] ?? '');
+    $wZam = false;
+    foreach ($order['items'] as $it) if ((string) $it['product_id'] === $pid) $wZam = true;
+    if (!$wZam) { echo json_encode(['err' => 'tego produktu nie ma w zamówieniu']); exit; }
+    $err = wsm_ean_assign($pdo, $pid, (string) ($_POST['ean'] ?? ''), $actor);
+    if ($err !== null) { echo json_encode(['err' => $err], JSON_UNESCAPED_UNICODE); exit; }
+    echo json_encode(['ok' => true, 'ean' => wsm_ean_norm((string) $_POST['ean'])]);
+    exit;
+}
+
 if ($order && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['zakoncz'])) {
     if (!console_csrf_ok()) { http_response_code(400); exit('Bad request.'); }
     if (!$isAdmin) { header('Location: pakowanie.php?id=' . $id . '&k=err&ok=' . rawurlencode('Brak uprawnień do zapisu pakowania.'), true, 303); exit; }
@@ -100,6 +116,9 @@ console_head('Pakowanie', $me, <<<'CSS'
   .poz.swiezy { outline: 2px solid var(--success); }
   .poz .reka { display: flex; gap: 4px; }
   .poz .reka button { min-width: 38px; }
+  .przyp { margin-top: 8px; display: none; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .przyp.on { display: flex; }
+  .przyp .muted { flex-basis: 100%; font-size: 13px; }
   .komunikat { margin-top: 12px; padding: 12px 14px; border-radius: 10px; font-weight: 600; display: none; }
   .komunikat.ok { display: block; background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
   .komunikat.err { display: block; background: color-mix(in srgb, var(--danger) 13%, transparent); color: var(--danger); }
@@ -130,6 +149,7 @@ CSS);
   </div>
   <video id="wideo" playsinline muted></video>
   <div class="komunikat" id="kom" aria-live="assertive"></div>
+  <div class="przyp" id="przyp"><span class="muted">To nowy kod? Jeśli to jeden z tych produktów, przypisz go — następnym razem skaner go rozpozna:</span></div>
   <div class="pasek"><i id="pasek"></i></div>
   <div class="muted" id="stan" style="font-size:13px"></div>
 
@@ -177,6 +197,33 @@ CSS);
     } catch (e) {}
     if (navigator.vibrate) navigator.vibrate(ok ? 40 : [150, 70, 150]);
   }
+  var ADMIN = <?= $isAdmin ? 'true' : 'false' ?>, CSRF = <?= json_encode(console_csrf()) ?>, ID = <?= (int) $order['id'] ?>;
+  var przyp = document.getElementById('przyp');
+  function przypisanie(kod) {
+    przyp.querySelectorAll('button').forEach(function (b) { b.remove(); });
+    var bez = poz.filter(function (p) { return !p.ean && p.towar; });
+    if (!ADMIN || !bez.length) { przyp.classList.remove('on'); return; }
+    bez.forEach(function (p) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = '🔗 ' + p.nom;
+      b.addEventListener('click', function () {
+        var fd = new FormData(); fd.append('_t', CSRF); fd.append('id', ID); fd.append('akcja', 'przypisz');
+        fd.append('product_id', p.pid); fd.append('ean', kod);
+        fetch('pakowanie.php?id=' + ID, { method: 'POST', body: fd, credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j.err) { bip(false); mow(false, '✕ ' + j.err); return; }
+            p.ean = j.ean; warianty(p.ean).forEach(function (w) { poKodzie[w] = p; });
+            var mt = document.querySelector('.poz[data-pid="' + CSS.escape(p.pid) + '"] .mt');
+            if (mt) mt.textContent = 'EAN ' + p.ean + (p.sku ? ' · ' + p.sku : '');
+            przyp.classList.remove('on');
+            skan(kod); pole.focus();
+          })
+          .catch(function () { bip(false); mow(false, 'Błąd połączenia — spróbuj jeszcze raz.'); });
+      });
+      przyp.appendChild(b);
+    });
+    przyp.classList.add('on');
+  }
   function mow(ok, t) { kom.className = 'komunikat ' + (ok ? 'ok' : 'err'); kom.textContent = t; }
 
   function rysuj(swiezy) {
@@ -204,7 +251,13 @@ CSS);
     var kod = (raw || '').replace(/\D+/g, '');
     if (!kod) return;
     var p = poKodzie[kod];
-    if (!p) { bip(false); mow(false, '✕ Kod ' + kod + ' — tego produktu NIE MA w zamówieniu. Odłóż go.'); return; }
+    przyp.classList.remove('on');
+    if (!p) {
+      bip(false);
+      var mozna = ADMIN && poz.some(function (x) { return !x.ean && x.towar; });
+      mow(false, '✕ Kod ' + kod + ' nie pasuje do żadnego produktu z zamówienia.' + (mozna ? '' : ' Odłóż go.'));
+      przypisanie(kod); return;
+    }
     if (n[p.pid] >= p.qty) { n[p.pid]++; bip(false); mow(false, '✕ ' + p.nom + ': już jest ' + p.qty + ' szt. — to o jeden za dużo.'); rysuj(p.pid); return; }
     n[p.pid]++; bip(true);
     mow(true, '✓ ' + p.nom + ' — ' + n[p.pid] + '/' + p.qty + (n[p.pid] === p.qty ? ' (komplet)' : ''));

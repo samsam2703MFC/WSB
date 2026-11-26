@@ -16,8 +16,10 @@
 //  moment de la commande. Leur contrôle au scanner est l'emballage
 //  (pakowanie.php), qui vérifie qu'on met les bons produits dans le colis.
 //
-//  Un code inconnu se rattache au produit sur place (« Przypisz kod ») : la
-//  fois suivante, le scanner le reconnaît.
+//  Un code inconnu se rattache sur place à un produit de la base (recherche
+//  par nom ou SKU, ceux sans EAN d'abord), ou devient un produit NOUVEAU
+//  (brouillon, pas en boutique, avec son EAN) : la fois suivante, le scanner
+//  le reconnaît.
 //
 //  Un lecteur USB ou Bluetooth « tape » le code puis Entrée : le champ de scan
 //  garde le focus. Sur téléphone, « Aparat » lit le code avec la caméra
@@ -40,7 +42,7 @@ $actor = (string) ($me['nom'] ?? '');
 
 // ─── Les écritures ───────────────────────────────────────────────────────────
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-    $json = ($_POST['akcja'] ?? '') === 'przypisz';
+    $json = in_array($_POST['akcja'] ?? '', ['przypisz', 'nowy'], true);
     if (!console_csrf_ok()) {
         if ($json) { header('Content-Type: application/json'); echo json_encode(['err' => 'Formularz wygasł — odśwież stronę.']); exit; }
         http_response_code(400); exit('Bad request.');
@@ -58,6 +60,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $err = wsm_ean_assign($pdo, $pid, (string) ($_POST['ean'] ?? ''), $actor);
         if ($err !== null) { echo json_encode(['err' => $err]); exit; }
         echo json_encode(['ok' => true, 'produkt' => wsm_ean_find($pdo, (string) $_POST['ean'])]);
+        exit;
+    }
+
+    // Un code inconnu qui est un produit NOUVEAU : créé en brouillon avec son EAN.
+    if ($akcja === 'nowy') {
+        header('Content-Type: application/json');
+        [$pid, $err] = wsm_ean_nowy_produkt($pdo, (string) ($_POST['nazwa'] ?? ''), (int) ($_POST['category_id'] ?? 0),
+                                            (string) ($_POST['cena'] ?? ''), (string) ($_POST['ean'] ?? ''), $actor);
+        if ($err !== null) { echo json_encode(['err' => $err]); exit; }
+        $p = wsm_ean_find($pdo, (string) $_POST['ean']);
+        echo json_encode(['ok' => true, 'produkt' => ['id' => $pid, 'nom' => $p['nom'] ?? '', 'ean' => $p['ean'] ?? '',
+                          'sku' => '', 'stock' => 0, 'active' => 1]], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -120,6 +134,7 @@ foreach ($pdo->query("SELECT id, nom, ean, sku, stock, image_url, active FROM ws
     $produits[] = ['id' => (string) $r['id'], 'nom' => (string) $r['nom'], 'ean' => (string) ($r['ean'] ?? ''),
                    'sku' => (string) ($r['sku'] ?? ''), 'stock' => (int) $r['stock'], 'active' => (int) $r['active']];
 }
+$kategorie = $pdo->query("SELECT id, name FROM wsm_categories WHERE active = 1 ORDER BY sort_order, name")->fetchAll();
 $bezEan = count(array_filter($produits, fn($p) => $p['active'] && $p['ean'] === ''));
 
 console_head('Skaner', $me, <<<'CSS'
@@ -137,9 +152,24 @@ console_head('Skaner', $me, <<<'CSS'
   .karta .nm { font-weight: 700; font-size: 17px; color: var(--text-strong); }
   .karta .mt { font: 13px var(--font-mono); color: var(--text-muted); margin-top: 4px; }
   .karta .big { font: 700 28px/1 var(--font-display); margin-top: 8px; }
-  .przyp { display: none; margin-top: 10px; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .przyp.on { display: flex; }
-  .przyp select { min-width: 260px; flex: 1; }
+  .przyp { display: none; margin-top: 12px; }
+  .przyp.on { display: block; }
+  .przyp .zakl { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .przyp .zakl button { flex: 1 1 160px; }
+  .przyp .zakl button.on { background: var(--brand); border-color: var(--brand); color: var(--paper-50); }
+  .przyp input[type=search], .przyp input[type=text], .przyp select { width: 100%; min-width: 0; box-sizing: border-box; }
+  .wyniki { list-style: none; margin: 8px 0 0; padding: 0; max-height: 300px; overflow: auto;
+            border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--surface, #fff); }
+  .wyniki li button { display: flex; width: 100%; justify-content: space-between; gap: 10px; text-align: left;
+            border: 0; border-bottom: 1px solid var(--border-subtle); border-radius: 0; padding: 11px 12px;
+            background: transparent; font-weight: 500; }
+  .wyniki li:last-child button { border-bottom: 0; }
+  .wyniki li button:hover, .wyniki li button:focus-visible { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+  .wyniki .wy-m { font: 12px var(--font-mono); color: var(--text-muted); white-space: nowrap; }
+  .wyniki .wy-zero { padding: 11px 12px; color: var(--text-muted); font-size: 14px; }
+  .nowy-f { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .nowy-f .cala { grid-column: 1 / -1; }
+  @media (max-width: 560px) { .nowy-f { grid-template-columns: 1fr; } }
   table.linie td, table.linie th { padding: 8px; vertical-align: middle; }
   table.linie input { width: 90px; text-align: right; }
   table.linie .code { font-size: 12px; color: var(--text-muted); }
@@ -174,13 +204,26 @@ CSS);
     <div class="mt" id="k-mt"></div>
     <div class="big" id="k-big"></div>
     <div class="przyp" id="przyp">
-      <select id="przyp-pid" aria-label="Produkt dla tego kodu">
-        <option value="">— wybierz produkt dla tego kodu —</option>
-        <?php foreach ($produits as $p): if (!$p['active']) continue; ?>
-        <option value="<?= h($p['id']) ?>"><?= h($p['nom']) ?><?= $p['ean'] !== '' ? ' (ma już EAN ' . h($p['ean']) . ')' : '' ?></option>
-        <?php endforeach; ?>
-      </select>
-      <button type="button" class="primary" id="przyp-ok">Przypisz kod</button>
+      <div class="zakl" role="tablist">
+        <button type="button" id="zk-ist" class="on" role="tab">🔗 Istniejący produkt</button>
+        <button type="button" id="zk-now" role="tab">＋ Nowy produkt</button>
+      </div>
+      <div id="pn-ist">
+        <input type="search" id="szukaj" autocomplete="off" placeholder="Szukaj produktu: nazwa albo SKU…" aria-label="Szukaj produktu">
+        <ul class="wyniki" id="wyniki"></ul>
+      </div>
+      <div id="pn-now" hidden>
+        <div class="nowy-f">
+          <label class="field cala"><span>Nazwa produktu</span><input type="text" id="nw-nazwa" maxlength="160" autocomplete="off"></label>
+          <label class="field"><span>Kategoria</span>
+            <select id="nw-kat"><option value="">— wybierz —</option>
+              <?php foreach ($kategorie as $kt): ?><option value="<?= (int) $kt['id'] ?>"><?= h((string) $kt['name']) ?></option><?php endforeach; ?>
+            </select></label>
+          <label class="field"><span>Cena brutto (zł) — opcjonalnie</span><input type="text" id="nw-cena" inputmode="decimal" placeholder="0,00"></label>
+        </div>
+        <p class="muted" style="font-size:13px;margin:6px 0 8px">Produkt powstaje jako szkic (niewidoczny w sklepie) z tym kodem EAN. Zdjęcie i opis uzupełnisz w Produkty.</p>
+        <button type="button" class="primary" id="nw-ok">Utwórz produkt z kodem <span id="nw-kod"></span></button>
+      </div>
     </div>
   </div>
 </div>
@@ -264,8 +307,8 @@ CSS);
     var p = poKodzie[kod];
     if (!p) {
       ostatniNieznany = kod; bip(false);
-      pokaz(false, 'Nieznany kod ' + kod, 'Żaden produkt nie ma tego EAN.' + (ADMIN ? ' Wybierz produkt i przypisz kod — następnym razem skaner go rozpozna.' : ''), '');
-      if (ADMIN) przyp.classList.add('on');
+      pokaz(false, 'Nieznany kod ' + kod, 'Żaden produkt nie ma tego EAN.' + (ADMIN ? ' Przypisz go do produktu z bazy albo dodaj nowy produkt — następnym razem skaner go rozpozna.' : ' Poproś Centralę o przypisanie kodu.'), '');
+      if (ADMIN) otworzPrzypisanie(kod);
       return;
     }
     bip(true);
@@ -343,26 +386,83 @@ CSS);
     if (!confirm((TRYB === 'przyjecie' ? 'Przyjąć na stan ' : 'Zdjąć ze stanu ') + n + ' szt. (' + linie.length + ' produktów)?')) e.preventDefault();
   });
 
-  // Rattacher un code inconnu à un produit.
-  document.getElementById('przyp-ok').addEventListener('click', function () {
-    var pid = document.getElementById('przyp-pid').value;
-    if (!pid || !ostatniNieznany) return;
-    var fd = new FormData(); fd.append('_t', CSRF); fd.append('akcja', 'przypisz'); fd.append('tryb', TRYB);
-    fd.append('product_id', pid); fd.append('ean', ostatniNieznany);
+  // Un code inconnu : le rattacher à un produit de la base, ou créer le produit.
+  var szukaj = document.getElementById('szukaj'), wyniki = document.getElementById('wyniki');
+  function zakladka(nowy) {
+    document.getElementById('zk-ist').classList.toggle('on', !nowy);
+    document.getElementById('zk-now').classList.toggle('on', nowy);
+    document.getElementById('pn-ist').hidden = nowy;
+    document.getElementById('pn-now').hidden = !nowy;
+    (nowy ? document.getElementById('nw-nazwa') : szukaj).focus();
+  }
+  document.getElementById('zk-ist').addEventListener('click', function () { zakladka(false); });
+  document.getElementById('zk-now').addEventListener('click', function () { zakladka(true); });
+  function bezAkc(t) { return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l'); }
+  function listuj() {
+    var q = bezAkc(szukaj.value.trim()).split(/\s+/).filter(Boolean);
+    var lista = produkty.filter(function (p) {
+      if (!p.active) return false;
+      var t = bezAkc(p.nom + ' ' + p.sku + ' ' + p.ean);
+      return q.every(function (w) { return t.indexOf(w) >= 0; });
+    }).sort(function (a, b) { return (a.ean ? 1 : 0) - (b.ean ? 1 : 0) || a.nom.localeCompare(b.nom, 'pl'); });
+    wyniki.innerHTML = '';
+    if (!lista.length) {
+      var z = document.createElement('li'); z.className = 'wy-zero';
+      z.textContent = 'Nic nie znaleziono — dodaj go jako nowy produkt.';
+      wyniki.appendChild(z); return;
+    }
+    lista.slice(0, 40).forEach(function (p) {
+      var li = document.createElement('li'), bt = document.createElement('button');
+      bt.type = 'button';
+      var n = document.createElement('span'); n.textContent = p.nom;
+      var m = document.createElement('span'); m.className = 'wy-m';
+      m.textContent = p.ean ? 'ma EAN ' + p.ean : (p.sku || 'bez EAN');
+      bt.appendChild(n); bt.appendChild(m);
+      bt.addEventListener('click', function () {
+        if (p.ean && !confirm('„' + p.nom + '” ma już kod ' + p.ean + '. Zastąpić go kodem ' + ostatniNieznany + '?')) return;
+        wyslij({ akcja: 'przypisz', product_id: p.id });
+      });
+      li.appendChild(bt); wyniki.appendChild(li);
+    });
+  }
+  szukaj.addEventListener('input', listuj);
+  szukaj.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+  document.getElementById('nw-ok').addEventListener('click', function () {
+    var nazwa = document.getElementById('nw-nazwa').value.trim(), kat = document.getElementById('nw-kat').value;
+    if (!nazwa) { document.getElementById('nw-nazwa').focus(); return; }
+    if (!kat) { document.getElementById('nw-kat').focus(); return; }
+    wyslij({ akcja: 'nowy', nazwa: nazwa, category_id: kat, cena: document.getElementById('nw-cena').value });
+  });
+  function otworzPrzypisanie(kod) {
+    document.getElementById('nw-kod').textContent = kod;
+    document.getElementById('nw-nazwa').value = ''; document.getElementById('nw-cena').value = '';
+    szukaj.value = ''; listuj();
+    przyp.classList.add('on');
+    zakladka(false);
+  }
+  function wyslij(pola) {
+    if (!ostatniNieznany) return;
+    var fd = new FormData(); fd.append('_t', CSRF); fd.append('tryb', TRYB); fd.append('ean', ostatniNieznany);
+    Object.keys(pola).forEach(function (k) { fd.append(k, pola[k]); });
     fetch('skaner.php', { method: 'POST', body: fd, credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        if (j.err) { bip(false); pokaz(false, 'Nie przypisano', j.err, ''); przyp.classList.add('on'); return; }
-        produkty.forEach(function (p) { if (p.id === pid) p.ean = j.produkt.ean; });
+        if (j.err) { bip(false); document.getElementById('k-mt').textContent = '✕ ' + j.err; return; }
+        if (pola.akcja === 'nowy') produkty.push(j.produkt);
+        else produkty.forEach(function (p) { if (p.id === pola.product_id) p.ean = j.produkt.ean; });
         indeks();
         var k = ostatniNieznany; ostatniNieznany = '';
         skan(k);
+        if (pola.akcja === 'nowy') {
+          var mt = document.getElementById('k-mt');
+          var l = document.createElement('a'); l.href = 'produkty.php?id=' + encodeURIComponent(j.produkt.id);
+          l.textContent = ' · nowy szkic — uzupełnij zdjęcie i opis →'; mt.appendChild(l);
+        }
         pole.focus();
       })
       .catch(function () { bip(false); pokaz(false, 'Błąd połączenia', 'Spróbuj jeszcze raz.', ''); });
-  });
+  }
 
-  // L'appareil photo : seulement là où le navigateur sait lire un code-barres.
   // L'appareil photo du téléphone (kamera.js) : photo du code partout, vidéo en direct en https.
   wsmKamera({ zdjecie: document.getElementById('zdjecie'), naZywo: document.getElementById('na-zywo'),
               wideo: document.getElementById('wideo'),
