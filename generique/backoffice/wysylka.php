@@ -218,6 +218,7 @@ if ($detail) {
             <?php endif; ?>
           </span>
           <span class="droite">
+            <a href="pakowanie.php?id=<?= (int) $o['id'] ?>" onclick="event.stopPropagation()">📦 Pakuj</a><br>
             <?= h(pln((int) $o['total_gross'])) ?><br>
             <?= number_format((int) $o['weight_g'] / 1000, 2, ',', ' ') ?> kg
           </span>

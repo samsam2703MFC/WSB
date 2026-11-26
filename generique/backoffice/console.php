@@ -343,6 +343,7 @@ function console_sections(?array $me = null): array {
         'Paczki' => [
             'wysylka.php' => 'Wysyłka',
             'magazyn.php' => 'Magazyn',
+            'skaner.php'  => 'Skaner (EAN)',
             'przyjecie.php' => 'Faktury zakupu',
         ],
 

@@ -192,7 +192,9 @@ function seo_product(array $p, string $lang, string $defaut = 'pl', array $extra
     ];
     if (($p['desc'] ?? '') !== '')  $d['description'] = (string) $p['desc'];
     if (($p['sku'] ?? '') !== '')   $d['sku'] = (string) $p['sku'];
-    if (($p['ean'] ?? '') !== '')   $d['gtin13'] = (string) $p['ean'];
+    // gtin8 / gtin12 / gtin13 / gtin14 selon la longueur : un EAN-8 déclaré en
+    // gtin13 est refusé par Google Merchant.
+    if (($p['ean'] ?? '') !== '')   $d['gtin' . (in_array(strlen((string) $p['ean']), [8, 12, 13, 14], true) ? strlen((string) $p['ean']) : 13)] = (string) $p['ean'];
     if (!empty($p['brand']['name'])) {
         $d['brand'] = ['@type' => 'Brand', 'name' => (string) $p['brand']['name']];
     }

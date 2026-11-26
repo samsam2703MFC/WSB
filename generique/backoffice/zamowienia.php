@@ -504,6 +504,7 @@ console_crumbs($detail
       <form method="post">
         <input type="hidden" name="_t" value="<?= h($csrf) ?>">
         <input type="hidden" name="id" value="<?= (int) $o['id'] ?>">
+        <a class="code" href="pakowanie.php?id=<?= (int) $o['id'] ?>">📦 Pakowanie (skaner) →</a>
         <?php if ($wzRow): ?>
         <a class="code" href="magazyn.php?dok=<?= (int) $wzRow['id'] ?>">WZ <?= h((string) $wzRow['number']) ?> →</a>
         <?php else: ?>

@@ -23,6 +23,7 @@ require_once $API . '/brand.php';
 // le reste du domaine produit, pas dans cet écran : le panneau Kategorie et la
 // fiche produit l'appellent tous les deux.
 require_once $API . '/commerce.php';
+require_once $API . '/ean.php';    // le code EAN : clé du produit au scanner (magasin, emballage)
 
 /** La table produits stocke des złotys, pas des grosze : conversion locale. */
 function zl($v): string { return number_format((float) $v, 2, ',', "\u{202F}") . "\u{202F}zł"; }
@@ -357,6 +358,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 if ($n < 0 || $n > $max) { $fieldErrors[$k] = 'od 0 do ' . $max; continue; }
                 $mesures[$k] = $n;
             }
+            // ── LE CODE EAN ET LE CODE INTERNE (SKU) ─────────────────────
+            // Demande du magasin (26/11/2026) : le scanner reconnaît le produit
+            // par son EAN — à la réception, à l'emballage, à la sortie. Un code
+            // déjà porté par une autre fiche, ou à la clé de contrôle fausse,
+            // est refusé ici plutôt que découvert devant le scanner.
+            $eanNew = null; $skuNew = null;
+            if (isset($_POST['ean'])) {
+                [$eanNew, $eanErr] = wsm_ean_check($pdo, (string) $_POST['ean'], $id);
+                if ($eanErr !== null) $fieldErrors['ean'] = $eanErr;
+            }
+            if (isset($_POST['sku'])) $skuNew = mb_substr(trim((string) $_POST['sku']), 0, 64);
             // ── LES VALEURS NUTRITIVES POUR 100 g ─────────────────────────
             // Des chiffres, plus une phrase perdue dans la description. Le
             // témoin « nutri__on » dit que la fiche les portait : sans lui, un
@@ -444,6 +456,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                         $set[] = 'brand_id = ?'; $vals[] = $bid > 0 ? $bid : null;
                     }
                     foreach ($mesures as $k => $v) { $set[] = "$k = ?"; $vals[] = $v; }
+                    if ($eanNew !== null) { $set[] = 'ean = ?'; $vals[] = $eanNew; }
+                    if ($skuNew !== null) { $set[] = 'sku = ?'; $vals[] = $skuNew; }
                     if ($nutri !== null) { $set[] = 'nutrition = ?'; $vals[] = wsm_nutrition_encode($nutri); }
                     // Le gabarit se DÉDUIT des dimensions : le laisser en
                     // arrière ferait payer un tarif qui ne correspond plus au
@@ -891,6 +905,18 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Produkty' => null]);
               <small class="err"><?= h($fieldErrors['weight_g']) ?></small>
             <?php else: ?><small>Waga produktu. Wchodzi w wagę paczki.</small><?php endif; ?>
           </label>
+          <label class="f">Kod EAN (kod kreskowy)
+            <input type="text" name="ean" value="<?= h($vv('ean', (string) ($p['ean'] ?? ''))) ?>" inputmode="numeric"
+                   maxlength="20" placeholder="5901234123457" autocomplete="off" data-skaner<?= $isAdmin ? '' : ' disabled' ?>>
+            <?php if (isset($fieldErrors['ean']) && $open): ?>
+              <small class="err"><?= h($fieldErrors['ean']) ?></small>
+            <?php else: ?><small>Wpisz albo zeskanuj kod z opakowania. Po nim magazyn rozpoznaje produkt przy przyjęciu, pakowaniu i wydaniu; klient widzi go na stronie produktu.</small><?php endif; ?>
+          </label>
+          <label class="f">Kod wewnętrzny (SKU)
+            <input type="text" name="sku" value="<?= h($vv('sku', (string) ($p['sku'] ?? ''))) ?>" maxlength="64"
+                   placeholder="MS-0001"<?= $isAdmin ? '' : ' disabled' ?>>
+            <small>Twój własny kod — na dokumentach magazynowych i listach do pakowania.</small>
+          </label>
           <label class="f">Wymiary (mm) — dł. × szer. × wys.
             <span class="wym">
               <input type="text" name="length_mm" value="<?= h($vv('length_mm', (string) (int) ($p['length_mm'] ?? 0))) ?>"<?= $isAdmin ? '' : ' disabled' ?>>
@@ -1185,4 +1211,11 @@ $editB = isset($_GET['marka']) ? wsm_brand($pdo, (int) $_GET['marka']) : null;
   </form>
   <?php endif; ?>
 </div>
+<script>
+// Un lecteur de codes-barres « tape » le code puis Entrée : dans le champ EAN,
+// Entrée ne doit pas enregistrer toute la fiche.
+document.querySelectorAll('input[data-skaner]').forEach(function (i) {
+  i.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+});
+</script>
 <?php console_foot();
