@@ -206,6 +206,7 @@ case "$ACTION" in
     "$W" katalog "$BOUTIQUE"
     ;;
   traefik-info) "$W" traefik-info ;;
+  https-ip) [ -n "$IP" ] || { echo "adresse IP inconnue" >&2; exit 1; }; "$W" https-ip "$IP" ;;
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;
   retour)   "$W" retour "$BOUTIQUE" ;;

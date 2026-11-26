@@ -59,6 +59,7 @@ GARDER_VERSIONS="${GARDER_VERSIONS:-8}"
 # wsb-db derrière le Traefik du serveur (wsm docker-init écrit MODE=docker).
 MODE="${MODE:-hote}"
 DK="$RACINE/docker"
+HTTPS_IP_OK=/etc/wsm/https-ip.ok
 SECRETS=/etc/wsm                     # hors de /srv/webshops : jamais monté dans le conteneur web
 
 dire()   { printf '  %s\n' "$*"; }
@@ -334,6 +335,11 @@ ip_sites_ecrire() {
       if [ -f "$BOUT/siege/config.php" ]; then
         printf '    <Directory %s/admin>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.php\n' "$r"
         printf '        SetEnv WSM_CONFIG_FILE %s/siege/config.php\n        SetEnv WSM_DATA_DIR    %s/siege/data\n        SetEnv WSM_MEDIA_DIR   %s/siege/media\n    </Directory>\n' "$BOUT" "$BOUT" "$BOUT"
+      fi
+      # Le défi Let's Encrypt du certificat de l'IP (wsm https-ip).
+      if [ -d "$RACINE/acme/.well-known/acme-challenge" ]; then
+        printf '    Alias /.well-known/acme-challenge/ %s/acme/.well-known/acme-challenge/\n' "$RACINE"
+        printf '    <Directory %s/acme/.well-known/acme-challenge>\n        Options -Indexes\n        AllowOverride None\n        Require all granted\n        php_admin_flag engine off\n    </Directory>\n' "$RACINE"
       fi
       # « /szoko » et « /szoko/ » mènent à sa vitrine ; la racine de l'IP reste à ce qui la sert déjà.
       local liste; liste=$(for b in $(boutiques_ip); do chemin_ip "$b"; done | paste -sd'|')
@@ -736,6 +742,16 @@ compose_ecrire() {
           "traefik.http.routers.wsb-$b-ips.priority=100" "traefik.http.routers.wsb-$b-ips.tls=true"
           "traefik.http.routers.wsb-$b-ips.service=wsb")
       IP_SLASH=1
+      # Certificat de l'IP en place (wsm https-ip) : la console s'ouvre en https —
+      # le navigateur n'autorise la caméra en direct que là. La vitrine reste en http.
+      if [ -f "$HTTPS_IP_OK" ]; then
+        local pb="PathPrefix(\`/backoffice\`)"
+        for bb in $(boutiques_ip); do pb+=" || PathPrefix(\`/$(chemin_ip "$bb")/backoffice\`)"; done
+        local rb="" ; for ip in $ips; do rb+="${rb:+ || }Host(\`$ip\`)"; done
+        L+=("traefik.http.routers.wsb-$b-ipbo.rule=($rb) && ($pb)" "traefik.http.routers.wsb-$b-ipbo.entrypoints=$EP_HTTP"
+            "traefik.http.routers.wsb-$b-ipbo.priority=110" "traefik.http.routers.wsb-$b-ipbo.service=wsb"
+            "traefik.http.routers.wsb-$b-ipbo.middlewares=wsb-https")
+      fi
     fi
     L+=("traefik.http.routers.wsb-$b.rule=$regle" "traefik.http.routers.wsb-$b.entrypoints=$EP_HTTPS"
         "traefik.http.routers.wsb-$b.tls=true" "traefik.http.routers.wsb-$b.service=wsb")
@@ -815,6 +831,116 @@ for f in ('/etc/traefik/traefik.yml', '/etc/traefik/traefik.yaml', '/traefik.yml
     except Exception: pass
 print('ports :', T['HostConfig'].get('PortBindings'))
 PY
+}
+
+# ---------------------------------------------------------------------------
+# HTTPS sur l'adresse IP (client, 26/11/2026 : « faire en sorte que le scan à la
+# caméra fonctionne » — la vidéo en direct n'est permise qu'en https). Let's
+# Encrypt délivre des certificats d'IP (profil « shortlived », 6 jours) ; certbot
+# ≥ 5.4 (snap) les obtient par le défi http-01, servi par wsb-web
+# ($RACINE/acme). Le Traefik du serveur (pas le nôtre) les reçoit par son dossier
+# de configuration dynamique : un routeur pour le défi, et le certificat comme
+# certificat par défaut (un navigateur n'envoie pas de SNI pour une IP).
+traefik_dyn_dir() {
+  local t; t=$(docker ps --format '{{.Names}} {{.Image}}' | awk '$2 ~ /traefik/ {print $1; exit}')
+  [ -n "$t" ] || return 1
+  python3 - "$t" <<'PY'
+import json, re, subprocess, sys
+T = json.loads(subprocess.check_output(['docker', 'inspect', sys.argv[1]]))[0]
+args = '\n'.join(T.get('Args') or [])
+m = re.search(r'--providers\.file\.directory=(\S+)', args)
+if not m: sys.exit(1)
+d = m.group(1).rstrip('/')
+for mt in T.get('Mounts') or []:
+    dst = (mt.get('Destination') or '').rstrip('/')
+    if mt.get('Type') == 'bind' and mt.get('RW') and (d == dst or d.startswith(dst + '/')):
+        print(mt['Source'].rstrip('/') + d[len(dst):], d); sys.exit(0)
+sys.exit(1)
+PY
+}
+
+cmd_https_ip() {
+  racine_seulement
+  dk_on || mourir "réservé au mode Docker"
+  local ip="${1:-}"
+  [[ "$ip" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || mourir "usage : wsm https-ip <adresse IP>"
+  titre "https sur l'adresse IP"
+  local dd; dd=$(traefik_dyn_dir) || mourir "Traefik sans dossier de configuration dynamique accessible"
+  local dyn="${dd%% *}" dync="${dd##* }"
+  dire "configuration dynamique de Traefik : $dyn"
+  local wr="$RACINE/acme"
+  install -d -m 755 "$wr/.well-known/acme-challenge"
+  cmd_ip >/dev/null
+  # Le défi passe avant celui de Traefik (même priorité maximale, règle plus longue).
+  cat > "$dyn/wsb-acme-ip.yml" <<YML
+# Écrit par wsm https-ip — le défi Let's Encrypt du certificat de $ip vers wsb-web.
+http:
+  routers:
+    wsb-acme-ip:
+      rule: "Host(\`$ip\`) && PathPrefix(\`/.well-known/acme-challenge/\`)"
+      entryPoints: [$(. "$DK/traefik.env"; echo "$EP_HTTP")]
+      priority: 9223372036854775807
+      service: wsb@docker
+YML
+  local jet; jet="wsm-test-$(openssl rand -hex 8)"; echo "$jet" > "$wr/.well-known/acme-challenge/$jet"; chmod 644 "$wr/.well-known/acme-challenge/$jet"
+  local lu="" i
+  for i in $(seq 1 15); do lu=$(curl -s --max-time 5 "http://$ip/.well-known/acme-challenge/$jet" || true); [ "$lu" = "$jet" ] && break; sleep 2; done
+  rm -f "$wr/.well-known/acme-challenge/$jet"
+  [ "$lu" = "$jet" ] || { rm -f "$dyn/wsb-acme-ip.yml"; mourir "Traefik garde le chemin du défi pour lui : le certificat de l'IP ne peut pas être validé par http-01"; }
+  dire "défi http-01 joignable ✓"
+  # certbot ≥ 5.4 (IP + webroot), par snap.
+  command -v snap >/dev/null || mourir "snap absent"
+  if snap list certbot >/dev/null 2>&1; then snap refresh certbot >/dev/null 2>&1 || true
+  else snap install --classic certbot >/dev/null || mourir "installation de certbot impossible"; fi
+  local cb=/snap/bin/certbot v; v=$("$cb" --version 2>&1 | awk '{print $2}')
+  dire "certbot $v"
+  printf '%s\n5.4\n' "$v" | sort -V | head -1 | grep -qx '5.4' || mourir "certbot $v : il faut 5.4 ou plus"
+  "$cb" certonly -n --agree-tos --register-unsafely-without-email --cert-name wsb-ip \
+    --preferred-profile shortlived --webroot -w "$wr" --ip-address "$ip" \
+    --deploy-hook "/usr/local/sbin/wsm https-ip-poser" 2>&1 | grep -v -i 'email' || true
+  [ -s /etc/letsencrypt/live/wsb-ip/fullchain.pem ] || mourir "certificat non délivré (voir ci-dessus)"
+  # Première fois : le crochet ne tourne qu'au renouvellement si le certificat existait déjà.
+  cmd_https_ip_poser
+  local c=000
+  for i in $(seq 1 15); do c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 "https://$ip/backoffice/login.php" || true); [ "$c" != 000 ] && break; sleep 2; done
+  [ "$c" != 000 ] || mourir "https://<IP> ne répond pas avec un certificat valide"
+  dire "https://<IP> : certificat valide ✓ (HTTP $c) — renouvellement automatique (snap.certbot.renew.timer)"
+  install -d -m 700 /etc/wsm; date -u +%FT%TZ > "$HTTPS_IP_OK"
+  cmd_ip >/dev/null
+  dire "la console par l'IP s'ouvre désormais en https"
+}
+
+# Crochet de certbot : le certificat (re)délivré → le dossier de Traefik.
+cmd_https_ip_poser() {
+  racine_seulement
+  local src="${RENEWED_LINEAGE:-/etc/letsencrypt/live/wsb-ip}"
+  [ -s "$src/fullchain.pem" ] && [ -s "$src/privkey.pem" ] || mourir "certificat absent : $src"
+  local dd; dd=$(traefik_dyn_dir) || mourir "dossier de Traefik introuvable"
+  local dyn="${dd%% *}" dync="${dd##* }"
+  install -d -m 700 "$dyn/wsb-ip"
+  install -m 644 "$src/fullchain.pem" "$dyn/wsb-ip/fullchain.pem.nouveau" && mv -f "$dyn/wsb-ip/fullchain.pem.nouveau" "$dyn/wsb-ip/fullchain.pem"
+  install -m 600 "$src/privkey.pem" "$dyn/wsb-ip/privkey.pem.nouveau" && mv -f "$dyn/wsb-ip/privkey.pem.nouveau" "$dyn/wsb-ip/privkey.pem"
+  # Le magasin « default » n'est déclaré qu'une fois : si un autre fichier le
+  # déclare déjà, on ajoute seulement le certificat (choisi alors par Traefik).
+  local autre; autre=$(grep -lE '^\s*stores:' "$dyn"/*.y*ml "$dyn"/*.toml 2>/dev/null | grep -v '/wsb-ip-tls.yml$' || true)
+  {
+    echo "# Écrit par wsm https-ip-poser — $(date -u +%FT%TZ) (chaque écriture recharge Traefik)."
+    echo "tls:"
+    if [ -z "$autre" ]; then
+      echo "  stores:"
+      echo "    default:"
+      echo "      defaultCertificate:"
+      echo "        certFile: $dync/wsb-ip/fullchain.pem"
+      echo "        keyFile: $dync/wsb-ip/privkey.pem"
+    else
+      echo "  certificates:"
+      echo "    - certFile: $dync/wsb-ip/fullchain.pem"
+      echo "      keyFile: $dync/wsb-ip/privkey.pem"
+    fi
+  } > "$dyn/wsb-ip-tls.yml.nouveau"
+  mv -f "$dyn/wsb-ip-tls.yml.nouveau" "$dyn/wsb-ip-tls.yml"
+  [ -z "$autre" ] || dire "⚠ magasin TLS « default » déjà déclaré ailleurs : certificat ajouté sans être celui par défaut"
+  dire "certificat de l'IP posé dans Traefik (expire : $(openssl x509 -enddate -noout -in "$src/fullchain.pem" | cut -d= -f2))"
 }
 
 cmd_docker_init() {
@@ -934,6 +1060,8 @@ case "$cmd" in
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
   docker-init) cmd_docker_init;;
   traefik-info) cmd_traefik_info;;
+  https-ip) cmd_https_ip "${1:-}";;
+  https-ip-poser) cmd_https_ip_poser;;
   siege) cmd_siege "$@";;
   siege-cle) cmd_siege_cle "${1:-}";;
   alias) cmd_alias "${1:-}" "${2-}";;
