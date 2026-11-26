@@ -2,16 +2,13 @@
  "_opis": "Catalogue de départ de MyCobotBuddy. Import : php migrate.php --import-katalog <ce fichier>. Rejouable. Prix INDICATIFS, à valider avant l'ouverture. Images : illustrations provisoires (zdjecia/src/*.svg), à remplacer par de vraies photos depuis la console.",
  "kategorie": [
   {
-   "nazwa": "Oprogramowanie (SaaS)",
+   "nazwa": "Coboty",
    "pod": [
     {
-     "nazwa": "Monitoring i analityka"
+     "nazwa": "Coboty przemysłowe"
     },
     {
-     "nazwa": "Programowanie offline"
-    },
-    {
-     "nazwa": "Licencje i wsparcie"
+     "nazwa": "Zestawy startowe"
     }
    ]
   },
@@ -33,19 +30,50 @@
    ]
   },
   {
-   "nazwa": "Szkolenia",
+   "nazwa": "Akcesoria na zamówienie",
    "pod": [
     {
-     "nazwa": "Szkolenia podstawowe"
+     "nazwa": "Chwytaki na zamówienie"
     },
     {
-     "nazwa": "Szkolenia zaawansowane"
+     "nazwa": "Stanowiska i osłony"
+    }
+   ]
+  },
+  {
+   "nazwa": "SaaS dla cobotów",
+   "pod": [
+    {
+     "nazwa": "Monitoring i analityka"
     },
     {
-     "nazwa": "Szkolenia online"
+     "nazwa": "Programowanie offline"
+    },
+    {
+     "nazwa": "Licencje i wsparcie"
+    }
+   ]
+  },
+  {
+   "nazwa": "Integracja na zamówienie",
+   "pod": [
+    {
+     "nazwa": "Audyt i projekt"
+    },
+    {
+     "nazwa": "Wdrożenie i uruchomienie"
+    },
+    {
+     "nazwa": "Szkolenia"
     }
    ]
   }
+ ],
+ "kategorie_wylacz": [
+  "Oprogramowanie (SaaS)",
+  "Szkolenia podstawowe",
+  "Szkolenia zaawansowane",
+  "Szkolenia online"
  ],
  "dostawa": [
   {
@@ -66,6 +94,26 @@
      "note": "Licence and access details are sent by e-mail; we confirm the training date within 1 business day."
     }
    }
+  },
+  {
+   "id": "paleta_cobot",
+   "carrier": "",
+   "kind": "adres",
+   "cena_netto": 490,
+   "vat": 0.23,
+   "kraje": "PL",
+   "kolejnosc": 2,
+   "min_waga_g": 20000,
+   "teksty": {
+    "pl": {
+     "label": "Transport paletowy z wniesieniem",
+     "note": "Coboty i ciężkie akcesoria dowozimy na palecie, z wniesieniem. Termin uzgadniamy telefonicznie."
+    },
+    "en": {
+     "label": "Pallet delivery with carry-in",
+     "note": "Cobots and heavy accessories are delivered on a pallet and carried in. We agree the date by phone."
+    }
+   }
   }
  ],
  "rabaty_wagowe": false,
@@ -78,10 +126,10 @@
   "pl": {
    "brand": "MyCobotBuddy",
    "meta.title": "MyCobotBuddy — oprogramowanie, akcesoria i szkolenia dla cobotów",
-   "meta.desc": "Monitoring floty cobotów, programowanie offline, chwytaki, skanery bezpieczeństwa i szkolenia z robotyki współpracującej.",
+   "meta.desc": "Coboty, akcesoria, rozwiązania na zamówienie, oprogramowanie SaaS i integracja stanowisk zrobotyzowanych.",
    "footer.tagline": "Wszystko, czego potrzebuje Twój cobot",
    "catalog.title": "Oferta",
-   "catalog.sub": "Oprogramowanie, akcesoria i szkolenia — wszystko dla cobotów w jednym miejscu.",
+   "catalog.sub": "Coboty, akcesoria, rozwiązania na zamówienie, oprogramowanie i integracja — wszystko w jednym miejscu.",
    "promise.title": "Dlaczego MyCobotBuddy.",
    "promise.sub": "Jeden partner od wyboru chwytaka po szkolenie zespołu.",
    "promise.1.t": "Wysyłka w 24 h",
@@ -101,7 +149,7 @@
    "brand": "MyCobotBuddy",
    "meta.title": "MyCobotBuddy — software, accessories and training for cobots",
    "catalog.title": "Our offer",
-   "catalog.sub": "Software, accessories and training — everything for cobots in one place.",
+   "catalog.sub": "Cobots, accessories, made-to-order solutions, software and integration — all in one place.",
    "promise.title": "Why MyCobotBuddy.",
    "promise.sub": "One partner from choosing a gripper to training your team.",
    "promise.1.t": "Shipped in 24 h",
@@ -111,7 +159,8 @@
    "promise.3.t": "Trained by engineers",
    "promise.3.d": "Training on real cobots, in small groups, with a certificate.",
    "home.title": "Your cobot. Ready to work.",
-   "footer.rights": "All rights reserved. Main photo: Shixart1985, CC BY 2.0 (Wikimedia Commons)."
+   "footer.rights": "All rights reserved. Main photo: Shixart1985, CC BY 2.0 (Wikimedia Commons).",
+   "meta.desc": "Cobots, accessories, made-to-order solutions, SaaS software and robotic cell integration."
   }
  },
  "slajdy": [
@@ -122,13 +171,13 @@
     "pl": {
      "eyebrow": "Robotyka współpracująca",
      "title": "Twój cobot. Gotowy do pracy.",
-     "tekst": "Oprogramowanie, akcesoria i szkolenia dla cobotów — od jednego partnera.",
+     "tekst": "Coboty, akcesoria, oprogramowanie i integracja na zamówienie — od jednego partnera.",
      "cta_label": "Zobacz ofertę"
     },
     "en": {
      "eyebrow": "Collaborative robotics",
      "title": "Your cobot. Ready to work.",
-     "tekst": "Software, accessories and training for cobots — from one partner.",
+     "tekst": "Cobots, accessories, software and made-to-order integration — from one partner.",
      "cta_label": "See the offer"
     }
    }
@@ -136,159 +185,98 @@
  ],
  "produkty": [
   {
-   "id": "mcb-saas-monitoring-m",
-   "kategoria": "Monitoring i analityka",
-   "rodzaj": "subskrypcja",
-   "cena": 249,
+   "id": "mcb-rob-5",
+   "kategoria": "Coboty przemysłowe",
+   "rodzaj": "towar",
+   "cena": 89900,
    "vat": 0.23,
-   "stan": 999,
-   "jednostka": "/ mies. / cobot",
-   "zdjecie": "zdjecia/saas-monitoring.webp",
+   "stan": 2,
+   "jednostka": "",
+   "zdjecie": "zdjecia/robot-5.webp",
    "teksty": {
     "pl": {
-     "name": "Monitoring floty cobotów — abonament miesięczny",
-     "subtitle": "SaaS · 1 cobot · miesięcznie",
-     "desc": "Stan każdego cobota na żywo: dostępność, cykle, alarmy i OEE w jednym panelu. Powiadomienia e-mail i SMS, eksport do Excela. Cena za jednego cobota."
+     "name": "Cobot 6-osiowy — udźwig 5 kg, zasięg 900 mm",
+     "subtitle": "Cobot · 5 kg · 900 mm · wysyłka paletą",
+     "desc": "Lekki cobot do pick & place, montażu i obsługi maszyn. Programowanie z tabletu lub przez prowadzenie ręką, sterownik i panel w zestawie. Uruchomienie u klienta wyceniamy osobno."
     },
     "en": {
-     "name": "Cobot fleet monitoring — monthly plan",
-     "subtitle": "SaaS · 1 cobot · monthly",
-     "desc": "Live status of every cobot: availability, cycles, alarms and OEE in one dashboard. E-mail and SMS alerts, Excel export. Price per cobot."
-    }
-   }
-  },
-  {
-   "id": "mcb-saas-monitoring-r",
-   "kategoria": "Monitoring i analityka",
-   "rodzaj": "subskrypcja",
-   "cena": 2490,
-   "vat": 0.23,
-   "stan": 999,
-   "jednostka": "/ rok / cobot",
-   "zdjecie": "zdjecia/saas-monitoring.webp",
-   "teksty": {
-    "pl": {
-     "name": "Monitoring floty cobotów — licencja roczna",
-     "subtitle": "SaaS · 1 cobot · 12 miesięcy",
-     "desc": "Ten sam panel co w abonamencie miesięcznym, dwa miesiące taniej. Historia danych przez 24 miesiące i raport miesięczny w PDF."
-    },
-    "en": {
-     "name": "Cobot fleet monitoring — annual licence",
-     "subtitle": "SaaS · 1 cobot · 12 months",
-     "desc": "The same dashboard as the monthly plan, two months cheaper. 24 months of data history and a monthly PDF report."
+     "name": "6-axis cobot — 5 kg payload, 900 mm reach",
+     "subtitle": "Cobot · 5 kg · 900 mm · pallet shipping",
+     "desc": "Lightweight cobot for pick & place, assembly and machine tending. Program it from a tablet or by hand-guiding; controller and teach pendant included. On-site commissioning quoted separately."
     }
    },
+   "waga_g": 25000,
    "badge": "Bestseller"
   },
   {
-   "id": "mcb-saas-predykcja",
-   "kategoria": "Monitoring i analityka",
-   "rodzaj": "subskrypcja",
-   "cena": 1990,
+   "id": "mcb-rob-10",
+   "kategoria": "Coboty przemysłowe",
+   "rodzaj": "towar",
+   "cena": 119900,
    "vat": 0.23,
-   "stan": 999,
-   "jednostka": "/ rok / cobot",
-   "zdjecie": "zdjecia/saas-predykcja.webp",
+   "stan": 2,
+   "jednostka": "",
+   "zdjecie": "zdjecia/robot-10.webp",
    "teksty": {
     "pl": {
-     "name": "Konserwacja predykcyjna — moduł roczny",
-     "subtitle": "SaaS · dodatek · 12 miesięcy",
-     "desc": "Analiza prądów i temperatur przegubów przewiduje zużycie, zanim zatrzyma linię. Dodatek do monitoringu floty."
+     "name": "Cobot 6-osiowy — udźwig 10 kg, zasięg 1300 mm",
+     "subtitle": "Cobot · 10 kg · 1300 mm · wysyłka paletą",
+     "desc": "Uniwersalny cobot do obsługi maszyn CNC, pakowania i kontroli jakości. Duży zasięg, powtarzalność ±0,05 mm, sterownik i panel w zestawie."
     },
     "en": {
-     "name": "Predictive maintenance — annual module",
-     "subtitle": "SaaS · add-on · 12 months",
-     "desc": "Joint current and temperature analysis predicts wear before it stops the line. Add-on to fleet monitoring."
+     "name": "6-axis cobot — 10 kg payload, 1300 mm reach",
+     "subtitle": "Cobot · 10 kg · 1300 mm · pallet shipping",
+     "desc": "All-round cobot for CNC tending, packing and quality inspection. Long reach, ±0.05 mm repeatability, controller and teach pendant included."
     }
-   }
+   },
+   "waga_g": 40000
   },
   {
-   "id": "mcb-saas-offline",
-   "kategoria": "Programowanie offline",
-   "rodzaj": "subskrypcja",
-   "cena": 3990,
+   "id": "mcb-rob-20",
+   "kategoria": "Coboty przemysłowe",
+   "rodzaj": "towar",
+   "cena": 149900,
    "vat": 0.23,
-   "stan": 999,
-   "jednostka": "/ rok",
-   "zdjecie": "zdjecia/saas-offline.webp",
+   "stan": 1,
+   "jednostka": "",
+   "zdjecie": "zdjecia/robot-paleta.webp",
    "teksty": {
     "pl": {
-     "name": "Programowanie offline — licencja roczna, 1 stanowisko",
-     "subtitle": "SaaS · 1 stanowisko · 12 miesięcy",
-     "desc": "Programuj i testuj trajektorie na komputerze, bez zatrzymywania produkcji. Biblioteka chwytaków, wykrywanie kolizji, eksport programu do cobota."
+     "name": "Cobot do paletyzacji — udźwig 20 kg, zasięg 1700 mm",
+     "subtitle": "Cobot · 20 kg · 1700 mm · wysyłka paletą",
+     "desc": "Cobot do paletyzacji na końcu linii: kartony do 18 kg, palety do 1,8 m wysokości. Gotowe szablony wzorów paletyzacji w oprogramowaniu."
     },
     "en": {
-     "name": "Offline programming — annual licence, 1 seat",
-     "subtitle": "SaaS · 1 seat · 12 months",
-     "desc": "Program and test trajectories on your computer without stopping production. Gripper library, collision detection, program export to the cobot."
+     "name": "Palletising cobot — 20 kg payload, 1700 mm reach",
+     "subtitle": "Cobot · 20 kg · 1700 mm · pallet shipping",
+     "desc": "End-of-line palletising cobot: cartons up to 18 kg, pallets up to 1.8 m high. Ready-made palletising pattern templates in the software."
     }
-   }
+   },
+   "waga_g": 65000
   },
   {
-   "id": "mcb-saas-symulacja",
-   "kategoria": "Programowanie offline",
-   "rodzaj": "subskrypcja",
-   "cena": 1490,
+   "id": "mcb-rob-zestaw",
+   "kategoria": "Zestawy startowe",
+   "rodzaj": "towar",
+   "cena": 99900,
    "vat": 0.23,
-   "stan": 999,
-   "jednostka": "/ 3 mies.",
-   "zdjecie": "zdjecia/saas-offline.webp",
+   "stan": 2,
+   "jednostka": "",
+   "zdjecie": "zdjecia/robot-zestaw.webp",
    "teksty": {
     "pl": {
-     "name": "Symulacja celi zrobotyzowanej — pakiet 3 miesiące",
-     "subtitle": "SaaS · 3 miesiące",
-     "desc": "Sprawdź czas cyklu i rozmieszczenie celi przed zakupem sprzętu. Idealne na etap ofertowania."
+     "name": "Zestaw startowy: cobot 5 kg + chwytak + szkolenie",
+     "subtitle": "Zestaw · cobot, chwytak, 1 dzień szkolenia",
+     "desc": "Wszystko, by zacząć: cobot 5 kg, elektryczny chwytak dwupalcowy i jednodniowe szkolenie dla dwóch osób. Taniej niż osobno."
     },
     "en": {
-     "name": "Robotic cell simulation — 3-month pack",
-     "subtitle": "SaaS · 3 months",
-     "desc": "Check cycle time and cell layout before buying hardware. Ideal for the quoting stage."
+     "name": "Starter kit: 5 kg cobot + gripper + training",
+     "subtitle": "Kit · cobot, gripper, 1-day training",
+     "desc": "Everything to get started: a 5 kg cobot, an electric two-finger gripper and a one-day training for two people. Cheaper than separately."
     }
-   }
-  },
-  {
-   "id": "mcb-saas-wsparcie",
-   "kategoria": "Licencje i wsparcie",
-   "rodzaj": "subskrypcja",
-   "cena": 2990,
-   "vat": 0.23,
-   "stan": 999,
-   "jednostka": "/ rok",
-   "zdjecie": "zdjecia/wsparcie.webp",
-   "teksty": {
-    "pl": {
-     "name": "Wsparcie zdalne Premium — 12 miesięcy",
-     "subtitle": "Wsparcie · 12 miesięcy",
-     "desc": "Inżynier na wideo w ciągu 4 godzin roboczych, zdalny dostęp do cobota, kopie zapasowe programów."
-    },
-    "en": {
-     "name": "Premium remote support — 12 months",
-     "subtitle": "Support · 12 months",
-     "desc": "An engineer on video within 4 business hours, remote access to the cobot, program backups."
-    }
-   }
-  },
-  {
-   "id": "mcb-usl-wdrozenie",
-   "kategoria": "Licencje i wsparcie",
-   "rodzaj": "usluga",
-   "cena": 1490,
-   "vat": 0.23,
-   "stan": 999,
-   "jednostka": "/ wdrożenie",
-   "zdjecie": "zdjecia/saas-monitoring.webp",
-   "teksty": {
-    "pl": {
-     "name": "Wdrożenie platformy — konfiguracja zdalna",
-     "subtitle": "Usługa · online",
-     "desc": "Podłączamy Twoje coboty do monitoringu, ustawiamy alarmy i uczymy zespół korzystać z panelu. 2 sesje online."
-    },
-    "en": {
-     "name": "Platform onboarding — remote setup",
-     "subtitle": "Service · online",
-     "desc": "We connect your cobots to monitoring, set up alarms and train your team on the dashboard. 2 online sessions."
-    }
-   }
+   },
+   "waga_g": 30000,
+   "badge": "Nowość"
   },
   {
    "id": "mcb-acc-chwytak-2f",
@@ -499,8 +487,340 @@
    "waga_g": 600
   },
   {
+   "id": "mcb-zam-chwytak",
+   "kategoria": "Chwytaki na zamówienie",
+   "rodzaj": "usluga",
+   "cena": 4900,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ projekt",
+   "zdjecie": "zdjecia/zam-chwytak.webp",
+   "teksty": {
+    "pl": {
+     "name": "Chwytak na zamówienie — projekt i prototyp",
+     "subtitle": "Na zamówienie · projekt 3D · prototyp",
+     "desc": "Projektujemy chwytak pod Twój detal: analiza, model 3D, prototyp z druku 3D do testów na Twoim cobocie. Kwota odliczana od zamówienia wersji seryjnej."
+    },
+    "en": {
+     "name": "Custom gripper — design and prototype",
+     "subtitle": "Made to order · 3D design · prototype",
+     "desc": "We design a gripper for your part: analysis, 3D model, a 3D-printed prototype to test on your cobot. The amount is deducted from the production order."
+    }
+   }
+  },
+  {
+   "id": "mcb-zam-szczeki",
+   "kategoria": "Chwytaki na zamówienie",
+   "rodzaj": "towar",
+   "cena": 1290,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ para",
+   "zdjecie": "zdjecia/zam-szczeki.webp",
+   "teksty": {
+    "pl": {
+     "name": "Szczęki chwytaka pod Twój detal — para",
+     "subtitle": "Na zamówienie · aluminium · 10 dni roboczych",
+     "desc": "Frezowane szczęki do chwytaka dwupalcowego, dopasowane do kształtu Twojego detalu. Przyślij rysunek lub próbkę, wykonanie w 10 dni roboczych."
+    },
+    "en": {
+     "name": "Custom gripper fingers for your part — pair",
+     "subtitle": "Made to order · aluminium · 10 business days",
+     "desc": "Milled fingers for the two-finger gripper, shaped to your part. Send a drawing or a sample; ready in 10 business days."
+    }
+   },
+   "waga_g": 400
+  },
+  {
+   "id": "mcb-zam-stanowisko",
+   "kategoria": "Stanowiska i osłony",
+   "rodzaj": "usluga",
+   "cena": 2900,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ projekt",
+   "zdjecie": "zdjecia/zam-stanowisko.webp",
+   "teksty": {
+    "pl": {
+     "name": "Stanowisko i podstawa na wymiar — projekt",
+     "subtitle": "Na zamówienie · projekt i wycena wykonania",
+     "desc": "Stół, podstawa lub cała cela dopasowana do Twojej hali i procesu. Projekt z rysunkami i wyceną wykonania; kwota odliczana od zamówienia."
+    },
+    "en": {
+     "name": "Custom station and pedestal — design",
+     "subtitle": "Made to order · design and build quote",
+     "desc": "A table, pedestal or full cell fitted to your shop floor and process. Design with drawings and a build quote; the amount is deducted from the order."
+    }
+   }
+  },
+  {
+   "id": "mcb-zam-oslony",
+   "kategoria": "Stanowiska i osłony",
+   "rodzaj": "usluga",
+   "cena": 2490,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ projekt",
+   "zdjecie": "zdjecia/zam-oslony.webp",
+   "teksty": {
+    "pl": {
+     "name": "Osłony i wygrodzenia na wymiar — projekt",
+     "subtitle": "Na zamówienie · zgodnie z oceną ryzyka",
+     "desc": "Wygrodzenia, drzwi z ryglem bezpieczeństwa i osłony dobrane do oceny ryzyka Twojego stanowiska. Projekt i wycena; kwota odliczana od zamówienia."
+    },
+    "en": {
+     "name": "Custom guards and fencing — design",
+     "subtitle": "Made to order · based on the risk assessment",
+     "desc": "Fencing, interlocked doors and guards matched to the risk assessment of your station. Design and quote; the amount is deducted from the order."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-monitoring-m",
+   "kategoria": "Monitoring i analityka",
+   "rodzaj": "subskrypcja",
+   "cena": 249,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ mies. / cobot",
+   "zdjecie": "zdjecia/saas-monitoring.webp",
+   "teksty": {
+    "pl": {
+     "name": "Monitoring floty cobotów — abonament miesięczny",
+     "subtitle": "SaaS · 1 cobot · miesięcznie",
+     "desc": "Stan każdego cobota na żywo: dostępność, cykle, alarmy i OEE w jednym panelu. Powiadomienia e-mail i SMS, eksport do Excela. Cena za jednego cobota."
+    },
+    "en": {
+     "name": "Cobot fleet monitoring — monthly plan",
+     "subtitle": "SaaS · 1 cobot · monthly",
+     "desc": "Live status of every cobot: availability, cycles, alarms and OEE in one dashboard. E-mail and SMS alerts, Excel export. Price per cobot."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-monitoring-r",
+   "kategoria": "Monitoring i analityka",
+   "rodzaj": "subskrypcja",
+   "cena": 2490,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok / cobot",
+   "zdjecie": "zdjecia/saas-monitoring.webp",
+   "teksty": {
+    "pl": {
+     "name": "Monitoring floty cobotów — licencja roczna",
+     "subtitle": "SaaS · 1 cobot · 12 miesięcy",
+     "desc": "Ten sam panel co w abonamencie miesięcznym, dwa miesiące taniej. Historia danych przez 24 miesiące i raport miesięczny w PDF."
+    },
+    "en": {
+     "name": "Cobot fleet monitoring — annual licence",
+     "subtitle": "SaaS · 1 cobot · 12 months",
+     "desc": "The same dashboard as the monthly plan, two months cheaper. 24 months of data history and a monthly PDF report."
+    }
+   },
+   "badge": "Bestseller"
+  },
+  {
+   "id": "mcb-saas-predykcja",
+   "kategoria": "Monitoring i analityka",
+   "rodzaj": "subskrypcja",
+   "cena": 1990,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok / cobot",
+   "zdjecie": "zdjecia/saas-predykcja.webp",
+   "teksty": {
+    "pl": {
+     "name": "Konserwacja predykcyjna — moduł roczny",
+     "subtitle": "SaaS · dodatek · 12 miesięcy",
+     "desc": "Analiza prądów i temperatur przegubów przewiduje zużycie, zanim zatrzyma linię. Dodatek do monitoringu floty."
+    },
+    "en": {
+     "name": "Predictive maintenance — annual module",
+     "subtitle": "SaaS · add-on · 12 months",
+     "desc": "Joint current and temperature analysis predicts wear before it stops the line. Add-on to fleet monitoring."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-offline",
+   "kategoria": "Programowanie offline",
+   "rodzaj": "subskrypcja",
+   "cena": 3990,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok",
+   "zdjecie": "zdjecia/saas-offline.webp",
+   "teksty": {
+    "pl": {
+     "name": "Programowanie offline — licencja roczna, 1 stanowisko",
+     "subtitle": "SaaS · 1 stanowisko · 12 miesięcy",
+     "desc": "Programuj i testuj trajektorie na komputerze, bez zatrzymywania produkcji. Biblioteka chwytaków, wykrywanie kolizji, eksport programu do cobota."
+    },
+    "en": {
+     "name": "Offline programming — annual licence, 1 seat",
+     "subtitle": "SaaS · 1 seat · 12 months",
+     "desc": "Program and test trajectories on your computer without stopping production. Gripper library, collision detection, program export to the cobot."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-symulacja",
+   "kategoria": "Programowanie offline",
+   "rodzaj": "subskrypcja",
+   "cena": 1490,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ 3 mies.",
+   "zdjecie": "zdjecia/saas-offline.webp",
+   "teksty": {
+    "pl": {
+     "name": "Symulacja celi zrobotyzowanej — pakiet 3 miesiące",
+     "subtitle": "SaaS · 3 miesiące",
+     "desc": "Sprawdź czas cyklu i rozmieszczenie celi przed zakupem sprzętu. Idealne na etap ofertowania."
+    },
+    "en": {
+     "name": "Robotic cell simulation — 3-month pack",
+     "subtitle": "SaaS · 3 months",
+     "desc": "Check cycle time and cell layout before buying hardware. Ideal for the quoting stage."
+    }
+   }
+  },
+  {
+   "id": "mcb-saas-wsparcie",
+   "kategoria": "Licencje i wsparcie",
+   "rodzaj": "subskrypcja",
+   "cena": 2990,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ rok",
+   "zdjecie": "zdjecia/wsparcie.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wsparcie zdalne Premium — 12 miesięcy",
+     "subtitle": "Wsparcie · 12 miesięcy",
+     "desc": "Inżynier na wideo w ciągu 4 godzin roboczych, zdalny dostęp do cobota, kopie zapasowe programów."
+    },
+    "en": {
+     "name": "Premium remote support — 12 months",
+     "subtitle": "Support · 12 months",
+     "desc": "An engineer on video within 4 business hours, remote access to the cobot, program backups."
+    }
+   }
+  },
+  {
+   "id": "mcb-usl-wdrozenie",
+   "kategoria": "Licencje i wsparcie",
+   "rodzaj": "usluga",
+   "cena": 1490,
+   "vat": 0.23,
+   "stan": 999,
+   "jednostka": "/ wdrożenie",
+   "zdjecie": "zdjecia/saas-monitoring.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wdrożenie platformy — konfiguracja zdalna",
+     "subtitle": "Usługa · online",
+     "desc": "Podłączamy Twoje coboty do monitoringu, ustawiamy alarmy i uczymy zespół korzystać z panelu. 2 sesje online."
+    },
+    "en": {
+     "name": "Platform onboarding — remote setup",
+     "subtitle": "Service · online",
+     "desc": "We connect your cobots to monitoring, set up alarms and train your team on the dashboard. 2 online sessions."
+    }
+   }
+  },
+  {
+   "id": "mcb-int-audyt",
+   "kategoria": "Audyt i projekt",
+   "rodzaj": "usluga",
+   "cena": 2900,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ audyt",
+   "zdjecie": "zdjecia/int-audyt.webp",
+   "teksty": {
+    "pl": {
+     "name": "Audyt stanowiska i koncepcja zrobotyzowania",
+     "subtitle": "Integracja · 1 dzień u klienta · raport",
+     "desc": "Inżynier ocenia proces na miejscu: czas cyklu, detale, bezpieczeństwo. Dostajesz raport z koncepcją, doborem cobota i wyliczeniem zwrotu z inwestycji."
+    },
+    "en": {
+     "name": "Station audit and automation concept",
+     "subtitle": "Integration · 1 day on site · report",
+     "desc": "An engineer assesses the process on site: cycle time, parts, safety. You get a report with a concept, cobot selection and ROI calculation."
+    }
+   }
+  },
+  {
+   "id": "mcb-int-projekt",
+   "kategoria": "Audyt i projekt",
+   "rodzaj": "usluga",
+   "cena": 9900,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ projekt",
+   "zdjecie": "zdjecia/int-projekt.webp",
+   "teksty": {
+    "pl": {
+     "name": "Projekt celi zrobotyzowanej z symulacją 3D",
+     "subtitle": "Integracja · projekt · symulacja czasu cyklu",
+     "desc": "Pełny projekt celi: układ, chwytak, zabezpieczenia i symulacja 3D potwierdzająca czas cyklu, zanim kupisz sprzęt."
+    },
+    "en": {
+     "name": "Robotic cell design with 3D simulation",
+     "subtitle": "Integration · design · cycle time simulation",
+     "desc": "Complete cell design: layout, gripper, safety and a 3D simulation confirming the cycle time before you buy the hardware."
+    }
+   }
+  },
+  {
+   "id": "mcb-int-dzien",
+   "kategoria": "Wdrożenie i uruchomienie",
+   "rodzaj": "usluga",
+   "cena": 3200,
+   "vat": 0.23,
+   "stan": 40,
+   "jednostka": "/ dzień",
+   "zdjecie": "zdjecia/int-inzynier.webp",
+   "teksty": {
+    "pl": {
+     "name": "Integracja pod klucz — dzień pracy inżyniera",
+     "subtitle": "Integracja · u klienta · programowanie",
+     "desc": "Montaż, programowanie i dostrojenie aplikacji na Twojej linii. Liczba dni wynika z audytu lub projektu."
+    },
+    "en": {
+     "name": "Turnkey integration — engineer day",
+     "subtitle": "Integration · on site · programming",
+     "desc": "Installation, programming and fine-tuning of the application on your line. The number of days follows from the audit or the design."
+    }
+   }
+  },
+  {
+   "id": "mcb-int-ce",
+   "kategoria": "Wdrożenie i uruchomienie",
+   "rodzaj": "usluga",
+   "cena": 4900,
+   "vat": 0.23,
+   "stan": 10,
+   "jednostka": "/ stanowisko",
+   "zdjecie": "zdjecia/int-ce.webp",
+   "teksty": {
+    "pl": {
+     "name": "Uruchomienie, odbiór i dokumentacja CE",
+     "subtitle": "Integracja · ocena ryzyka · deklaracja",
+     "desc": "Ocena ryzyka, walidacja zabezpieczeń, instrukcja i dokumentacja do deklaracji zgodności CE stanowiska zrobotyzowanego."
+    },
+    "en": {
+     "name": "Commissioning, acceptance and CE documentation",
+     "subtitle": "Integration · risk assessment · declaration",
+     "desc": "Risk assessment, safety validation, manual and documentation for the CE declaration of conformity of the robotic station."
+    }
+   }
+  },
+  {
    "id": "mcb-szk-start",
-   "kategoria": "Szkolenia podstawowe",
+   "kategoria": "Szkolenia",
    "rodzaj": "usluga",
    "cena": 1490,
    "vat": 0.23,
@@ -523,7 +843,7 @@
   },
   {
    "id": "mcb-szk-bhp",
-   "kategoria": "Szkolenia podstawowe",
+   "kategoria": "Szkolenia",
    "rodzaj": "usluga",
    "cena": 1290,
    "vat": 0.23,
@@ -545,7 +865,7 @@
   },
   {
    "id": "mcb-szk-prog",
-   "kategoria": "Szkolenia zaawansowane",
+   "kategoria": "Szkolenia",
    "rodzaj": "usluga",
    "cena": 2690,
    "vat": 0.23,
@@ -567,7 +887,7 @@
   },
   {
    "id": "mcb-szk-paletyzacja",
-   "kategoria": "Szkolenia zaawansowane",
+   "kategoria": "Szkolenia",
    "rodzaj": "usluga",
    "cena": 2190,
    "vat": 0.23,
@@ -589,7 +909,7 @@
   },
   {
    "id": "mcb-szk-online",
-   "kategoria": "Szkolenia online",
+   "kategoria": "Szkolenia",
    "rodzaj": "usluga",
    "cena": 490,
    "vat": 0.23,
@@ -611,7 +931,7 @@
   },
   {
    "id": "mcb-szk-konsultacja",
-   "kategoria": "Szkolenia online",
+   "kategoria": "Szkolenia",
    "rodzaj": "usluga",
    "cena": 590,
    "vat": 0.23,

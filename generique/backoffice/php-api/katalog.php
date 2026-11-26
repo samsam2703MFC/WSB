@@ -139,20 +139,34 @@ function wsm_katalog_import(PDO $pdo, array $k, string $base = ''): array {
             foreach ((array) ($c['pod'] ?? []) as $p) $pose(trim((string) $p['nazwa']), $catId[mb_strtolower($nom)]);
         }
 
+        // ---- Rayons retirés ---------------------------------------------------
+        // « kategorie_wylacz » : les rayons d'une version précédente du fichier
+        // (renommés, fondus dans un autre). Éteints, jamais effacés ; un rayon
+        // que ce même fichier pose reste allumé.
+        foreach ((array) ($k['kategorie_wylacz'] ?? []) as $nomOff) {
+            $nomOff = mb_strtolower(trim((string) $nomOff));
+            if ($nomOff === '' || isset($catId[$nomOff])) continue;
+            foreach ($pdo->query("SELECT id, name FROM wsm_categories WHERE active = 1")->fetchAll() as $r) {
+                if (mb_strtolower(trim((string) $r['name'])) === $nomOff) {
+                    $pdo->prepare("UPDATE wsm_categories SET active = 0 WHERE id = ?")->execute([(int) $r['id']]);
+                }
+            }
+        }
+
         // ---- Modes de livraison propres à la boutique ------------------------
         foreach ((array) ($k['dostawa'] ?? []) as $i => $d) {
             $id = (string) $d['id'];
             $vals = [(string) ($d['carrier'] ?? ''), (string) ($d['kind'] ?? 'adres'), (int) ($d['kolejnosc'] ?? (100 + $i)),
                      (int) round(((float) ($d['cena_netto'] ?? 0)) * 100), (float) ($d['vat'] ?? 0.23),
-                     (string) ($d['kraje'] ?? '*'), (int) ($d['max_waga_g'] ?? 0)];
+                     (string) ($d['kraje'] ?? '*'), (int) ($d['min_waga_g'] ?? 0), (int) ($d['max_waga_g'] ?? 0)];
             $ex = $pdo->prepare("SELECT 1 FROM wsm_shipping_methods WHERE id = ?");
             $ex->execute([$id]);
             if ($ex->fetchColumn()) {
                 $pdo->prepare("UPDATE wsm_shipping_methods SET carrier = ?, kind = ?, sort_order = ?, price_net = ?, vat_rate = ?,
-                                      countries = ?, max_weight_g = ?, active = 1 WHERE id = ?")->execute([...$vals, $id]);
+                                      countries = ?, min_weight_g = ?, max_weight_g = ?, active = 1 WHERE id = ?")->execute([...$vals, $id]);
             } else {
-                $pdo->prepare("INSERT INTO wsm_shipping_methods (carrier, kind, sort_order, price_net, vat_rate, countries, max_weight_g, active, id)
-                               VALUES (?,?,?,?,?,?,?,1,?)")->execute([...$vals, $id]);
+                $pdo->prepare("INSERT INTO wsm_shipping_methods (carrier, kind, sort_order, price_net, vat_rate, countries, min_weight_g, max_weight_g, active, id)
+                               VALUES (?,?,?,?,?,?,?,?,1,?)")->execute([...$vals, $id]);
             }
             foreach ((array) ($d['teksty'] ?? []) as $lang => $t) {
                 foreach (['label', 'note'] as $champ) {
