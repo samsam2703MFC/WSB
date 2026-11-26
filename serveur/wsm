@@ -786,6 +786,37 @@ YML
   mv -f "$DK/compose.yml.nouveau" "$DK/compose.yml"; chmod 600 "$DK/compose.yml"
 }
 
+# ---------------------------------------------------------------------------
+# Lecture seule : comment le Traefik du serveur est lancé (version, fournisseurs,
+# résolveurs de certificats, montages) — sans e-mail ni secret.
+cmd_traefik_info() {
+  racine_seulement
+  local t; t=$(docker ps --format '{{.Names}} {{.Image}}' | awk '$2 ~ /traefik/ {print $1; exit}')
+  [ -n "$t" ] || mourir "aucun conteneur Traefik"
+  python3 - "$t" <<'PY'
+import json, re, subprocess, sys
+t = sys.argv[1]
+T = json.loads(subprocess.check_output(['docker', 'inspect', t]))[0]
+L = T['Config'].get('Labels') or {}
+print('conteneur :', t, '| image :', T['Config'].get('Image'))
+try: print('version :', subprocess.check_output(['docker', 'exec', t, 'traefik', 'version'], stderr=subprocess.STDOUT).decode().replace('\n', ' | '))
+except Exception as e: print('version : ?', e)
+for k in ('com.docker.compose.project', 'com.docker.compose.project.working_dir', 'com.docker.compose.project.config_files', 'com.docker.compose.service'):
+    if k in L: print(k, '=', L[k])
+red = lambda s: re.sub(r'[\w.+-]+@[\w-]+\.[\w.-]+', '<e-mail>', s)
+print('arguments :')
+for a in (T.get('Args') or []) + []: print('  ', red(a))
+print('montages :')
+for m in T.get('Mounts') or []: print('  ', m.get('Type'), m.get('Source'), '->', m.get('Destination'), 'rw' if m.get('RW') else 'ro')
+for f in ('/etc/traefik/traefik.yml', '/etc/traefik/traefik.yaml', '/traefik.yml', '/traefik.yaml', '/etc/traefik/traefik.toml', '/traefik.toml'):
+    try:
+        c = subprocess.check_output(['docker', 'exec', t, 'cat', f], stderr=subprocess.DEVNULL).decode('utf-8', 'replace')
+        print('fichier', f, ':'); print('\n'.join('   ' + red(l) for l in c.splitlines() if not re.search(r'(?i)(password|token|secret|key)\s*[:=]', l)))
+    except Exception: pass
+print('ports :', T['HostConfig'].get('PortBindings'))
+PY
+}
+
 cmd_docker_init() {
   racine_seulement
   command -v docker >/dev/null || mourir "docker absent"
@@ -902,6 +933,7 @@ case "$cmd" in
   https) cmd_https "${1:?usage : wsm https <boutique>}";;
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
   docker-init) cmd_docker_init;;
+  traefik-info) cmd_traefik_info;;
   siege) cmd_siege "$@";;
   siege-cle) cmd_siege_cle "${1:-}";;
   alias) cmd_alias "${1:-}" "${2-}";;

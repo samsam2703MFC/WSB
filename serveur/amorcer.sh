@@ -205,6 +205,7 @@ case "$ACTION" in
     [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide" >&2; exit 2; }
     "$W" katalog "$BOUTIQUE"
     ;;
+  traefik-info) "$W" traefik-info ;;
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;
   retour)   "$W" retour "$BOUTIQUE" ;;
