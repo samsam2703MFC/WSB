@@ -1090,13 +1090,20 @@ cmd_projet() {
     grep -q '_wsb/stockage.js' "$f" || { sed -i '0,/<head>/s#<head>#<head>\n<script src="./_wsb/stockage.js"></script>#' "$f"; k=$((k+1)); }
   done < <(find "$d/site.nouveau" -maxdepth 1 -name '*.html' -print0)
   dire "pages reliées à la base : $k"
-  if [ ! -f "$d/site.nouveau/index.html" ]; then
+  # La liste des écrans (ekrany.html), et l'accueil : la page choisie dans
+  # projets/<nom>.conf (INDEX=…), sinon cette liste.
+  local index; index=$(sed -n 's/^INDEX=//p' "$DEPOT/projets/$n.conf" 2>/dev/null | head -1)
+  if [ ! -f "$d/site.nouveau/ekrany.html" ]; then
     { echo '<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">'
       echo "<title>$n</title><style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#2e2924;background:#f4efe7}a{display:block;padding:12px 14px;margin:6px 0;background:#fbf8f3;border:1px solid #d8cdbd;border-radius:12px;color:#2e2924;text-decoration:none}a:hover{border-color:#465802}</style></head><body><h1>$n</h1>"
-      find "$d/site.nouveau" -maxdepth 1 -name '*.html' ! -name index.html -printf '%f\n' | sort | while IFS= read -r f; do
+      find "$d/site.nouveau" -maxdepth 1 -name '*.html' ! -name index.html ! -name ekrany.html -printf '%f\n' | sort | while IFS= read -r f; do
         printf '<a href="%s">%s</a>\n' "$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$f")" "${f%.dc.html}"
       done
-      echo '</body></html>'; } > "$d/site.nouveau/index.html"
+      echo '</body></html>'; } > "$d/site.nouveau/ekrany.html"
+  fi
+  if [ ! -f "$d/site.nouveau/index.html" ]; then
+    if [ -n "$index" ] && [ -f "$d/site.nouveau/$index" ]; then cp "$d/site.nouveau/$index" "$d/site.nouveau/index.html"; dire "accueil : $index"
+    else cp "$d/site.nouveau/ekrany.html" "$d/site.nouveau/index.html"; fi
   fi
   # La base du projet (gardée d'une version à l'autre).
   local base="${n//-/_}" dbh dbd mdp

@@ -22,3 +22,6 @@ les appareils, sauvegardées avec le serveur.
 Les écrans internes (Back office, Poczta, Super admin, Asystent rozmowy,
 Retroplan, Karta misji) demandent le mot de passe ; le site, le formulaire et le
 devis en ligne restent ouverts.
+
+Réglages par projet : `projets/<nom>.conf` — `INDEX=<page>` : la page servie à
+`/<nom>/` (sinon la liste des écrans, toujours à `/<nom>/ekrany.html`).
