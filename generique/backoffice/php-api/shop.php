@@ -254,7 +254,10 @@ function wsm_shop_row_to_product(array $r, array $S): array {
         'price_net' => $net,
         'price_vat' => $vatAmt,
         'vat_rate'  => $vat,
-        'stock'     => (int) ($r['stock'] ?? 0),
+        // `stock` = ce que voit le client (le stock affiché s'il est posé),
+        // `stock_real` = le stock du magasin : commandes et manques le lisent.
+        'stock'      => ($r['stock_widoczny'] ?? null) !== null ? max(0, (int) $r['stock_widoczny']) : (int) ($r['stock'] ?? 0),
+        'stock_real' => (int) ($r['stock'] ?? 0),
         // 'towar' (un colis), 'usluga' (formation, prestation) ou 'subskrypcja'
         // (logiciel, licence) — voir wsm_rodzaj().
         'rodzaj'    => wsm_rodzaj((string) ($r['rodzaj'] ?? 'towar')),
@@ -825,8 +828,11 @@ function wsm_shop_quote(PDO $pdo, array $items, string $methodId, string $lang, 
         // Le stock ne bloque plus la vente : ce qui manque est produit et
         // l'acheteur est prévenu. Refuser une commande faute de stock, c'est
         // perdre le client au lieu de lui donner une date.
-        $missing = max(0, $qty - max(0, $p['stock']));
-        if ($missing > 0) $backorder = true;
+        // Ce qui manque VRAIMENT (le magasin le produira) se lit sur le stock
+        // réel ; l'avis « na zamówienie » montré au client, sur le stock affiché.
+        $real = (int) ($p['stock_real'] ?? $p['stock']);
+        $missing = max(0, $qty - max(0, $real));
+        if ($qty > max(0, (int) $p['stock'])) $backorder = true;
 
         // La remise s'applique au prix TTC affiché, ligne par ligne : la somme
         // des lignes reste égale au total, et la TVA se déduit ensuite.
@@ -844,7 +850,7 @@ function wsm_shop_quote(PDO $pdo, array $items, string $methodId, string $lang, 
             'vat_rate' => $p['vat_rate'],
             'line_net' => $lineNet, 'line_vat' => $lineVat, 'line_gross' => $lineGross,
             'weight_g' => $p['weight_g'] * $qty,
-            'stock' => max(0, $p['stock']), 'backorder' => $missing,
+            'stock' => max(0, $real), 'backorder' => $missing,
         ];
         $itemsGross += $lineGross; $itemsNet += $lineNet; $itemsVat += $lineVat;
     }
@@ -1428,8 +1434,14 @@ function wsm_shop_create_order(PDO $pdo, array $body): array {
                                  SET stock = CASE WHEN stock >= ? THEN stock - ? ELSE 0 END
                                WHERE id = ?");
         $read = $pdo->prepare("SELECT stock FROM wsm_products WHERE id = ?");
+        // Le stock affiché descend avec les ventes (jamais sous zéro) : il garde
+        // son avance sur le réel sans qu'on le retouche à chaque commande.
+        $decW = $pdo->prepare("UPDATE wsm_products
+                                  SET stock_widoczny = CASE WHEN stock_widoczny >= ? THEN stock_widoczny - ? ELSE 0 END
+                                WHERE id = ? AND stock_widoczny IS NOT NULL");
         $taken = [];
         foreach ($quote['lines'] as $l) {
+            if ((int) $l['qty'] > 0) $decW->execute([(int) $l['qty'], (int) $l['qty'], $l['id']]);
             $take = max(0, (int) $l['qty'] - (int) ($l['backorder'] ?? 0));
             if ($take > 0) {
                 $dec->execute([$take, $take, $l['id']]);

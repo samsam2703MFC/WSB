@@ -290,6 +290,54 @@ function wsm_stock_receive_tx(PDO $pdo, array $head, array $clean): array {
 }
 
 /**
+ * LE SCAN QUI MET À JOUR LE STOCK TOUT DE SUITE (Szoko, 26/11/2026 : « po
+ * zeskanowaniu aktualizacja w zakładce magazyn »). Une séance de scan = UN PZ :
+ * le premier scan le crée, les suivants s'y ajoutent (même jour) ; $qty négatif
+ * = « cofnij ostatni skan ». Jamais sous zéro sur le document.
+ *
+ * @return array{0:?array, 1:?string} [['doc_id','number','units','stock'], erreur]
+ */
+function wsm_stock_receive_scan(PDO $pdo, ?int $docId, array $head, string $pid, int $qty, int $unitCost = 0): array {
+    if ($qty === 0) return [null, 'ilość 0'];
+    $chk = $pdo->prepare("SELECT 1 FROM wsm_products WHERE id = ?");
+    $chk->execute([$pid]);
+    if (!$chk->fetchColumn()) return [null, 'nieznany produkt'];
+    $pdo->beginTransaction();
+    try {
+        $doc = null;
+        if ($docId) {
+            $st = $pdo->prepare("SELECT * FROM wsm_stock_docs WHERE id = ? AND kind = 'PZ' AND issued_at = ?" . ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''));
+            $st->execute([$docId, date('Y-m-d')]);
+            $doc = $st->fetch() ?: null;
+        }
+        if ($qty < 0) {
+            if (!$doc) throw new RuntimeException('brak dokumentu do cofnięcia');
+            $n = $pdo->prepare("SELECT COALESCE(SUM(delta), 0) FROM wsm_stock_moves WHERE doc_id = ? AND product_id = ? AND kind = 'przyjecie'");
+            $n->execute([(int) $doc['id'], $pid]);
+            if ((int) $n->fetchColumn() + $qty < 0) throw new RuntimeException('w tym dokumencie nie ma tylu sztuk');
+        }
+        if (!$doc) {
+            [$id, $number] = wsm_stock_receive_tx($pdo, $head, [['product_id' => $pid, 'qty' => $qty, 'unit_cost' => $unitCost]]);
+        } else {
+            $id = (int) $doc['id']; $number = (string) $doc['number'];
+            wsm_stock_apply($pdo, $pid, $qty, 'przyjecie', [
+                'doc' => $number, 'doc_id' => $id, 'supplier' => (string) $doc['partner'], 'unit_cost' => $unitCost,
+                'note' => $qty < 0 ? 'cofnięty skan' : (string) $doc['ref'], 'actor' => (string) ($head['actor'] ?? ''),
+            ]);
+            $pdo->prepare("UPDATE wsm_stock_docs SET units = units + ?, value = value + ? WHERE id = ?")
+                ->execute([$qty, $qty * $unitCost, $id]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        return [null, $e->getMessage()];
+    }
+    $u = $pdo->prepare("SELECT units FROM wsm_stock_docs WHERE id = ?"); $u->execute([$id]);
+    $s = $pdo->prepare("SELECT stock FROM wsm_products WHERE id = ?"); $s->execute([$pid]);
+    return [['doc_id' => $id, 'number' => $number, 'units' => (int) $u->fetchColumn(), 'stock' => (int) $s->fetchColumn()], null];
+}
+
+/**
  * Le bon de livraison d'une commande. La marchandise est déjà sortie du stock
  * au moment de la commande (c'est ce qui empêche de vendre deux fois le même
  * sac) : ce document ne bouge donc RIEN. Il nomme ce qui part, lui donne un

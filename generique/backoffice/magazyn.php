@@ -120,6 +120,10 @@ $statusLabel = ['brak' => 'Brak', 'dlug' => 'Dług wobec klientów', 'krytyczny'
 $statusTag   = ['brak' => 'bad', 'dlug' => 'no', 'krytyczny' => 'bad', 'niski' => 'wait', 'ok' => 'ok'];
 
 console_head('Magazyn', $me, <<<'CSS'
+  .skan-wejscie { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 16px; }
+  .skan-wejscie span { flex: 1 1 260px; font-size: 13px; color: var(--text-muted); }
+  .skan-btn { display: inline-flex; align-items: center; padding: 12px 18px; border-radius: 12px; font-weight: 700;
+              text-decoration: none; background: var(--brand); color: var(--paper-50); }
   .why { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0 0 14px; }
   /* Le détail d'un article : replié par défaut, un clic pour l'ouvrir. */
   .art { border-bottom: 1px solid var(--border-subtle); }
@@ -208,6 +212,15 @@ console_crumbs($doc
   </div>
 </div>
 <?php endif; ?>
+
+<?php // PRZYJĘCIE SKANEREM — prosto z Magazynu (Szoko, 26/11/2026 : « skanowanie
+      // aparatem w telefonie, po skanie aktualizacja stanu »). ?>
+<div class="skan-wejscie">
+  <a class="primary skan-btn" href="skaner.php?tryb=przyjecie">📷 Przyjmij towar — skaner / aparat</a>
+  <span>Zeskanuj kod EAN telefonem albo czytnikiem: z włączonym „Od razu na stan” każda sztuka trafia na stan natychmiast.</span>
+  <a class="code" href="skaner.php?tryb=wydanie">Wydanie / ubytek</a>
+  <a class="code" href="skaner.php?tryb=sprawdz">Sprawdź produkt</a>
+</div>
 
 <div class="kpis">
   <div class="kpi"><b><?= (int) $kpis['products'] ?></b><span>Produkty w sklepie</span></div>

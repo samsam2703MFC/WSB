@@ -42,7 +42,7 @@ $actor = (string) ($me['nom'] ?? '');
 
 // ─── Les écritures ───────────────────────────────────────────────────────────
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-    $json = in_array($_POST['akcja'] ?? '', ['przypisz', 'nowy'], true);
+    $json = in_array($_POST['akcja'] ?? '', ['przypisz', 'nowy', 'przyjmij1'], true);
     if (!console_csrf_ok()) {
         if ($json) { header('Content-Type: application/json'); echo json_encode(['err' => 'Formularz wygasł — odśwież stronę.']); exit; }
         http_response_code(400); exit('Bad request.');
@@ -60,6 +60,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $err = wsm_ean_assign($pdo, $pid, (string) ($_POST['ean'] ?? ''), $actor);
         if ($err !== null) { echo json_encode(['err' => $err]); exit; }
         echo json_encode(['ok' => true, 'produkt' => wsm_ean_find($pdo, (string) $_POST['ean'])]);
+        exit;
+    }
+
+    // « Od razu na stan » : chaque scan entre tout de suite dans le stock, dans
+    // le PZ de la séance (créé au premier scan) ; −1 = cofnij.
+    if ($akcja === 'przyjmij1') {
+        header('Content-Type: application/json');
+        $q = (int) ($_POST['qty'] ?? 1);
+        if ($q !== 1 && $q !== -1) { echo json_encode(['err' => 'ilość']); exit; }
+        [$r, $err] = wsm_stock_receive_scan($pdo, (int) ($_POST['doc_id'] ?? 0) ?: null, [
+            'partner' => trim((string) ($_POST['partner'] ?? '')), 'ref' => trim((string) ($_POST['ref'] ?? '')),
+            'issued_at' => date('Y-m-d'), 'note' => 'skaner — od razu na stan', 'actor' => $actor,
+        ], (string) ($_POST['product_id'] ?? ''), $q, (int) round(((float) str_replace(',', '.', (string) ($_POST['cost'] ?? '0'))) * 100));
+        echo json_encode($err !== null ? ['err' => $err] : ['ok' => true] + $r, JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -176,6 +190,11 @@ console_head('Skaner', $me, <<<'CSS'
   tr.flash td { animation: fl .8s ease-out; }
   @keyframes fl { from { background: color-mix(in srgb, var(--success) 30%, transparent); } to { background: transparent; } }
   .suma { font-weight: 700; }
+  .od-razu { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin: 0 0 12px; border-radius: 12px;
+             background: var(--surface-sunken, #f3f3f3); cursor: pointer; font-size: 14px; }
+  .od-razu input { width: 22px; height: 22px; margin-top: 1px; flex: none; }
+  .od-razu-info { margin: 0 0 12px; font-size: 14px; color: var(--success); font-weight: 600; }
+  body.tryb-od-razu #zapis .actions { display: none; }
   #wideo { width: 100%; max-height: 260px; border-radius: 12px; margin-top: 10px; display: none; background: #000; object-fit: cover; }
 CSS);
 ?>
@@ -231,6 +250,10 @@ CSS);
 <?php if ($tryb !== 'sprawdz'): ?>
 <div class="panel">
   <h2><?= $tryb === 'przyjecie' ? 'Przyjmowane na stan' : 'Schodzi ze stanu' ?></h2>
+  <?php if ($tryb === 'przyjecie'): ?>
+  <label class="od-razu"><input type="checkbox" id="od-razu"> <span><b>Od razu na stan</b> — każdy skan od razu dodaje 1 szt. w Magazynie (jeden dokument PZ na całe skanowanie)</span></label>
+  <p class="od-razu-info" id="od-razu-info" hidden></p>
+  <?php endif; ?>
   <div class="tablewrap">
     <table class="linie">
       <thead><tr><th>Produkt</th><th class="num">Stan teraz</th><th class="num">Ilość</th>
@@ -320,10 +343,47 @@ CSS);
       return;
     }
     var ln = linie.find(function (x) { return x.p.id === p.id; });
+    if (odRazu()) { naStan(p, 1); return; }
     if (ln) ln.qty++; else { ln = { p: p, qty: 1, cost: '' }; linie.push(ln); }
     pokaz(true, p.nom, 'EAN ' + p.ean + ' · stan teraz ' + p.stock + ' szt.',
           (TRYB === 'przyjecie' ? '+' : '−') + ln.qty + ' szt.');
     rysuj(p.id);
+  }
+
+  // « Od razu na stan » : chaque scan part tout de suite au serveur (PZ de la séance).
+  var chk = document.getElementById('od-razu'), info = document.getElementById('od-razu-info');
+  var dokument = 0;
+  function odRazu() { return TRYB === 'przyjecie' && chk && chk.checked; }
+  if (chk) {
+    var zap = localStorage.getItem('wsm-skaner-od-razu');
+    chk.checked = zap === null ? true : zap === '1';
+    var ustaw = function () { document.body.classList.toggle('tryb-od-razu', chk.checked); rysuj(); };
+    chk.addEventListener('change', function () { localStorage.setItem('wsm-skaner-od-razu', chk.checked ? '1' : '0'); ustaw(); pole.focus(); });
+    document.body.classList.toggle('tryb-od-razu', chk.checked);
+  }
+  function naStan(p, q) {
+    if (!ADMIN) { bip(false); pokaz(false, 'Brak uprawnień', 'Tylko rola Centrala może zmieniać magazyn.', ''); return; }
+    var f = document.getElementById('zapis');
+    var fd = new FormData(); fd.append('_t', CSRF); fd.append('akcja', 'przyjmij1'); fd.append('tryb', TRYB);
+    fd.append('product_id', p.id); fd.append('qty', String(q)); fd.append('doc_id', String(dokument));
+    fd.append('partner', f ? (f.elements.partner || {}).value || '' : ''); fd.append('ref', f ? (f.elements.ref || {}).value || '' : '');
+    var ln = linie.find(function (x) { return x.p.id === p.id; });
+    fd.append('cost', ln ? ln.cost : '');
+    fetch('skaner.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.err) { bip(false); pokaz(false, 'Nie zapisano', j.err, ''); return; }
+        dokument = j.doc_id;
+        if (!ln) { ln = { p: p, qty: 0, cost: '' }; linie.push(ln); }
+        ln.qty += q; p.stock = j.stock;
+        if (ln.qty <= 0) linie.splice(linie.indexOf(ln), 1);
+        if (q > 0) bip(true);
+        pokaz(true, p.nom, 'EAN ' + p.ean + ' · zapisane w ' + j.number, 'Stan: ' + j.stock + ' szt.');
+        info.hidden = false;
+        info.textContent = '✓ Na stanie od razu — dokument ' + j.number + ', razem ' + j.units + ' szt.';
+        rysuj(p.id);
+      })
+      .catch(function () { bip(false); pokaz(false, 'Błąd połączenia', 'Skan nie zapisany — spróbuj jeszcze raz.', ''); });
   }
 
   function rysuj(swiezy) {
@@ -340,10 +400,15 @@ CSS);
       tr.appendChild(td);
       var st = document.createElement('td'); st.className = 'num'; st.textContent = ln.p.stock; tr.appendChild(st);
       var q = document.createElement('td'); q.className = 'num';
-      var iq = document.createElement('input'); iq.type = 'number'; iq.min = '0'; iq.value = ln.qty;
-      iq.setAttribute('aria-label', 'Ilość — ' + ln.p.nom);
-      iq.addEventListener('input', function () { ln.qty = Math.max(0, parseInt(iq.value || '0', 10)); suma(); });
-      q.appendChild(iq); tr.appendChild(q);
+      if (odRazu()) {
+        q.textContent = ln.qty + ' szt.';
+      } else {
+        var iq = document.createElement('input'); iq.type = 'number'; iq.min = '0'; iq.value = ln.qty;
+        iq.setAttribute('aria-label', 'Ilość — ' + ln.p.nom);
+        iq.addEventListener('input', function () { ln.qty = Math.max(0, parseInt(iq.value || '0', 10)); suma(); });
+        q.appendChild(iq);
+      }
+      tr.appendChild(q);
       if (TRYB === 'przyjecie') {
         var c = document.createElement('td'); c.className = 'num';
         var ic = document.createElement('input'); ic.type = 'text'; ic.inputMode = 'decimal'; ic.placeholder = '0,00'; ic.value = ln.cost;
@@ -353,7 +418,11 @@ CSS);
       }
       var x = document.createElement('td'); x.className = 'num';
       var bx = document.createElement('button'); bx.type = 'button'; bx.textContent = '✕'; bx.title = 'Usuń z listy';
-      bx.addEventListener('click', function () { linie.splice(i, 1); rysuj(); pole.focus(); });
+      if (odRazu()) { bx.textContent = '−1'; bx.title = 'Cofnij jeden skan (zdejmuje 1 szt. ze stanu)'; }
+      bx.addEventListener('click', function () {
+        if (odRazu()) { naStan(ln.p, -1); pole.focus(); return; }
+        linie.splice(i, 1); rysuj(); pole.focus();
+      });
       x.appendChild(bx); tr.appendChild(x);
       tb.appendChild(tr);
     });

@@ -369,6 +369,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 if ($eanErr !== null) $fieldErrors['ean'] = $eanErr;
             }
             if (isset($_POST['sku'])) $skuNew = mb_substr(trim((string) $_POST['sku']), 0, 64);
+            // CENA ZAKUPU NETTO (Szoko, 26/11/2026 : « za ile kupujemy, za ile
+            // sprzedajemy, ile zysku na 1 sztuce »). Vide = inconnue (0).
+            $kosztNew = null;
+            if (isset($_POST['koszt'])) {
+                $kz = trim((string) $_POST['koszt']);
+                $kv = $kz === '' ? 0.0 : wsm_parse_price($kz);
+                if ($kv === null || $kv < 0) $fieldErrors['koszt'] = 'nie rozumiem tej ceny';
+                else $kosztNew = round($kv, 2);
+            }
+            // LE STOCK MONTRÉ AUX CLIENTS : vide = le stock réel (false = champ absent).
+            $swNew = false;
+            if (array_key_exists('stock_widoczny', $_POST)) {
+                $sw = trim((string) $_POST['stock_widoczny']);
+                if ($sw === '') $swNew = null;
+                elseif (!preg_match('/^\d{1,7}$/', $sw)) $fieldErrors['stock_widoczny'] = 'liczba całkowita ≥ 0 albo puste';
+                else $swNew = (int) $sw;
+            }
             // ── LES VALEURS NUTRITIVES POUR 100 g ─────────────────────────
             // Des chiffres, plus une phrase perdue dans la description. Le
             // témoin « nutri__on » dit que la fiche les portait : sans lui, un
@@ -458,6 +475,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     foreach ($mesures as $k => $v) { $set[] = "$k = ?"; $vals[] = $v; }
                     if ($eanNew !== null) { $set[] = 'ean = ?'; $vals[] = $eanNew; }
                     if ($skuNew !== null) { $set[] = 'sku = ?'; $vals[] = $skuNew; }
+                    // Cena zakupu netto et stock affiché : contrôlés plus haut.
+                    if ($kosztNew !== null) { $set[] = 'base_cost = ?'; $vals[] = $kosztNew; }
+                    if ($swNew !== false) { if ($swNew === null) $set[] = 'stock_widoczny = NULL'; else { $set[] = 'stock_widoczny = ?'; $vals[] = $swNew; } }
                     if ($nutri !== null) { $set[] = 'nutrition = ?'; $vals[] = wsm_nutrition_encode($nutri); }
                     // Le gabarit se DÉDUIT des dimensions : le laisser en
                     // arrière ferait payer un tarif qui ne correspond plus au
@@ -641,11 +661,33 @@ $rows = $pdo->query(
        LEFT JOIN wsm_categories c ON c.id = p.category_id
       ORDER BY p.shop_visible DESC, p.sort_order, p.nom"
 )->fetchAll();
+// La dernière cena zakupu netto lue sur un PZ, par produit : proposée quand la
+// fiche n'en porte pas (base_cost = 0).
+$ostatniZakup = [];
+try {
+    foreach ($pdo->query("SELECT product_id, unit_cost FROM wsm_stock_moves WHERE kind = 'przyjecie' AND unit_cost > 0 ORDER BY id") as $m)
+        $ostatniZakup[(string) $m['product_id']] = (int) $m['unit_cost'];
+} catch (Throwable $e) { /* magasin pas encore créé */ }
+/** [zysk netto / szt. en grosze, marża %] — null quand la cena zakupu est inconnue. */
+$zysk = function (array $p) use ($ostatniZakup): ?array {
+    $koszt = (int) round(((float) ($p['base_cost'] ?? 0)) * 100);
+    if ($koszt <= 0) $koszt = $ostatniZakup[(string) $p['id']] ?? 0;
+    if ($koszt <= 0) return null;
+    [$net] = wsm_split_vat(wsm_grosze($p['prix']), (float) ($p['vat_rate'] ?? 0.23));
+    return [$net - $koszt, $net > 0 ? round(($net - $koszt) / $net * 100, 1) : 0.0, $koszt, $net];
+};
 $writable = is_dir(wsm_media_dir()) ? is_writable(wsm_media_dir()) : is_writable(dirname(wsm_media_dir()));
 $nVisible = count(array_filter($rows, fn($r) => (int) $r['shop_visible'] === 1));
 $nPhoto   = count(array_filter($rows, fn($r) => (int) $r['shop_visible'] === 1 && (string) $r['image_url'] !== ''));
 
 console_head('Produkty i zdjęcia', $me, <<<'CSS'
+  .tag.zysk { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+  .zysk-box { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 12px;
+              background: var(--surface-sunken, #f3f3f3); }
+  .zysk-box span { font-size: 13px; font-weight: 600; }
+  .zysk-box b { font: 700 20px/1.2 var(--font-display); }
+  .zysk-box b.minus { color: var(--danger); }
+  .zysk-box small { color: var(--text-muted); font-size: 12px; }
   .hint { color: var(--text-muted); font-size: 13.5px; margin: 0 0 20px; max-width: 78ch; line-height: 1.55; }
   .item { background: var(--surface-card); border: 0; border-radius: 18px;
           margin-bottom: 12px; box-shadow: var(--shadow-xs); overflow: hidden; }
@@ -731,7 +773,7 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Produkty' => null]);
   // $nowy ne change que trois choses : le titre du repli, le bouton posté, et
   // les gestes qui n'ont pas de sens sur un produit qui n'existe pas encore
   // (supprimer, désactiver, voir en boutique).
-  $fiszka = function (array $p, bool $nowy = false) use (&$fieldErrors, &$enCreation, $openId, $isAdmin, $csrf, $kategorie, $brands, $txt, $vv, $slugProp, $pdo) {
+  $fiszka = function (array $p, bool $nowy = false) use (&$fieldErrors, &$enCreation, $openId, $isAdmin, $csrf, $kategorie, $brands, $txt, $vv, $slugProp, $pdo, $zysk, $ostatniZakup) {
     // Les fiches se dessinent l'une après l'autre : ce drapeau ne vaut que
     // pour celle qu'on est en train de rendre.
     $enCreation = $nowy && (bool) $fieldErrors;
@@ -766,7 +808,10 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Produkty' => null]);
         <?php if ($vis && $img === ''): ?><span class="tag no">bez zdjęcia</span><?php endif; ?>
         <?php if (!$act): ?><span class="tag bad">wyłączony</span><?php endif; ?>
         <span class="tag <?= $vis ? 'on' : 'off' ?>"><?= $vis ? 'W sprzedaży' : 'Ukryty' ?></span>
-        <span class="tag">stan <?= (int) $p['stock'] ?></span>
+        <?php $z = $nowy ? null : $zysk($p); if ($z !== null): ?>
+        <span class="tag <?= $z[0] >= 0 ? 'zysk' : 'bad' ?>" title="Cena sprzedaży netto <?= h(number_format($z[3] / 100, 2, ',', ' ')) ?> zł − cena zakupu netto <?= h(number_format($z[2] / 100, 2, ',', ' ')) ?> zł">zysk <?= h(number_format($z[0] / 100, 2, ',', ' ')) ?> zł / szt. · <?= h(number_format($z[1], 1, ',', ' ')) ?> %</span>
+        <?php elseif (!$nowy): ?><span class="tag no" title="Wpisz cenę zakupu w fiszce">brak ceny zakupu</span><?php endif; ?>
+        <span class="tag">stan <?= (int) $p['stock'] ?><?= ($p['stock_widoczny'] ?? null) !== null ? ' · klient widzi ' . (int) $p['stock_widoczny'] : '' ?></span>
       </div>
     </summary>
 
@@ -885,6 +930,22 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Produkty' => null]);
             <input type="text" name="prix" value="<?= h($vv('prix', number_format((float) $p['prix'], 2, ',', ''))) ?>"<?= $isAdmin ? '' : ' disabled' ?>>
             <small>Cena widoczna dla klienta, z VAT.</small>
           </label>
+          <?php // ZA ILE KUPUJEMY, ZA ILE SPRZEDAJEMY, ILE ZYSKU NA 1 SZTUCE
+                // (Szoko, 26/11/2026) — sur toutes les fiches, cachées comprises. ?>
+          <?php $kosztFiche = (float) ($p['base_cost'] ?? 0); $ost = $ostatniZakup[(string) $id] ?? 0; ?>
+          <label class="f">Cena zakupu netto (zł)
+            <input type="text" name="koszt" inputmode="decimal" data-koszt
+                   value="<?= h($vv('koszt', $kosztFiche > 0 ? number_format($kosztFiche, 2, ',', '') : '')) ?>"
+                   placeholder="<?= $ost > 0 ? h(number_format($ost / 100, 2, ',', '')) : '0,00' ?>"<?= $isAdmin ? '' : ' disabled' ?>>
+            <?php if (isset($fieldErrors['koszt']) && $open): ?>
+              <small class="err"><?= h($fieldErrors['koszt']) ?></small>
+            <?php else: ?><small>Za ile kupujemy 1 szt., bez VAT.<?= $ost > 0 ? ' Ostatnie przyjęcie (PZ): ' . h(number_format($ost / 100, 2, ',', ' ')) . ' zł — użyte, jeśli pole jest puste.' : '' ?> Widzi to tylko zespół.</small><?php endif; ?>
+          </label>
+          <div class="f zysk-box" data-zysk data-vat="<?= h((string) (float) ($p['vat_rate'] ?? 0.23)) ?>" data-ost="<?= (int) $ost ?>">
+            <span>Zysk na 1 sprzedanej szt.</span>
+            <b data-zysk-out>—</b>
+            <small data-zysk-opis>Cena sprzedaży netto − cena zakupu netto.</small>
+          </div>
 
           <?php $rate = (float) ($p['vat_rate'] ?? 0.23);
                 [$netG, $vatG] = wsm_split_vat(wsm_grosze($p['prix']), $rate); ?>
@@ -980,6 +1041,13 @@ console_crumbs(['Pulpit' => 'pulpit.php', 'Produkty' => null]);
             <?php if (isset($fieldErrors['stock']) && $open): ?>
               <small class="err"><?= h($fieldErrors['stock']) ?></small>
             <?php else: ?><small>Zamówienie ponad stan przechodzi — klient dostaje mail „skontaktujemy się”.</small><?php endif; ?>
+          </label>
+          <label class="f">Stan widoczny dla klientów
+            <input type="number" name="stock_widoczny" min="0" value="<?= h($vv('stock_widoczny', ($p['stock_widoczny'] ?? null) !== null ? (string) (int) $p['stock_widoczny'] : '')) ?>"
+                   placeholder="jak faktyczny (<?= (int) $p['stock'] ?>)"<?= $isAdmin ? '' : ' disabled' ?>>
+            <?php if (isset($fieldErrors['stock_widoczny']) && $open): ?>
+              <small class="err"><?= h($fieldErrors['stock_widoczny']) ?></small>
+            <?php else: ?><small>Sklep pokazuje klientom tę ilość (Na stanie / Ostatnie sztuki), magazyn liczy faktyczną. Puste = faktyczny stan. Spada razem ze sprzedażą.</small><?php endif; ?>
           </label>
           <label class="f">Powód zmiany stanu
             <input type="text" name="stock_reason" placeholder="np. inwentaryzacja, stłuczka"<?= $isAdmin ? '' : ' disabled' ?>>
@@ -1218,6 +1286,26 @@ $editB = isset($_GET['marka']) ? wsm_brand($pdo, (int) $_GET['marka']) : null;
 // Un lecteur de codes-barres « tape » le code puis Entrée : dans le champ EAN,
 // Entrée ne doit pas enregistrer toute la fiche. Et le téléphone lit le code
 // à l'appareil photo (kamera.js) : pas besoin de le recopier.
+// Le zysk na 1 szt. se recalcule pendant la saisie (prix brut, TVA, prix d'achat).
+document.querySelectorAll('[data-zysk]').forEach(function (box) {
+  var f = box.closest('form'); if (!f) return;
+  var prix = f.querySelector('input[name="prix"]'), koszt = f.querySelector('input[data-koszt]'), vat = f.querySelector('[name="vat_rate"]');
+  var out = box.querySelector('[data-zysk-out]'), opis = box.querySelector('[data-zysk-opis]');
+  var num = function (v) { v = String(v || '').replace(/\s/g, '').replace(',', '.'); var n = parseFloat(v); return isNaN(n) ? null : n; };
+  var zl = function (n) { return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' zł'; };
+  function licz() {
+    var b = num(prix && prix.value), r = num(vat && vat.value); if (r === null) r = parseFloat(box.dataset.vat) || 0.23;
+    if (r > 1) r = r / 100;
+    var k = num(koszt && koszt.value); if (k === null || k === 0) k = (parseInt(box.dataset.ost, 10) || 0) / 100;
+    if (b === null || !k) { out.textContent = '—'; out.className = ''; opis.textContent = 'Wpisz cenę zakupu netto, żeby policzyć zysk.'; return; }
+    var netto = b / (1 + r), z = netto - k;
+    out.textContent = zl(z) + ' · marża ' + (netto > 0 ? (z / netto * 100).toFixed(1).replace('.', ',') : '0') + ' %';
+    out.className = z < 0 ? 'minus' : '';
+    opis.textContent = 'Sprzedaż netto ' + zl(netto) + ' − zakup netto ' + zl(k) + '.';
+  }
+  [prix, koszt, vat].forEach(function (i) { if (i) { i.addEventListener('input', licz); i.addEventListener('change', licz); } });
+  licz();
+});
 document.querySelectorAll('input[data-skaner]').forEach(function (i) {
   i.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
   if (window.wsmKameraPole) wsmKameraPole(i);

@@ -735,6 +735,12 @@ function wsm_ensure_shop(PDO $pdo): void {
         'slug'         => $txt(80),
         'shop_visible' => ['TINYINT(1) NOT NULL DEFAULT 0', 'INTEGER NOT NULL DEFAULT 0'],
         'stock'        => ['INT NOT NULL DEFAULT 0',        'INTEGER NOT NULL DEFAULT 0'],
+        // LE STOCK MONTRÉ AUX CLIENTS (Szoko, 26/11/2026 : « le stock réel pour
+        // nous seuls ; le client voit une autre quantité ») : NULL = le réel.
+        // La vitrine (Na stanie / Ostatnie sztuki / Na zamówienie, données
+        // Google) lit celui-ci ; le magasin, les commandes et les documents
+        // lisent toujours `stock`, le réel.
+        'stock_widoczny' => ['INT NULL DEFAULT NULL',       'INTEGER NULL DEFAULT NULL'],
         'image_url'    => $txt(255),
         'swatch_from'  => $txt(32, "'--brand-500'"),
         'swatch_to'    => $txt(32, "'--brand-800'"),
