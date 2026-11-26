@@ -377,7 +377,9 @@ ip_sites_ecrire() {
           printf '        <IfModule mod_rewrite.c>\n            RewriteEngine On\n            RewriteBase /%s/\n' "$n"
           printf '            RewriteRule ^sitemap\\.xml$ _wsb/app/sitemap.php [L]\n'
           printf '            RewriteRule ^(index\\.html)?$ _wsb/app/seo.php?f=home [L,QSA]\n'
-          printf '            RewriteRule ^Ola\\sflora\\s-\\s(wesela\\sv2|oferta\\slive)\\.dc\\.html$ _wsb/app/seo.php?f=$1 [L,QSA]\n'
+          # Pas de « $1 » dans la cible : il porterait une espace, qu'Apache refuse (403) dans une requête réécrite.
+          printf '            RewriteRule ^Ola\\sflora\\s-\\swesela\\sv2\\.dc\\.html$ _wsb/app/seo.php?f=home [L,QSA]\n'
+          printf '            RewriteRule ^Ola\\sflora\\s-\\soferta\\slive\\.dc\\.html$ _wsb/app/seo.php?f=oferta [L,QSA]\n'
           printf '        </IfModule>\n'
         fi
         printf '        <FilesMatch "^(Back office.*|Poczta|Super admin|Asystent rozmowy|Retroplan|Karta misji)\\.dc\\.html$">\n            AuthType Basic\n            AuthName "%s"\n            AuthUserFile %s/%s/htpasswd\n            Require valid-user\n        </FilesMatch>\n    </Directory>\n' "$n" "$PROJ" "$n"
