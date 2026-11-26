@@ -82,8 +82,8 @@ if ($order) {
 }
 
 console_head('Pakowanie', $me, <<<'CSS'
-  .scan { display: flex; gap: 8px; }
-  .scan input { flex: 1; font: 600 22px/1.2 var(--font-mono); padding: 14px 16px; letter-spacing: .04em; }
+  .scan { display: flex; flex-wrap: wrap; gap: 8px; }
+  .scan input { flex: 1 1 260px; min-width: 0; font: 600 22px/1.2 var(--font-mono); padding: 14px 16px; letter-spacing: .04em; }
   .glowa { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: baseline; }
   .glowa .code { font-size: 20px; font-weight: 700; }
   .pasek { height: 10px; border-radius: 6px; background: var(--border-subtle); overflow: hidden; margin: 14px 0 4px; }
@@ -125,7 +125,8 @@ CSS);
 
   <div class="scan" style="margin-top:14px">
     <input id="kod" type="text" inputmode="numeric" autocomplete="off" autofocus placeholder="Zeskanuj produkt wkładany do paczki…" aria-label="Kod EAN">
-    <button type="button" id="aparat" hidden>📷 Aparat</button>
+    <button type="button" id="zdjecie" hidden>📷 Zdjęcie kodu</button>
+    <button type="button" id="na-zywo" hidden>🎥 Skanuj na żywo</button>
   </div>
   <video id="wideo" playsinline muted></video>
   <div class="komunikat" id="kom" aria-live="assertive"></div>
@@ -157,6 +158,7 @@ CSS);
   </form>
 </div>
 
+<script src="<?= h(console_asset('kamera.js')) ?>"></script>
 <script>
 (function () {
   var poz = <?= json_encode(array_values($pozycje), JSON_UNESCAPED_UNICODE) ?>;
@@ -223,24 +225,11 @@ CSS);
     if (rozne && !confirm('Paczka różni się od zamówienia. Zapisać mimo to?')) e.preventDefault();
   });
 
-  if ('BarcodeDetector' in window && navigator.mediaDevices) {
-    var bA = document.getElementById('aparat'), wid = document.getElementById('wideo'), strum = null, det, ostatni = '', kiedy = 0;
-    bA.hidden = false;
-    bA.addEventListener('click', function () {
-      if (strum) { strum.getTracks().forEach(function (t) { t.stop(); }); strum = null; wid.style.display = 'none'; bA.textContent = '📷 Aparat'; return; }
-      det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf'] });
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (s) {
-        strum = s; wid.srcObject = s; wid.style.display = 'block'; wid.play(); bA.textContent = '■ Zatrzymaj';
-        (function petla() {
-          if (!strum) return;
-          det.detect(wid).then(function (kody) {
-            var k = kody.length ? kody[0].rawValue.replace(/\D+/g, '') : '';
-            if (k && (k !== ostatni || Date.now() - kiedy > 1500)) { ostatni = k; kiedy = Date.now(); skan(k); }
-          }).catch(function () {}).finally(function () { setTimeout(petla, 200); });
-        })();
-      }).catch(function () { mow(false, 'Brak dostępu do aparatu.'); });
-    });
-  }
+  // L'appareil photo du téléphone (kamera.js) : photo du code partout, vidéo en direct en https.
+  wsmKamera({ zdjecie: document.getElementById('zdjecie'), naZywo: document.getElementById('na-zywo'),
+              wideo: document.getElementById('wideo'),
+              kod: function (k) { skan(k); pole.focus(); },
+              blad: function (m) { bip(false); mow(false, m); } });
   rysuj();
 })();
 </script>

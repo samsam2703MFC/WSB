@@ -127,8 +127,8 @@ console_head('Skaner', $me, <<<'CSS'
   .tryby a { padding: 9px 14px; border: 1px solid var(--border-default); border-radius: 10px;
              color: var(--text-strong); text-decoration: none; font-weight: 600; font-size: 14px; }
   .tryby a.on { background: var(--brand); border-color: var(--brand); color: var(--paper-50); }
-  .scan { display: flex; gap: 8px; align-items: stretch; }
-  .scan input { flex: 1; font: 600 22px/1.2 var(--font-mono); padding: 14px 16px; letter-spacing: .04em; }
+  .scan { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+  .scan input { flex: 1 1 260px; min-width: 0; font: 600 22px/1.2 var(--font-mono); padding: 14px 16px; letter-spacing: .04em; }
   .scan button { white-space: nowrap; }
   .karta { margin-top: 14px; padding: 14px 16px; border-radius: 12px; border: 2px solid var(--border-subtle);
            display: none; }
@@ -164,7 +164,8 @@ CSS);
   <div class="scan">
     <input id="kod" type="text" inputmode="numeric" autocomplete="off" autofocus
            placeholder="Zeskanuj kod EAN…" aria-label="Kod EAN">
-    <button type="button" id="aparat" hidden>📷 Aparat</button>
+    <button type="button" id="zdjecie" hidden>📷 Zdjęcie kodu</button>
+    <button type="button" id="na-zywo" hidden>🎥 Skanuj na żywo</button>
   </div>
   <video id="wideo" playsinline muted></video>
 
@@ -221,6 +222,7 @@ CSS);
 </div>
 <?php endif; ?>
 
+<script src="<?= h(console_asset('kamera.js')) ?>"></script>
 <script>
 (function () {
   var TRYB = <?= json_encode($tryb) ?>;
@@ -361,25 +363,11 @@ CSS);
   });
 
   // L'appareil photo : seulement là où le navigateur sait lire un code-barres.
-  if ('BarcodeDetector' in window && navigator.mediaDevices) {
-    var bA = document.getElementById('aparat'), wid = document.getElementById('wideo'), strum = null, det, ostatni = '', kiedy = 0;
-    bA.hidden = false;
-    bA.addEventListener('click', function () {
-      if (strum) { strum.getTracks().forEach(function (t) { t.stop(); }); strum = null; wid.style.display = 'none'; bA.textContent = '📷 Aparat'; return; }
-      det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf'] });
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (s) {
-        strum = s; wid.srcObject = s; wid.style.display = 'block'; wid.play(); bA.textContent = '■ Zatrzymaj';
-        (function petla() {
-          if (!strum) return;
-          det.detect(wid).then(function (kody) {
-            var k = kody.length ? cyfry(kody[0].rawValue) : '';
-            // Le même code vu en continu ne compte qu'une fois par 1,5 s.
-            if (k && (k !== ostatni || Date.now() - kiedy > 1500)) { ostatni = k; kiedy = Date.now(); skan(k); }
-          }).catch(function () {}).finally(function () { setTimeout(petla, 200); });
-        })();
-      }).catch(function () { pokaz(false, 'Brak dostępu do aparatu', 'Zezwól przeglądarce na użycie aparatu.', ''); });
-    });
-  }
+  // L'appareil photo du téléphone (kamera.js) : photo du code partout, vidéo en direct en https.
+  wsmKamera({ zdjecie: document.getElementById('zdjecie'), naZywo: document.getElementById('na-zywo'),
+              wideo: document.getElementById('wideo'),
+              kod: function (k) { skan(k); pole.focus(); },
+              blad: function (m) { bip(false); pokaz(false, 'Aparat', m, ''); } });
   rysuj();
 })();
 </script>
