@@ -420,5 +420,9 @@
    },
    "waga_g": 300
   }
+ ],
+ "uklad_ukryj": [
+  "hero",
+  "pasek"
  ]
 }

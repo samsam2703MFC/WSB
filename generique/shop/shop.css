@@ -1405,3 +1405,6 @@ h3 { font-weight: var(--weight-bold); }
   .obietnice-pas .promise { border-left: 0; border-top: 1px solid var(--border-default, rgba(0,0,0,.12)); padding: 16px 4px; }
   .obietnice-pas .promise:first-child { border-top: 0; }
 }
+
+/* Accueil sans nagłówek (Układ strony) : la bande des promesses ne laisse pas de vide sous l'en-tête. */
+main > .obietnice-pas:first-child { margin-top: 0; }

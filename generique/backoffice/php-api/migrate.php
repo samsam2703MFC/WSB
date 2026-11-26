@@ -151,6 +151,7 @@ if (($ik = array_search('--import-katalog', $args, true)) !== false) {
     if (!$b['ok']) { fwrite(STDERR, "katalog ODRZUCONY :\n  " . implode("\n  ", $b['erreurs']) . "\n"); exit(1); }
     echo "katalog : {$b['kategorie']} kategorii, {$b['produkty']} produktów, {$b['zdjecia']} zdjęć, {$b['dostawa']} metod dostawy, {$b['slajdy']} slajdów, {$b['teksty']} tekstów\n";
     foreach ($b['jezyki'] ?? [] as $l) echo "języki : $l\n";
+    if (!empty($b['uklad'])) echo "układ strony : ukryte " . implode(', ', $b['uklad']) . "\n";
     exit(0);
 }
 

@@ -339,6 +339,24 @@ function wsm_katalog_import(PDO $pdo, array $k, string $base = ''): array {
             $bilan['jezyki'][] = ($ok ? '' : '✗ ') . $msg;
         }
     }
+    // « uklad_ukryj » : les sections intégrées de l'accueil à cacher (ex. Ola flora :
+    // ["hero", "pasek"] — la boutique s'ouvre sur ses produits). Les autres gardent leur
+    // état ; une section « fixe » (le katalog) ne se cache jamais. Réversible dans Układ.
+    if ($bilan['ok'] && isset($k['uklad_ukryj']) && is_file(__DIR__ . '/layout.php')) {
+        require_once __DIR__ . '/layout.php';
+        $ukryj = array_map('strval', (array) $k['uklad_ukryj']);
+        $wbud = wsm_layout_home_builtins();
+        $liste = wsm_layout_get($pdo, 'home');
+        $bilan['uklad'] = [];
+        foreach ($liste as $i => $it) {
+            $kk = (string) $it['k'];
+            if (!isset($wbud[$kk]) || !empty($wbud[$kk]['fixed'])) continue;
+            $on = in_array($kk, $ukryj, true) ? 0 : (int) $it['on'];
+            if ($on === 0 && (int) $it['on'] === 1) $bilan['uklad'][] = $kk;
+            $liste[$i]['on'] = $on;
+        }
+        wsm_layout_write($pdo, 'home', $liste, 'katalog');
+    }
     return $bilan;
 }
 
