@@ -49,14 +49,14 @@ on:
       action:
         description: "Que faire"
         type: choice
-        options: [mettre-a-jour, creer, valider, deployer, retour, liste, demenager, katalog]
+        options: [mettre-a-jour, creer, valider, deployer, retour, liste, demenager, katalog, transfert-cle, demenager-url]
         default: liste
       boutique:
         description: "Boutique (pour creer / deployer / retour / demenager / katalog)"
         required: false
         default: ""
       domaine:
-        description: "Domaine de la boutique à créer (vide = adresse provisoire <boutique>.<ip>.sslip.io)"
+        description: "Domaine de la boutique à créer (vide = adresse provisoire <boutique>.<ip>.sslip.io) — pour demenager-url : l'adresse http://hôte/dossier/ de l'archive chiffrée"
         required: false
         default: ""
       afficher_adresse:
@@ -134,9 +134,14 @@ jobs:
             printf 'SIEGE_TELEFONY=%s\nSMSAPI_TOKEN=%s\nSMSAPI_NADAWCA=%s\n' \
               "$(printf '%s' "$SIEGE_TELEFONY" | tr -d '\r\n')" "$(printf '%s' "$SMSAPI_TOKEN" | tr -d '\r\n')" \
               "$(printf '%s' "$SMSAPI_NADAWCA" | tr -d '\r\n')" > "$RUNNER_TEMP/wsb-secrets.env" )
-          case "${DOMAINE:-}" in ''|*[!a-z0-9.-]*) DOMAINE="";; esac
+          if [ "$A" = demenager-url ]; then
+            [[ "${DOMAINE:-}" =~ ^https?://[A-Za-z0-9.:-]+/[A-Za-z0-9._/-]*/$ ]] || { echo "adresse de l'archive invalide"; exit 1; }
+          else
+            case "${DOMAINE:-}" in ''|*[!a-z0-9.-]*) DOMAINE="";; esac
+          fi
           [ "$A" = demenager ] && BOUTIQUE="${BOUTIQUE:-szoko}"
-          if [ "$A" = deployer ] || [ "$A" = retour ] || [ "$A" = creer ] || [ "$A" = demenager ] || [ "$A" = katalog ]; then
+          [ "$A" = demenager-url ] && BOUTIQUE="${BOUTIQUE:-szoko}"
+          if [ "$A" = deployer ] || [ "$A" = retour ] || [ "$A" = creer ] || [ "$A" = demenager ] || [ "$A" = katalog ] || [ "$A" = demenager-url ]; then
             [[ "$BOUTIQUE" =~ ^[a-z0-9][a-z0-9-]{1,30}$ ]] || { echo "boutique invalide"; exit 1; }
           fi
           sshpass -e scp -P "$PORT" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \

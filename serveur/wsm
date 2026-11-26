@@ -592,6 +592,38 @@ cmd_demenager() {
   dire "boutique $b déménagée"
 }
 
+# Transfert chiffré depuis l'ancien serveur, sans secret partagé : ce serveur
+# garde une clé privée (/etc/wsm/transfert.key) et publie sa moitié publique ;
+# l'ancien serveur chiffre l'archive avec elle et la dépose sur le web ; seul
+# ce serveur peut la lire.
+TRANSFERT_CLE=/etc/wsm/transfert.key
+cmd_transfert_cle() {
+  racine_seulement
+  install -d -m 700 /etc/wsm
+  [ -s "$TRANSFERT_CLE" ] || ( umask 077; openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "$TRANSFERT_CLE" 2>/dev/null )
+  openssl pkey -in "$TRANSFERT_CLE" -pubout
+}
+
+# wsm demenager-url <boutique> <url> : <url>k (clé AES chiffrée RSA-OAEP) et
+# <url>d (archive chiffrée AES-256), puis « wsm demenager ».
+cmd_demenager_url() {
+  racine_seulement
+  local b="$1" u="$2"; existe "$b"
+  [[ "$u" =~ ^https?://[A-Za-z0-9.:-]+/[A-Za-z0-9._/-]*/$ ]] || mourir "adresse invalide (http://hôte/dossier/)"
+  [ -s "$TRANSFERT_CLE" ] || mourir "pas de clé de transfert : wsm transfert-cle"
+  local t; t=$(mktemp -d /root/wsm-transfert.XXXXXX)
+  titre "téléchargement de l'archive chiffrée"
+  curl -fsS --max-time 60 -o "$t/k" "${u}k" && curl -fsS --max-time 1800 -o "$t/d" "${u}d" || { rm -rf "$t"; mourir "téléchargement impossible"; }
+  dire "archive chiffrée : $(du -h "$t/d" | cut -f1)"
+  ( umask 077
+    openssl pkeyutl -decrypt -inkey "$TRANSFERT_CLE" -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in "$t/k" -out "$t/cle" \
+    && openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass "file:$t/cle" -in "$t/d" -out /tmp/wsb-demenagement.tgz ) \
+    || { find "$t" -type f -exec shred -u {} + 2>/dev/null; rm -rf "$t"; mourir "déchiffrement impossible"; }
+  find "$t" -type f -exec shred -u {} + 2>/dev/null; rm -rf "$t"
+  dire "archive déchiffrée"
+  cmd_demenager "$b" /tmp/wsb-demenagement.tgz
+}
+
 cmd_https() {
   racine_seulement
   local b="$1"; existe "$b"
@@ -864,6 +896,8 @@ case "$cmd" in
   ip) cmd_ip;;
   katalog) cmd_katalog "${1:-}";;
   chemin) cmd_chemin "${1:-}" "${2:-}";;
+  transfert-cle) cmd_transfert_cle;;
+  demenager-url) cmd_demenager_url "${1:?usage : wsm demenager-url <boutique> <url>}" "${2:?usage : wsm demenager-url <boutique> <url>}";;
   demenager) cmd_demenager "${1:?usage : wsm demenager <boutique> <archive.tgz>}" "${2:?usage : wsm demenager <boutique> <archive.tgz>}";;
   https) cmd_https "${1:?usage : wsm https <boutique>}";;
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
