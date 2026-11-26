@@ -1,0 +1,15 @@
+/* Poszła w las — mouvement rapide et discret : 120 ms survol et appui, 200 ms
+   changements d'état, 420 ms entrée à l'écran ; cubic-bezier(.2,.7,.3,1).
+   Fondus et courts glissements seulement. L'appui descend d'1 px ; RIEN ne
+   s'agrandit, rien ne se soulève au survol. */
+:root {
+  --ease-out:  cubic-bezier(.2, .7, .3, 1);
+  --ease-soft: cubic-bezier(.3, 1.3, .6, 1);   /* --ease-soft-back : interrupteurs seulement */
+  --dur-fast:  120ms;
+  --dur-base:  200ms;
+  --dur-slow:  420ms;
+  --lift:      none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
+}

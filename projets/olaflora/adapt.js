@@ -174,7 +174,7 @@
       sek.after(w);
       return widac > 0;
     }
-    var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 15.11 | 20.12 | \nWianki | 01.12 | 20.12 | ';
+    var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 20.12 | sklep/#katalog\nWianki | 01.12 | 20.12 | sklep/#katalog';
 
     function wyciagnij(html) { var out = [], t = szablon(html); wstawSezon(t, SEZON_DOMYSLNY, true); przejdz(t, function (i) { out.push(i); }); return out; }
 

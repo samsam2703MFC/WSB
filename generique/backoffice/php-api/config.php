@@ -66,6 +66,9 @@ $cfg = [
         'promise_icon_2' => getenv('WSM_SHOP_ICON_2') ?: '',
         'promise_icon_3' => getenv('WSM_SHOP_ICON_3') ?: '',
         'logo_image'     => getenv('WSM_SHOP_LOGO') ?: '',
+        // Le préfixe des numéros de commande (MS-261126-0001) — par boutique,
+        // dans sa configuration (boutique.json → « prefiks_zamowien », posé par wsm creer).
+        'order_prefix'   => getenv('WSM_ORDER_PREFIX') ?: 'MS',
         // Les logos de livraison et de paiement montrés au client (metody.php).
         // Vides ici : la liste suit alors la réalité (modes actifs, tpay) ;
         // Integracje → Sklep permet de choisir à la main.

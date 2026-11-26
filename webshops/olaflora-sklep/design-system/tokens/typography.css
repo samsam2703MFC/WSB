@@ -1,0 +1,36 @@
+/* Ola flora — typographie.
+   Poppins pour les titres et l'interface (600, serré −0,02em), Work Sans 15/1,6
+   pour le texte jusqu'à 64 caractères, Space Mono en minuscules, approche
+   large, pour les sur-titres et les métadonnées. Les titres gardent la casse
+   de la phrase (« Florystyka inspirowana naturą ») : OLA FLORA en capitales
+   est le logo, pas un style de titre. */
+:root {
+  --font-display: 'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;   /* le site : Work Sans léger */
+  --font-sans:    'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --text-2xs: 0.75rem;
+  --text-xs:  0.8125rem;
+  --text-sm:  0.875rem;
+  --text-md:  0.9375rem;   /* 15 px — le texte courant */
+  --text-lg:  1.125rem;
+  --text-xl:  1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.5rem;
+  --text-4xl: 3.5rem;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extra:    300;   /* titres légers, comme le site */
+
+  --leading-tight:   1.12;  /* titres : Poppins a besoin d'air */
+  --leading-snug:    1.2;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.6;
+
+  --tracking-tight: -0.01em;
+  --tracking-wide:  0.04em;
+  --tracking-caps:  0.12em;   /* le mono des étiquettes */
+}

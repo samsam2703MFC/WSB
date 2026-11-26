@@ -1,0 +1,14 @@
+{
+  "_opis": "Fiche de la boutique pour le serveur (serveur/wsm). AUCUN secret ici : ce dépôt est public. Les mots de passe et les clés sont générés sur le serveur ou saisis dans la console.",
+  "domaine_info": "« xxxx » = pas encore choisi ; on peut aussi le donner à la création : wsm creer <boutique> <domaine>",
+  "nom": "Ola flora — sklep",
+  "design_system": "olaflora-sklep",
+  "domaine": "xxxx",
+  "alias": [],
+  "langue": "pl",
+  "katalog": "katalog/katalog.json",
+  "projet_ip": "olaflora",
+  "projet_dossier": "sklep",
+  "_projet_ip": "Sur l'adresse IP, la vitrine est AUSSI servie dans le projet olaflora : https://<IP>/olaflora/sklep/ (lien posé par wsm ip).",
+  "prefiks_zamowien": "OF"
+}

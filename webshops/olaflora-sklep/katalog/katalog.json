@@ -1,0 +1,260 @@
+{
+ "_opis": "Sklep sezonowy Ola flora (/olaflora/sklep/) : dekoracje świąteczne i wianki, d'après les maquettes validées (docs/makiety-olaflora-sklep). Prix TTC en zł, EXEMPLES à valider par Ola ; photos provisoires (réalisations du site). Import : php migrate.php --import-katalog <ce fichier>.",
+ "kategorie": [
+  {
+   "nazwa": "Dekoracje świąteczne"
+  },
+  {
+   "nazwa": "Wianki"
+  }
+ ],
+ "kategorie_wylacz": [
+  "Pieczywo",
+  "Ciasta świeże",
+  "Czekolada",
+  "Katering",
+  "Lody",
+  "Menu i zestawy"
+ ],
+ "dostawa": [
+  {
+   "id": "odbior_pracownia",
+   "carrier": "",
+   "kind": "odbior",
+   "cena_netto": 0,
+   "vat": 0.23,
+   "kraje": "PL",
+   "kolejnosc": 1,
+   "teksty": {
+    "pl": {
+     "label": "Odbiór w pracowni",
+     "note": "Bez opłat. Termin odbioru potwierdzimy SMS-em."
+    },
+    "en": {
+     "label": "Pickup at the studio",
+     "note": "Free. We confirm the pickup time by SMS."
+    }
+   }
+  },
+  {
+   "id": "dostawa_lokalna",
+   "carrier": "",
+   "kind": "adres",
+   "cena_netto": 20.33,
+   "vat": 0.23,
+   "kraje": "PL",
+   "kolejnosc": 2,
+   "teksty": {
+    "pl": {
+     "label": "Dostawa pod adres",
+     "note": "Dowozimy sami, w okolicy pracowni. Termin ustalimy telefonicznie."
+    },
+    "en": {
+     "label": "Local delivery",
+     "note": "We deliver ourselves, near the studio. We agree the time by phone."
+    }
+   }
+  }
+ ],
+ "dostawa_tylko": true,
+ "rabaty_wagowe": false,
+ "ikony_obietnic": [
+  "zdjecia/ikona-1.png",
+  "zdjecia/ikona-2.png",
+  "zdjecia/ikona-3.png"
+ ],
+ "teksty": {
+  "pl": {
+   "brand": "Ola flora",
+   "meta.title": "Ola flora — sklep: dekoracje świąteczne i wianki",
+   "meta.desc": "Wieńce adwentowe, stroiki, girlandy i wianki robione ręcznie w pracowni Ola flora. Odbiór w pracowni lub dostawa.",
+   "footer.tagline": "Pracownia florystyczna — florystyka inspirowana naturą",
+   "catalog.title": "Dekoracje świąteczne i wianki",
+   "catalog.sub": "Robione ręcznie, na zamówienie — gotowe w 3 dni. Odbiór w pracowni lub dostawa.",
+   "promise.title": "Z pracowni, nie z magazynu.",
+   "promise.sub": "Każdą dekorację robię dla Was, z tego, co akurat daje sezon.",
+   "promise.1.t": "Robione ręcznie",
+   "promise.1.d": "Każdy wieniec i stroik powstaje w pracowni — żaden nie jest taki sam.",
+   "promise.2.t": "Sezonowe gałązki",
+   "promise.2.d": "Jodła, eukaliptus, ostrokrzew i suszone kwiaty, które przetrwają święta.",
+   "promise.3.t": "Odbiór lub dostawa",
+   "promise.3.d": "Odbiór w pracowni bez opłat albo dowóz w okolicy, w ustalonym terminie.",
+   "story.pro.eyebrow": "Kwiaty dla firm",
+   "story.pro.title": "Zazieleniamy wnętrza i przygotowujemy oprawę florystyczną firmowych wydarzeń.",
+   "story.pro.text": "Recepcje, regularne kompozycje, eventy — napiszcie, przygotuję propozycję.",
+   "story.pro.cta": "Napisz do Ola flora",
+   "home.title": "Święta w kwiatach",
+   "footer.rights": "Wszelkie prawa zastrzeżone. Zdjęcia: Ola flora.",
+   "info.darmowa": "Odbiór w pracowni bez opłat",
+   "checkout.note": "Termin odbioru lub dostawy, rozmiar, wstążka, bilecik — napiszcie tutaj"
+  }
+ },
+ "slajdy": [
+  {
+   "zdjecie": "zdjecia/hero.webp",
+   "link": "#katalog",
+   "teksty": {
+    "pl": {
+     "eyebrow": "sklep sezonowy",
+     "title": "Święta w kwiatach",
+     "tekst": "Wieńce, stroiki i dekoracje świąteczne robione ręcznie w pracowni — z jodły, suszonych kwiatów i tego, co akurat daje sezon. Każda sztuka jest trochę inna.",
+     "cta_label": "Zobacz dekoracje"
+    }
+   }
+  }
+ ],
+ "produkty": [
+  {
+   "id": "of-sw-01",
+   "kategoria": "Dekoracje świąteczne",
+   "rodzaj": "towar",
+   "cena": 219,
+   "vat": 0.23,
+   "stan": 12,
+   "jednostka": "szt.",
+   "sku": "OF-SW-01",
+   "zdjecie": "zdjecia/wieniec-adwentowy.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wieniec adwentowy z suszonych hortensji",
+     "subtitle": "Ø 40 cm · 4 świece",
+     "desc": "Okrągły wieniec na jodłowej bazie z suszonymi hortensjami, eukaliptusem i lnianą wstążką. Cztery świece w komplecie. Wytrzyma cały adwent, a hortensje — dłużej. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   },
+   "waga_g": 1500
+  },
+  {
+   "id": "of-sw-02",
+   "kategoria": "Dekoracje świąteczne",
+   "rodzaj": "towar",
+   "cena": 149,
+   "vat": 0.23,
+   "stan": 12,
+   "jednostka": "szt.",
+   "sku": "OF-SW-02",
+   "zdjecie": "zdjecia/stroik-swiece.webp",
+   "teksty": {
+    "pl": {
+     "name": "Stroik na stół, jodła i świece",
+     "subtitle": "ok. 60 cm · 3 świece",
+     "desc": "Długi stroik na stół wigilijny: jodła, szyszki, suszone kwiaty i bursztynowe szkło. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   },
+   "waga_g": 1200
+  },
+  {
+   "id": "of-sw-03",
+   "kategoria": "Dekoracje świąteczne",
+   "rodzaj": "towar",
+   "cena": 159,
+   "vat": 0.23,
+   "stan": 12,
+   "jednostka": "szt.",
+   "sku": "OF-SW-03",
+   "zdjecie": "zdjecia/bukiet-ostrokrzew.webp",
+   "teksty": {
+    "pl": {
+     "name": "Bukiet świąteczny z ostrokrzewem",
+     "subtitle": "ostrokrzew · jodła · wstążki",
+     "desc": "Bukiet z ostrokrzewu, gałązek jodły i eukaliptusa, z czerwonymi wstążkami. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   },
+   "waga_g": 900,
+   "badge": "nowość"
+  },
+  {
+   "id": "of-sw-04",
+   "kategoria": "Dekoracje świąteczne",
+   "rodzaj": "towar",
+   "cena": 289,
+   "vat": 0.23,
+   "stan": 12,
+   "jednostka": "szt.",
+   "sku": "OF-SW-04",
+   "zdjecie": "zdjecia/girlanda.webp",
+   "teksty": {
+    "pl": {
+     "name": "Girlanda na kominek, 150 cm",
+     "subtitle": "150 cm · żywe gałązki",
+     "desc": "Girlanda z jodły, bluszczu i suszonych kwiatów — na kominek, schody lub stół. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   },
+   "waga_g": 2000
+  },
+  {
+   "id": "of-sw-05",
+   "kategoria": "Dekoracje świąteczne",
+   "rodzaj": "usluga",
+   "cena": 450,
+   "vat": 0.23,
+   "stan": 20,
+   "jednostka": "szt.",
+   "sku": "OF-SW-05",
+   "zdjecie": "zdjecia/dekoracja-firmy.webp",
+   "teksty": {
+    "pl": {
+     "name": "Dekoracja świąteczna na recepcję",
+     "subtitle": "dla firm · z montażem",
+     "desc": "Kompozycja świąteczna dla recepcji, witryny lub biura, z dowozem i montażem na miejscu. Cena od — wycenę potwierdzimy po rozmowie. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   }
+  },
+  {
+   "id": "of-wi-01",
+   "kategoria": "Wianki",
+   "rodzaj": "towar",
+   "cena": 179,
+   "vat": 0.23,
+   "stan": 12,
+   "jednostka": "szt.",
+   "sku": "OF-WI-01",
+   "zdjecie": "zdjecia/wianek-drzwi.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wianek na drzwi, eukaliptus i jodła",
+     "subtitle": "Ø 35 cm",
+     "desc": "Wianek na drzwi z eukaliptusa i jodły, z lnianą wstążką do zawieszenia. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   },
+   "waga_g": 900
+  },
+  {
+   "id": "of-wi-02",
+   "kategoria": "Wianki",
+   "rodzaj": "towar",
+   "cena": 199,
+   "vat": 0.23,
+   "stan": 12,
+   "jednostka": "szt.",
+   "sku": "OF-WI-02",
+   "zdjecie": "zdjecia/wianek-gipsowka.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wianek z gipsówki i róż",
+     "subtitle": "Ø 40 cm",
+     "desc": "Jasny wianek z suszonej gipsówki i róż — na drzwi, ścianę lub jako dekoracja stołu. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   },
+   "waga_g": 800
+  },
+  {
+   "id": "of-wi-03",
+   "kategoria": "Wianki",
+   "rodzaj": "towar",
+   "cena": 89,
+   "vat": 0.23,
+   "stan": 0,
+   "jednostka": "szt.",
+   "sku": "OF-WI-03",
+   "zdjecie": "zdjecia/wianek-mini.webp",
+   "teksty": {
+    "pl": {
+     "name": "Wianek mini na prezent",
+     "subtitle": "Ø 20 cm",
+     "desc": "Mały wianek z suszonych kwiatów, zapakowany na prezent. Rozmiar, kolor wstążki i termin odbioru wpiszcie w uwagach do zamówienia."
+    }
+   },
+   "waga_g": 300
+  }
+ ]
+}

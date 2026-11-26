@@ -1,0 +1,6 @@
+/* Poszła w las — mise en page : conteneur 1180 px, gouttière 24 px, 96 px entre
+   les sections, mesure du texte plafonnée à 64 caractères. La grille de 4 px du
+   contrat reste celle du code. */
+:root {
+  --container: 1180px;
+}

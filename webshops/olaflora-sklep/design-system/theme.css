@@ -1,0 +1,99 @@
+/* Ola flora — sklep : retouches de composants, d'après les maquettes validées
+   (docs/makiety-olaflora-sklep, 26/11/2026). Imprimées APRÈS shop.css ; la
+   structure des pages ne change pas. Le site d'Ola flora : fond de lin, encre
+   terre d'ombre, titres en Work Sans léger, étiquettes en capitales espacées,
+   angles droits, AUCUNE ombre, filets fins. Couleurs : toujours les jetons. */
+
+/* ---- Titres : Work Sans 300, casse de la phrase -------------------------- */
+h1, h2, h3, .tytul-2, .section-head h2, .promise h2, .card h3,
+.hero:not(.sek) h1, .hero:not(.sek) .slajd-h {
+  font-family: var(--font-display);
+  font-weight: 300;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.08;
+}
+.card h3, .card-body h3 { font-weight: 400; font-size: 1.2rem; line-height: 1.25; }
+.tytul-2 span { color: var(--text-muted); }
+body { font-weight: 300; font-size: 16px; line-height: 1.7; }
+strong, b { font-weight: 500; }
+.prose, .lead, .section-head .sub { max-width: 60ch; }
+
+/* ---- La voix « étiquette » : capitales espacées, petit corps ------------- */
+.eyebrow, .hero:not(.sek) .eyebrow, .eyebrow.accent, .product-buy .eyebrow, .kontakt-txt .eyebrow,
+.card-meta, .badge, .site-head nav a, .btn, .chip, .rayons a, .rayons button {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .16em;
+}
+.hero:not(.sek) .eyebrow, .section-head .eyebrow { /* le sur-titre du site : italique, en minuscules */
+  font-size: 1.4rem; text-transform: none; letter-spacing: 0; font-style: italic; font-weight: 300; color: #8A7D6C;
+}
+.card-meta { color: var(--text-muted); letter-spacing: .12em; }
+.price { font-family: var(--font-sans); font-weight: 400; letter-spacing: 0; }
+.badge { background: var(--paper); color: var(--text-strong); border: 0; padding: 4px 9px; }
+
+/* ---- Boutons : rectangles d'encre, capitales espacées --------------------- */
+.btn { border-radius: 0; box-shadow: none; padding: 14px 24px; }
+.btn--brand, .btn--accent { background: var(--brand-700); color: var(--paper); border: 1px solid var(--brand-700); }
+.btn--brand:hover, .btn--accent:hover { background: var(--brand-900); border-color: var(--brand-900); }
+.btn--ghost { background: transparent; border: 1px solid var(--text-strong); color: var(--text-strong); }
+.btn--ghost:hover { background: var(--text-strong); color: var(--paper); }
+.btn:active { transform: none; }
+
+/* ---- Cartes produit : la photo, puis le texte — sans cadre ni fond -------- */
+.card { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.card:hover { transform: none; box-shadow: none; }
+.card-media { border-radius: 0; background: var(--paper-soft); padding: 0; }
+/* Ici, des compositions florales photographiées en pied : la photo REMPLIT le
+   cadre (4/5, comme sur le site), au lieu d'un produit détouré sur fond. */
+.card-photo { aspect-ratio: 4 / 5; object-fit: cover; border-radius: 0; }
+.card-body { gap: 4px; }
+.card-meta { font-weight: 400; color: var(--text-muted); text-transform: uppercase; letter-spacing: .12em; font-size: 11px; }
+.card h3 { font-weight: 400; font-size: 1.2rem; }
+.card-media img { transition: opacity var(--dur-fast) var(--ease-out); }
+.card:hover .card-media img { opacity: .92; }
+.card-body { padding-left: 0; padding-right: 0; }
+.card-photo, .product-media, .slajd-foto, .hero--foto:not(.sek)::after { border-radius: 0; }
+
+/* ---- Bandes « promesses », contact, résumé : filets fins, sans ombre ------ */
+.kontakt-poz { border-radius: 0; background: transparent; border: 1px solid var(--hairline); }
+.promise, .kontakt-karta, .summary, .checkout-form fieldset {
+  background: transparent; border: 1px solid var(--hairline); border-radius: 0; box-shadow: none;
+}
+.pro { background: var(--brand-700); border-radius: 0; }
+.pro .eyebrow { color: var(--brand-300); }
+.pro .btn--accent { background: var(--paper); color: var(--text-strong); border-color: var(--paper); }
+
+/* ---- Champs : filet fin, fond clair --------------------------------------- */
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+input[type="search"], input[type="password"], textarea, select {
+  border: 1px solid var(--brand-300); border-radius: 0; background: var(--surface-card);
+}
+
+/* ---- Liens : soulignés fin ----------------------------------------------- */
+.prose a, .check a, .legal-spis a, .page a:not(.btn) {
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px;
+}
+
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--text-strong); outline-offset: 2px; box-shadow: none;
+}
+
+/* ---- En-tête : lin à plat, filet fin ; le logo porte déjà le nom ----------- */
+.site-head { background: var(--paper); backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom: 1px solid var(--hairline); box-shadow: none; }
+.head-logo img { height: 30px; width: auto; opacity: .86; }
+.head-nazwa, .foot-brand span { display: none; }
+.foot-logo { height: 26px; width: auto; }
+
+/* ---- Pas de camionnettes en couleur : le nom du mode suffit --------------- */
+.dostawa-obraz, .dostawa-rys { display: none; }
+
+/* ---- Respiration ---------------------------------------------------------- */
+.block { padding-top: clamp(56px, 7vw, 96px); padding-bottom: clamp(56px, 7vw, 96px); }
+
+/* ---- Fiche produit : la photo en pied, sans cadre blanc ------------------- */
+.product-media { background: transparent; border-radius: 0; padding: 0; }
+.product-photo { aspect-ratio: 4 / 5; object-fit: cover; border-radius: 0; }
+.dostawa-info, .dostawa-info li, .dostawa-opcja, .cart-box, .zaplac-forma { border-radius: 0; box-shadow: none; }

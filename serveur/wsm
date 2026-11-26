@@ -176,6 +176,7 @@ cmd_creer() {
 
   local nomB ds kat base mdp jeton dir="$BOUT/$b"
   nomB=$(webshop_json "$ws" nom); ds=$(webshop_json "$ws" design_system); kat=$(webshop_json "$ws" katalog)
+  local pref; pref=$(webshop_json "$ws" prefiks_zamowien); [[ "$pref" =~ ^[A-Z]{2,4}$ ]] || pref=MS
   [ -n "$alias" ] || alias=$(webshop_json "$ws" alias)
   # Le nom de la base : celui de boutique.json (« base »), sinon ws_<boutique>.
   base=$(webshop_json "$ws" base); [[ "$base" =~ ^[a-z][a-z0-9_]{1,40}$ ]] || base=$(base_de "$b")
@@ -219,6 +220,7 @@ return [
     'admin_token'       => '$jeton',
     'design_system'     => '$ds',
     'superadmin_emails' => '$SUPERADMIN_EMAILS',
+    'shop'              => ['order_prefix' => '$pref'],
 $centrala
 ];
 PHP
@@ -317,6 +319,19 @@ ip_sites_ecrire() {
   ln -sfn "$BOUT/$defaut/current/shop" "$r/shop"; ln -sfn "$BOUT/$defaut/current/backoffice" "$r/backoffice"
   [ -f "$BOUT/siege/config.php" ] && ln -sfn "$BOUT/siege/current/siege" "$r/admin"
   for n in $(projets_ip); do ln -sfn "$PROJ/$n/site" "$r/$n"; done
+  # Une vitrine logée DANS un projet (boutique.json : projet_ip + projet_dossier),
+  # ex. la boutique olaflora-sklep → http://<IP>/olaflora/sklep/ : un lien dans le
+  # site du projet vers SA vitrine, reposé après chaque « wsm projet ».
+  local DANS_PROJET="" ws pj pd
+  for b in $(boutiques_ip); do
+    ws=$(meta "$b" WEBSHOP); [ -n "$ws" ] || continue
+    pj=$(webshop_json "$ws" projet_ip); pd=$(webshop_json "$ws" projet_dossier)
+    [[ "$pj" =~ ^[a-z0-9][a-z0-9-]{1,39}$ && "$pd" =~ ^[a-z0-9][a-z0-9-]{1,39}$ ]] || continue
+    [ -d "$PROJ/$pj/site" ] || continue
+    if [ -e "$PROJ/$pj/site/$pd" ] && [ ! -L "$PROJ/$pj/site/$pd" ]; then echo "  $pj/$pd existe déjà dans le projet : vitrine non liée" >&2; continue; fi
+    ln -sfn "$BOUT/$b/current/shop" "$PROJ/$pj/site/$pd"
+    DANS_PROJET+=" $pj/$pd:$b"
+  done
 
   # Un bloc par dossier : la configuration, le journal et les photos de SA boutique.
   bloc() { # <dossier sous la racine> <boutique>
@@ -342,6 +357,7 @@ ip_sites_ecrire() {
       # Les photos d'abord (un Alias plus précis passe avant).
       for b in $(boutiques_ip); do media "/$(chemin_ip "$b")" "$b"; done
       media "" "$defaut"
+      local dp; for dp in $DANS_PROJET; do printf '    Alias /%s/media/ %s/%s/media/\n' "${dp%%:*}" "$BOUT" "${dp##*:}"; done
       for b in $(boutiques_ip); do bloc "$(chemin_ip "$b")" "$b"; done
       bloc shop "$defaut"; bloc backoffice "$defaut"
       for b in $(boutiques_ip $defaut); do
@@ -357,6 +373,11 @@ ip_sites_ecrire() {
         printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.html\n        SetEnv PROJET_CONFIG %s/%s/config.php\n' "$r" "$n" "$PROJ" "$n"
         printf '        <FilesMatch "^(Back office.*|Poczta|Super admin|Asystent rozmowy|Retroplan|Karta misji)\\.dc\\.html$">\n            AuthType Basic\n            AuthName "%s"\n            AuthUserFile %s/%s/htpasswd\n            Require valid-user\n        </FilesMatch>\n    </Directory>\n' "$n" "$PROJ" "$n"
         printf '    <Directory %s/%s/_wsb/prive>\n        AuthType Basic\n        AuthName "%s"\n        AuthUserFile %s/%s/htpasswd\n        Require valid-user\n    </Directory>\n' "$r" "$n" "$n" "$PROJ" "$n"
+      done
+      # Les vitrines logées dans un projet : APRÈS le bloc du projet, plus précises (la configuration de LEUR boutique).
+      for dp in $DANS_PROJET; do
+        printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride All\n        Require all granted\n        DirectoryIndex index.php\n' "$r" "${dp%%:*}"
+        printf '        SetEnv WSM_CONFIG_FILE %s/%s/config.php\n        SetEnv WSM_DATA_DIR    %s/%s/data\n        SetEnv WSM_MEDIA_DIR   %s/%s/media\n    </Directory>\n' "$BOUT" "${dp##*:}" "$BOUT" "${dp##*:}" "$BOUT" "${dp##*:}"
       done
       # Le défi Let's Encrypt du certificat de l'IP (wsm https-ip).
       if [ -d "$RACINE/acme/.well-known/acme-challenge" ]; then

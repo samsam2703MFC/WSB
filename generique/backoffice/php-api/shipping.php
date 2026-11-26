@@ -215,7 +215,7 @@ function wsm_ship_queue(PDO $pdo, int $limit = 200): array {
         if (!$o) continue;
         // Une commande sans expédition (formation, licence) n'a pas de colis :
         // elle n'a rien à faire dans la file des étiquettes.
-        if (wsm_ship_kind($pdo, (string) $o['delivery_method']) === 'brak') continue;
+        if (in_array(wsm_ship_kind($pdo, (string) $o['delivery_method']), ['brak', 'odbior'], true)) continue;
         $b = wsm_ship_blockers($pdo, $o);
         $out[] = ['order' => $o, 'shipment' => $o['shipment'] ?? null,
                   'blockers' => $b, 'pret' => $b === []];

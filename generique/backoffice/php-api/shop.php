@@ -90,6 +90,16 @@ function wsm_shop_base_url(): string {
     $fixed = (string) (wsm_config()['shop_url'] ?? '');
     if ($fixed !== '') return rtrim($fixed, '/');
 
+    // Servie par SA vitrine (shop/index.php), la racine est le dossier du
+    // script, quel que soit son nom : une vitrine logée dans un projet
+    // (http://<IP>/olaflora/sklep/) n'a pas de « /shop » dans son chemin.
+    $sf = (string) ($_SERVER['SCRIPT_FILENAME'] ?? '');
+    $sn = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+    if ($sf !== '' && $sn !== '' && basename($sn) === 'index.php'
+        && is_file(dirname($sf) . '/layout.php') && is_file(dirname($sf) . '/znaki.php')) {
+        return wsm_request_origin() . rtrim(str_replace('\\', '/', dirname($sn)), '/');
+    }
+
     $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?? '/';
     foreach (['/backoffice', '/shop', '/landing'] as $surface) {
         $cut = strpos($path, $surface . '/');
@@ -644,7 +654,9 @@ function wsm_shipping_methods(PDO $pdo, string $lang, string $country = '', int 
 }
 
 /**
- * LE TYPE DE SERVICE D'UNE LIGNE DE MÉTHODE : 'punkt' ou 'adres'.
+ * LE TYPE DE SERVICE D'UNE LIGNE DE MÉTHODE : 'punkt', 'adres', 'brak' (rien
+ * à livrer : formation, licence) ou 'odbior' (un objet que le client vient
+ * chercher sur place — ni adresse ni point, mais permis avec un objet).
  *
  * La colonne fait foi. Le repli sur le nom n'est là que pour la fenêtre entre
  * le déploiement du code et le premier démarrage qui ajoute la colonne — sans
@@ -653,7 +665,7 @@ function wsm_shipping_methods(PDO $pdo, string $lang, string $country = '', int 
  */
 function wsm_ship_kind_row(array $r): string {
     $k = strtolower(trim((string) ($r['kind'] ?? '')));
-    if ($k === 'punkt' || $k === 'adres' || $k === 'brak') return $k;
+    if ($k === 'punkt' || $k === 'adres' || $k === 'brak' || $k === 'odbior') return $k;
     return str_contains(strtolower((string) ($r['id'] ?? '')), 'locker')
         || str_contains(strtolower((string) ($r['id'] ?? '')), 'point')
         || str_contains(strtolower((string) ($r['id'] ?? '')), 'pickup') ? 'punkt' : 'adres';
@@ -683,6 +695,7 @@ function wsm_ship_kind(PDO $pdo, string $methodId): string {
 function wsm_ship_opis(PDO $pdo, string $methodId, string $point = ''): string {
     $k = wsm_ship_kind($pdo, $methodId);
     if ($k === 'brak')  return 'Bez wysyłki';
+    if ($k === 'odbior') return 'Odbiór osobisty';
     if ($k === 'punkt') return trim('Paczkomat ' . $point);
     return 'Kurier ' . strtoupper(wsm_ship_carrier($pdo, $methodId));
 }
@@ -1259,9 +1272,11 @@ function wsm_validate_product_shop(PDO $pdo, array $in, string $id): array {
     return [$out, $e];
 }
 
-/** Code de commande lisible : MS-AAMMJJ-NNNN. */
+/** Code de commande lisible : MS-AAMMJJ-NNNN (MS = shop.order_prefix de la configuration : OF chez Ola flora). */
 function wsm_next_order_code(PDO $pdo): string {
-    $prefix = 'MS-' . date('ymd') . '-';
+    $pre = strtoupper((string) (wsm_config()['shop']['order_prefix'] ?? 'MS'));
+    if (!preg_match('/^[A-Z]{2,4}$/', $pre)) $pre = 'MS';
+    $prefix = $pre . '-' . date('ymd') . '-';
     $st = $pdo->prepare("SELECT code FROM wsm_orders WHERE code LIKE ? ORDER BY code DESC LIMIT 1");
     $st->execute([$prefix . '%']);
     $last = (string) $st->fetchColumn();

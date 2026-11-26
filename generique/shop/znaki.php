@@ -251,6 +251,15 @@ function ilustracja_dostawy(string $carrier, string $kind): string {
             . '<circle cx="15.5" cy="24" r="4.6" fill="#FFCD00"/>'
             . '<path d="M15.5 16.8v2.4M15.5 28.8v2.4M8.3 24h2.4M20.3 24h2.4M10.4 18.9l1.7 1.7M18.9 27.4l1.7 1.7M20.6 18.9l-1.7 1.7M12.1 27.4l-1.7 1.7" stroke="#FFCD00" stroke-width="1.5" stroke-linecap="round"/>'
             . '<text x="42.5" y="27" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="8.6" font-weight="700" fill="#3C3C3B">InPost</text>');
+    } elseif ($kind === 'odbior') {
+        // Odbiór osobisty : une vitrine et sa porte, sans transporteur.
+        $d = $cien
+           . '<rect x="14" y="20" width="68" height="35" rx="1.5" fill="#FBF8F3" stroke="#CFC6BB"/>'
+           . '<path d="M10 13h76l-3 9H13Z" fill="#6A6157"/>'
+           . '<path d="M23 13l-2 9M36 13l-1 9M48 13v9M60 13l1 9M73 13l2 9" stroke="#FBF8F3" stroke-width="2.4"/>'
+           . '<rect x="20" y="28" width="20" height="14" rx="1" fill="#E7DDCE"/><rect x="56" y="28" width="20" height="14" rx="1" fill="#E7DDCE"/>'
+           . '<rect x="42" y="30" width="12" height="25" rx="1" fill="#8C7A66"/><circle cx="51.6" cy="43" r=".9" fill="#FBF8F3"/>'
+           . '<path d="M26 39c1.5-5 3-7 4-8M30 39c0-4 1.5-6 3-7M33.5 39c-.5-3 .5-5 2-6" stroke="#465802" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
     } elseif ($carrier === 'dpd' && $kind === 'punkt') {
         $d = $cien
            . '<rect x="14" y="22" width="68" height="33" rx="1.5" fill="#F4EFE9" stroke="#CFC6BB"/>'

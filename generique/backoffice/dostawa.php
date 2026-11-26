@@ -77,7 +77,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $codes = $v['codes'];
             foreach ($v['inconnus'] as $c) $rejetes[$c] = true;
             foreach ($v['fermes'] as $c)   $fermes[$c]  = true;
-            $k = in_array($row['kind'] ?? '', ['punkt', 'brak'], true) ? (string) $row['kind'] : 'adres';
+            $k = in_array($row['kind'] ?? '', ['punkt', 'brak', 'odbior'], true) ? (string) $row['kind'] : 'adres';
             $up->execute([
                 empty($row['active']) ? 0 : 1,
                 $k,
@@ -287,6 +287,7 @@ console_flash($flash, $kind);
             <option value="adres"<?= wsm_ship_kind_row($m) === 'adres' ? ' selected' : '' ?>>Pod adres</option>
             <option value="punkt"<?= wsm_ship_kind_row($m) === 'punkt' ? ' selected' : '' ?>>Do punktu</option>
             <option value="brak"<?= wsm_ship_kind_row($m) === 'brak' ? ' selected' : '' ?>>Bez wysyłki (usługa, licencja) — tylko dla koszyka bez towaru</option>
+            <option value="odbior"<?= wsm_ship_kind_row($m) === 'odbior' ? ' selected' : '' ?>>Odbiór osobisty (w sklepie / pracowni)</option>
           </select></label>
 
         <label class="field"><span>Cena netto (zł)</span>

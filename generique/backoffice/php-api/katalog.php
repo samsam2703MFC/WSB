@@ -85,7 +85,7 @@ function wsm_katalog_check(array $k, string $base = ''): array {
     }
     foreach ((array) ($k['dostawa'] ?? []) as $i => $d) {
         if (!preg_match('/^[a-z0-9_]{2,40}$/', (string) ($d['id'] ?? ''))) $e[] = "dostawa #$i: id [a-z0-9_]";
-        if (!in_array((string) ($d['kind'] ?? 'adres'), ['punkt', 'adres', 'brak'], true)) $e[] = "dostawa #$i: kind punkt | adres | brak";
+        if (!in_array((string) ($d['kind'] ?? 'adres'), ['punkt', 'adres', 'brak', 'odbior'], true)) $e[] = "dostawa #$i: kind punkt | adres | brak | odbior";
     }
     $ids = [];
     foreach ((array) ($k['produkty'] ?? []) as $i => $p) {
@@ -174,6 +174,14 @@ function wsm_katalog_import(PDO $pdo, array $k, string $base = ''): array {
                 }
             }
             $bilan['dostawa']++;
+        }
+        // « dostawa_tylko » : la boutique ne livre QUE par ses propres modes (Ola
+        // flora : odbiór w pracowni, dowóz). Les transporteurs posés d'office
+        // (InPost, DPD…) sont éteints, jamais effacés : la console les rallume.
+        if (!empty($k['dostawa_tylko']) && !empty($k['dostawa'])) {
+            $garde = array_map(fn($d) => (string) $d['id'], (array) $k['dostawa']);
+            $in = implode(',', array_fill(0, count($garde), '?'));
+            $pdo->prepare("UPDATE wsm_shipping_methods SET active = 0 WHERE id NOT IN ($in)")->execute($garde);
         }
 
         // ---- Produits -----------------------------------------------------------

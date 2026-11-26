@@ -55,4 +55,6 @@ ordre, légendes, catégories, noms des filtres) et le bandeau de la page d'accu
   la page oferta : `nazwa | od (dd.mm) | do (dd.mm) | link do sklepu` — dates
   valables chaque année, une saison n'apparaît qu'entre ses dates ET avec un
   lien ; sans saison visible, pas de bandeau. Titre, texte et photos des deux
-  cartes s'éditent comme le reste de la page.
+  cartes s'éditent comme le reste de la page. D'office : Dekoracje świąteczne
+  01.11–20.12 et Wianki 01.12–20.12, vers `sklep/#katalog` (la boutique
+  `olaflora-sklep`, servie à /olaflora/sklep/).
