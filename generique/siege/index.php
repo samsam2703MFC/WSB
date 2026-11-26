@@ -33,7 +33,7 @@ header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store');
 // Polices du design system TFB (Google Fonts) ; « Konsola ↗ » poste ici puis
 // redirige vers le domaine de la boutique : form-action doit l'accepter (https:).
-header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; form-action 'self' https:; frame-ancestors 'none'; base-uri 'none'");
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; form-action 'self' https: http:; frame-ancestors 'none'; base-uri 'none'");
 header('X-Robots-Tag: noindex, nofollow');
 
 $pdo = wsb_pdo();
@@ -152,10 +152,11 @@ if ($p === '') $p = 'przeglad';
 if ($p === 'sso') {
     $b = (string) ($_POST['b'] ?? '');
     $serw = wsb_sklepy_serwera();
-    if (!$post || !isset($serw[$b]) || $serw[$b]['domena'] === '') { http_response_code(404); exit('Nieznany sklep.'); }
+    $cel = isset($serw[$b]) ? wsb_adres_sklepu($serw[$b], '/backoffice/sso.php') : '';
+    if (!$post || $cel === '') { http_response_code(404); exit('Nieznany sklep.'); }
     $jeton = wsb_sso_jeton($b, wsb_tel_maska($kto));
     wsb_dziennik($pdo, wsb_tel_maska($kto), $b, 'wejście do konsoli sklepu');
-    header('Location: https://' . $serw[$b]['domena'] . '/backoffice/sso.php?t=' . rawurlencode($jeton), true, 303);
+    header('Location: ' . $cel . '?t=' . rawurlencode($jeton), true, 303);
     exit;
 }
 
@@ -198,7 +199,8 @@ if ($p === 'przeglad') {
             <span class="awatar"><?= $h(inicjaly($nazwa)) ?></span>
             <div>
               <b><?= $h($nazwa) ?></b>
-              <a class="domena" href="https://<?= $h($d['domena']) ?>/shop/" target="_blank" rel="noopener"><?= $h($d['domena']) ?></a>
+              <?php $url = wsb_adres_sklepu($d, '/shop/'); ?>
+              <a class="domena" href="<?= $h($url) ?>" target="_blank" rel="noopener"><?= $h(preg_replace('#^https?://|/shop/$#', '', $url)) ?></a>
             </div>
           </div>
           <?php if (empty($d['dostepny'])): ?>

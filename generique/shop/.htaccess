@@ -9,6 +9,9 @@
   RewriteEngine On
 
   # HTTPS d'abord : inutile de router une requête qu'on va rediriger.
+  # Sauf par l'adresse IP du serveur (http://<IP>:<port>/) : une IP n'a pas de
+  # certificat, la redirection tournerait en rond.
+  RewriteCond %{HTTP_HOST} !^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)?$
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=308,L]

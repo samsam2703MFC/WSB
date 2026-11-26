@@ -15,6 +15,7 @@
 #    wsm sante <boutique>                    la boutique et sa console répondent-elles ?
 #    wsm sauvegarde <boutique> | --toutes    copie de la base dans sauvegardes/ (14 gardées)
 #    wsm importer-base <boutique> <dump.sql[.gz]>   remplace la base (après sauvegarde)
+#    wsm ports                               chaque boutique sur son port de l'IP (http://<IP>:8101/…)
 #    wsm demenager <boutique> <archive.tgz>         base + photos + données + clés d'une ancienne boutique
 #    wsm https <boutique>                    certificat Let's Encrypt (le DNS doit pointer ici)
 #    wsm apache <boutique>                   réécrit son site Apache depuis le modèle
@@ -252,8 +253,65 @@ PHP
 # la vitrine de cette boutique (/backoffice, /shop) et, s'il existe, le
 # superadmin BuddyCorp sous /admin. En http (pas de certificat pour une IP) :
 # ServerName sans « https:// », pour que les redirections d'Apache y restent.
+# Le port de la boutique sur l'adresse IP du serveur (http://<IP>:<port>/) : sans
+# nom de domaine, donc sans DNS ni certificat — le chemin qui marche partout,
+# même sur un réseau mobile qui intercepte les noms provisoires. Attribué une
+# fois (8101, 8102…) et gardé dans boutique.conf. Le siège n'en a pas : il est
+# sous /admin sur le port 80.
+PORT_PREMIER=8101; PORT_DERNIER=8199
+port_ip() {
+  local b="$1" p; p=$(meta "$b" PORT_IP)
+  if [ -z "$p" ]; then
+    p=$PORT_PREMIER
+    while grep -qx "PORT_IP=$p" "$BOUT"/*/boutique.conf 2>/dev/null; do p=$((p + 1)); done
+    [ "$p" -le "$PORT_DERNIER" ] || mourir "plus de port libre entre $PORT_PREMIER et $PORT_DERNIER"
+    echo "PORT_IP=$p" >> "$BOUT/$b/boutique.conf"
+  fi
+  echo "$p"
+}
+
+# Un site Apache par port (Listen + VirtualHost), boutique par boutique.
+ports_ecrire() {
+  dk_on || return 0
+  local d b p f
+  rm -f "$RACINE"/apache/wsm-port-*.conf
+  for d in "$BOUT"/*/; do
+    [ -f "$d/boutique.conf" ] || continue
+    b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
+    p=$(port_ip "$b"); f="$RACINE/apache/wsm-port-$b.conf"
+    { echo "Listen $p"
+      sed -e "s#<VirtualHost \*:80>#<VirtualHost *:$p>#" -e "s#__DOMAINE__#wsm-port-$b#g" -e "s#__ALIAS__##g" \
+          -e "s#__BOUTIQUE__#$BOUT/$b#g" -e "s#__INSTANCE__#port-$b#g" -e "s#__ACCUEIL__#/shop/#g" -e "s#__RESTRICTION__##g" \
+          "$DEPOT/serveur/apache-boutique.conf"; } > "$f"
+  done
+}
+
+# wsm ports : ouvre (ou rouvre) chaque boutique sur son port de l'adresse IP.
+cmd_ports() {
+  racine_seulement
+  dk_on || mourir "réservé au mode Docker"
+  ports_ecrire
+  local avant; avant=$(sha256sum "$DK/compose.yml" 2>/dev/null | cut -c1-16)
+  compose_ecrire
+  if [ "$(sha256sum "$DK/compose.yml" | cut -c1-16)" != "$avant" ]; then
+    dc up -d >/dev/null 2>&1 || dc up -d
+    attendre_web
+  fi
+  recharger_apache
+  # Le pare-feu de la machine (Docker passe en général devant, mais on ne compte pas dessus).
+  command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q '^Status: active' && \
+    ufw allow "$PORT_PREMIER:$PORT_DERNIER/tcp" >/dev/null 2>&1 || true
+  local d b
+  for d in "$BOUT"/*/; do
+    [ -f "$d/boutique.conf" ] || continue
+    b=$(basename "$d"); [ "$(type_de "$b")" = siege ] && continue
+    dire "$b : port $(meta "$b" PORT_IP)"
+  done
+}
+
 ip_sites_ecrire() {
   dk_on || return 0
+  ports_ecrire
   local d b ip alias f
   rm -f "$RACINE"/apache/wsm-ip-*.conf
   for d in "$BOUT"/*/; do
@@ -634,8 +692,15 @@ services:
     volumes:
       - $RACINE:$RACINE
     networks: [interne, traefik]
-    labels:
 YML
+    local pts="" d2 b2 p2
+    for d2 in "$BOUT"/*/; do
+      [ -f "$d2/boutique.conf" ] || continue
+      b2=$(basename "$d2"); [ "$(type_de "$b2")" = siege ] && continue
+      p2=$(meta "$b2" PORT_IP); [ -n "$p2" ] && pts+="      - \"$p2:$p2\"\n"
+    done
+    [ -n "$pts" ] && printf '    ports:\n%b' "$pts"
+    echo "    labels:"
     local l; for l in "${L[@]}"; do printf '      - "%s"\n' "$l"; done
     cat <<YML
 networks:
@@ -755,6 +820,7 @@ case "$cmd" in
   sante) cmd_sante "${1:?usage : wsm sante <boutique>}";;
   sauvegarde) cmd_sauvegarde "${1:?usage : wsm sauvegarde <boutique>|--toutes}";;
   importer-base) cmd_importer_base "${1:?usage : wsm importer-base <boutique> <dump>}" "${2:?usage : wsm importer-base <boutique> <dump>}";;
+  ports) cmd_ports;;
   demenager) cmd_demenager "${1:?usage : wsm demenager <boutique> <archive.tgz>}" "${2:?usage : wsm demenager <boutique> <archive.tgz>}";;
   https) cmd_https "${1:?usage : wsm https <boutique>}";;
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
