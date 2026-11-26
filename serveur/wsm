@@ -928,25 +928,23 @@ YML
   sleep 4
   install -d -m 700 "$RACINE/lego"
   docker rm -f wsb-lego >/dev/null 2>&1 || true
-  local opts=(--path /data --email "${EMAIL_ADMIN:-admin@example.pl}" --accept-tos --domains "$ip" --tls --tls.port :8443 --key-type ec256)
-  local r=0
-  if [ "$quoi" = run ]; then
-    docker run --rm --name wsb-lego --network "$net" -v "$RACINE/lego:/data" goacme/lego:latest "${opts[@]}" run --profile shortlived 2>&1 \
-      | grep -vi 'email\|@' || true
-  else
-    docker run --rm --name wsb-lego --network "$net" -v "$RACINE/lego:/data" goacme/lego:latest "${opts[@]}" renew --days 3 --profile shortlived 2>&1 \
-      | grep -vi 'email\|@' || true
-  fi
-  [ -s "$RACINE/lego/certificates/$ip.crt" ] && [ -s "$RACINE/lego/certificates/$ip.key" ] || r=1
+  # lego v5 : « run » obtient ET renouvelle (seulement s'il le faut : moitié de
+  # la vie restante pour un certificat court, ou l'avis ARI de Let's Encrypt).
+  local r=0 img=goacme/lego:v5.7.0
+  docker run --rm --name wsb-lego --network "$net" -v "$RACINE/lego:/data" "$img" run \
+    --path /data --email "${EMAIL_ADMIN:-admin@example.pl}" --accept-tos --domains "$ip" --cert.name wsb-ip \
+    --tls --tls.address ":8443" --profile shortlived --key-type EC256 --no-random-sleep 2>&1 \
+    | grep -vi 'email\|@' || true
+  [ -s "$RACINE/lego/certificates/wsb-ip.crt" ] && [ -s "$RACINE/lego/certificates/wsb-ip.key" ] || r=1
   return $r
 }
 
 cmd_https_ip_renouveler() {
   racine_seulement
   local ip="${1:?usage : wsm https-ip-renouveler <ip>}"
-  local avant; avant=$(sha256sum "$RACINE/lego/certificates/$ip.crt" 2>/dev/null | cut -c1-16)
+  local avant; avant=$(sha256sum "$RACINE/lego/certificates/wsb-ip.crt" 2>/dev/null | cut -c1-16)
   lego_ip "$ip" renew || mourir "renouvellement impossible"
-  [ "$(sha256sum "$RACINE/lego/certificates/$ip.crt" | cut -c1-16)" = "$avant" ] || cmd_https_ip_poser
+  [ "$(sha256sum "$RACINE/lego/certificates/wsb-ip.crt" | cut -c1-16)" = "$avant" ] || cmd_https_ip_poser
   # Filet : posé même sans changement si Traefik n'a pas le certificat.
   local dd; dd=$(traefik_dyn_dir) && [ -s "${dd%% *}/wsb-ip/fullchain.pem" ] || cmd_https_ip_poser
 }
@@ -954,7 +952,7 @@ cmd_https_ip_renouveler() {
 # Le certificat (re)délivré par lego → le dossier de Traefik.
 cmd_https_ip_poser() {
   racine_seulement
-  local crt key; crt=$(ls -1 "$RACINE"/lego/certificates/*.crt 2>/dev/null | grep -v issuer | head -1); key="${crt%.crt}.key"
+  local crt="$RACINE/lego/certificates/wsb-ip.crt" key="$RACINE/lego/certificates/wsb-ip.key"
   [ -s "$crt" ] && [ -s "$key" ] || mourir "certificat absent ($RACINE/lego/certificates)"
   local dd; dd=$(traefik_dyn_dir) || mourir "dossier de Traefik introuvable"
   local dyn="${dd%% *}" dync="${dd##* }"
