@@ -176,7 +176,10 @@ cmd_creer() {
   local nomB ds kat base mdp jeton dir="$BOUT/$b"
   nomB=$(webshop_json "$ws" nom); ds=$(webshop_json "$ws" design_system); kat=$(webshop_json "$ws" katalog)
   [ -n "$alias" ] || alias=$(webshop_json "$ws" alias)
-  base=$(base_de "$b"); mdp=$(openssl rand -hex 18); jeton=$(openssl rand -hex 24)
+  # Le nom de la base : celui de boutique.json (« base »), sinon ws_<boutique>.
+  base=$(webshop_json "$ws" base); [[ "$base" =~ ^[a-z][a-z0-9_]{1,40}$ ]] || base=$(base_de "$b")
+  sql_root -N -e "SHOW DATABASES LIKE '$base'" | grep -qx "$base" && mourir "la base « $base » existe déjà"
+  mdp=$(openssl rand -hex 18); jeton=$(openssl rand -hex 24)
   titre "boutique $b — $nomB ($dom), design « $ds »"
 
   dire "base de données $base"
@@ -982,6 +985,49 @@ cmd_https_ip_poser() {
   dire "certificat de l'IP posé dans Traefik (expire : $(openssl x509 -enddate -noout -in "$crt" | cut -d= -f2))"
 }
 
+# ---------------------------------------------------------------------------
+# wsm importer-sql <base> <url> : un export .sql (ou .sql.gz, .zip) trop lourd
+# pour un envoi par formulaire, téléchargé par le SERVEUR depuis un lien (Google
+# Drive « tous les utilisateurs disposant du lien », ou toute adresse https), et
+# importé dans une base À PART, jamais dans celle d'une boutique. Le fichier est
+# effacé après l'import ; seuls les noms de tables et leurs nombres de lignes
+# s'affichent.
+cmd_importer_sql() {
+  racine_seulement
+  local base="${1:-}" url="${2:-}"
+  [[ "$base" =~ ^[a-z][a-z0-9_]{1,40}$ ]] || mourir "nom de base invalide : $base"
+  [[ "$url" =~ ^https://[A-Za-z0-9.-]+/ ]] || mourir "adresse https attendue"
+  local b; for b in $(ls "$BOUT"); do [ "$(meta "$b" BASE)" = "$base" ] && mourir "« $base » est la base de la boutique $b : import refusé"; done
+  # Google Drive : le lien de partage → le téléchargement direct (gros fichiers compris).
+  local id; id=$(printf '%s' "$url" | sed -nE 's#.*drive\.google\.com/(file/d/|open\?id=|uc\?(export=download&)?id=)([A-Za-z0-9_-]{20,}).*#\3#p')
+  [ -n "$id" ] && url="https://drive.usercontent.google.com/download?id=$id&export=download&confirm=t"
+  titre "import SQL → base « $base »"
+  local t; t=$(mktemp -d); chmod 700 "$t"
+  curl -fsSL --max-time 1800 -o "$t/f" "$url" || { rm -rf "$t"; mourir "téléchargement impossible (le fichier est-il partagé « tous les utilisateurs disposant du lien » ?)"; }
+  dire "téléchargé : $(du -h "$t/f" | cut -f1)"
+  local sig; sig=$(head -c 4 "$t/f" | od -An -tx1 | tr -d ' \n')
+  case "$sig" in
+    1f8b*)    gunzip -c "$t/f" > "$t/d.sql" ;;
+    504b0304) unzip -p "$t/f" '*.sql' > "$t/d.sql" 2>/dev/null || unzip -p "$t/f" > "$t/d.sql" ;;
+    *) if head -c 600 "$t/f" | grep -qi '<html\|<!doctype'; then rm -rf "$t"; mourir "c'est une page web, pas le fichier (partage Drive non public ?)"; fi
+       mv "$t/f" "$t/d.sql" ;;
+  esac
+  rm -f "$t/f"
+  [ -s "$t/d.sql" ] || { rm -rf "$t"; mourir "fichier vide"; }
+  head -c 4000 "$t/d.sql" | grep -qiE 'CREATE TABLE|INSERT INTO|MySQL dump|MariaDB dump|phpMyAdmin' \
+    || { rm -rf "$t"; mourir "ce n'est pas un export SQL"; }
+  dire "export SQL : $(du -h "$t/d.sql" | cut -f1)"
+  sql_root -e "CREATE DATABASE IF NOT EXISTS \`$base\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  local n; n=$(sql_root -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$base'")
+  [ "$n" = 0 ] || { rm -rf "$t"; mourir "la base « $base » contient déjà $n tables : rien n'est écrasé"; }
+  # Les « USE autre_base » et « CREATE DATABASE » de l'export sont neutralisés : tout va dans $base.
+  sed -E '/^(USE |CREATE DATABASE)/Id' "$t/d.sql" | dump_pour_mariadb | sql_root --default-character-set=utf8mb4 "$base" \
+    || { rm -rf "$t"; mourir "import interrompu (voir l'erreur ci-dessus)"; }
+  rm -rf "$t"
+  dire "importé. Tables :"
+  sql_root -N -e "SELECT CONCAT('    ', table_name, ' : ', table_rows, ' lignes') FROM information_schema.tables WHERE table_schema='$base' ORDER BY table_name"
+}
+
 cmd_docker_init() {
   racine_seulement
   command -v docker >/dev/null || mourir "docker absent"
@@ -1099,6 +1145,7 @@ case "$cmd" in
   apache) cmd_apache "${1:?usage : wsm apache <boutique>}";;
   docker-init) cmd_docker_init;;
   traefik-info) cmd_traefik_info;;
+  importer-sql) cmd_importer_sql "${1:-}" "${2:-}";;
   https-ip) cmd_https_ip "${1:-}";;
   https-ip-poser) cmd_https_ip_poser;;
   https-ip-renouveler) cmd_https_ip_renouveler "${1:-}";;

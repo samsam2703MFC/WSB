@@ -206,6 +206,7 @@ case "$ACTION" in
     "$W" katalog "$BOUTIQUE"
     ;;
   traefik-info) "$W" traefik-info ;;
+  importer-sql) [[ "$BOUTIQUE" =~ ^[a-z][a-z0-9_]{1,40}$ ]] || { echo "base invalide" >&2; exit 2; }; "$W" importer-sql "$BOUTIQUE" "$DOMAINE" ;;
   https-ip) [ -n "$IP" ] || { echo "adresse IP inconnue" >&2; exit 1; }; "$W" https-ip "$IP" ;;
   valider)  "$W" valider ;;
   deployer) "$W" deployer "$BOUTIQUE" ;;

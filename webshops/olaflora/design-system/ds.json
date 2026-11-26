@@ -1,0 +1,43 @@
+{
+  "nom": "Ola flora",
+  "logo": "assets/logo.svg",
+  "theme_color": "#F1ACC0",
+  "fichiers": [
+    "tokens/colors.css",
+    "tokens/typography.css",
+    "tokens/spacing.css",
+    "tokens/radius.css",
+    "tokens/shadow.css",
+    "tokens/motion.css",
+    "tokens/fonts.css"
+  ],
+  "polices": {
+    "worksans": [
+      "Work Sans",
+      "'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      "Work Sans — domyślna dla tekstu: spokojna, czytelna"
+    ],
+    "baloo": [
+      "Baloo 2",
+      "'Baloo 2', 'Work Sans', system-ui, sans-serif",
+      "Baloo 2 — domyślna dla nagłówków: ciężka, zaokrąglona, jak logo"
+    ]
+  },
+  "wyglad": {
+    "font_body": "worksans",
+    "font_head": "baloo",
+    "font_head_baza": "baloo",
+    "brand": "#465803",
+    "accent": "#465803",
+    "bg": "#FBF6F5",
+    "przyciski": "marka"
+  },
+  "email": {
+    "tlo": "#FBF6F5",
+    "karta": "#FFFCFB",
+    "tekst": "#354202",
+    "cichy": "#4A4C33",
+    "akcent": "#465803",
+    "linia": "#F1ACC0"
+  }
+}
