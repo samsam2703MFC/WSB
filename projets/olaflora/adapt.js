@@ -218,8 +218,34 @@
         return '<a href="?lang=' + j + '" data-of-lang="' + j + '" hreflang="' + j + '" style="font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; padding: 4px 0; color: #2e2924; border-bottom: 1px solid ' + (j === jezyk ? '#2e2924' : 'transparent') + ';">' + j + '</a>';
       }).join('');
       nav.appendChild(sp);
+      // LE LIEN VERS LA BOUTIQUE, toujours dans l'en-tête (pas seulement dans le bandeau
+      // de saison, au milieu de la page) : juste avant le bouton « formularz ».
+      var cta = null, bs = nav.querySelectorAll('button');
+      for (var i = 0; i < bs.length; i++) if (/goForm/.test(bs[i].getAttribute('onClick') || '')) cta = bs[i];
+      var a = document.createElement('a');
+      a.setAttribute('href', linkSklep('sklep/'));
+      a.setAttribute('data-of-cms', 'pomin');
+      a.setAttribute('data-of-sklep', '1');
+      a.setAttribute('style', 'flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; padding: 4px 0; font-family: var(--font-body); font-weight: 400; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap; color: #465802; text-decoration: none; border-bottom: 1px solid #465802;');
+      a.innerHTML = '<span aria-hidden="true" style="width: 6px; height: 6px; background: #465802; display: inline-block;"></span>' + ({ pl: 'Sklep', en: 'Shop', de: 'Shop' }[jezyk] || 'Sklep');
+      if (cta) nav.insertBefore(a, cta); else nav.insertBefore(a, sp);
+      // Au téléphone le menu défile de côté : le lien y serait caché. Un bouton à part,
+      // à côté du logo, le remplace (styles dans ofStylesSklep).
+      var box = nav.parentNode, logo = box && box.querySelector('button');
+      if (box && logo) {
+        var m = a.cloneNode(true);
+        m.removeAttribute('data-of-sklep'); m.setAttribute('data-of-sklep-m', '1'); m.setAttribute('class', 'of-sklep-m');
+        m.setAttribute('style', 'flex: 0 0 auto; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid #465802; font-family: var(--font-body); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #465802; text-decoration: none; white-space: nowrap;');
+        box.insertBefore(m, logo.nextSibling);
+      }
       return true;
     }
+    (function ofStylesSklep() {
+      if (document.getElementById('of-sklep-css')) return;
+      var st = document.createElement('style'); st.id = 'of-sklep-css';
+      st.textContent = '.of-sklep-m{display:none}@media (max-width:760px){.of-sklep-m{display:inline-flex}a[data-of-sklep]{display:none!important}}';
+      (document.head || document.documentElement).appendChild(st);
+    })();
     var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 20.12 | sklep/#katalog\nWianki | 01.11 | 31.12 | sklep/#katalog';
 
     // Tout texte et toute étiquette (placeholder, title, alt) d'un gabarit, dans la langue.
