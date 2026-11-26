@@ -40,6 +40,10 @@ cp "$G/shop/media/.htaccess" "$SITE/shop/media/.htaccess"
 #    écrans y ont déjà été oubliés), ses feuilles et son logo d'origine.
 cp "$G/backoffice/"*.php "$G/backoffice/console.css" "$SITE/backoffice/"
 cp -r "$G/backoffice/_ds" "$SITE/backoffice/"
+# Scripts de la console (kamera.js : lecture des codes à l'appareil photo) et
+# bibliothèques tierces (_vendor/ : ZXing, licence MIT).
+cp "$G/backoffice/"*.js "$SITE/backoffice/" 2>/dev/null || true
+[ -d "$G/backoffice/_vendor" ] && cp -r "$G/backoffice/_vendor" "$SITE/backoffice/"
 mkdir -p "$SITE/backoffice/img" && cp "$G/backoffice/img/logo.png" "$SITE/backoffice/img/"
 cat > "$SITE/backoffice/index.html" <<'HTML'
 <!doctype html><html lang="pl"><head><meta charset="utf-8">
