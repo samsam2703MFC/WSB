@@ -84,6 +84,8 @@ ok('et la reprise a de nouveau préservé les langues servies',
 echo "\n-- publikacja to decyzja --\n";
 // L'allemand est vide : la publier reviendrait à afficher un menu allemand
 // au-dessus d'une boutique polonaise.
+// (L'allemand est livré traduit depuis nov. 2026 : on part d'une langue retirée et vidée.)
+wsm_lang_publish($pdo, 'de', false);
 $pdo->exec("DELETE FROM wsm_shop_i18n WHERE lang = 'de'");
 [$okDe, $msgDe] = wsm_lang_publish($pdo, 'de', true);
 ok('une langue non traduite est refusée à la publication', $okDe === false, $msgDe);

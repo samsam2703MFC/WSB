@@ -1636,6 +1636,152 @@ Szoko Shop
 
 Szoko Shop", ''];
 
+    $t[] = ['zamowienie', 'de', 'Bestellbestätigung', 'Bestellung {{numer}} eingegangen',
+"Hallo {{imie}},
+
+danke für deine Bestellung {{numer}} über {{kwota}}.
+
+{{pozycje}}
+
+Deine Bestellung ansehen: {{link}}
+
+Wir melden uns, sobald das Paket unterwegs ist.
+
+Szoko Shop", 'zamowienie'];
+
+    $t[] = ['na_zamowienie', 'de', 'Bestellung über Lagerbestand — Kontakt', 'Bestellung {{numer}} — wir melden uns per E-Mail',
+"Hallo {{imie}},
+
+deine Bestellung {{numer}} ist eingegangen. Einige Artikel stellen wir frisch für dich her,
+deshalb melden wir uns per E-Mail mit dem Versandtermin:
+
+{{brakujace}}
+
+Der Rest deiner Bestellung ist bereits verpackt. Details: {{link}}
+
+Szoko Shop", 'na_zamowienie'];
+
+    $t[] = ['platnosc', 'de', 'Zahlung eingegangen', 'Zahlung für {{numer}} bestätigt',
+"Hallo {{imie}},
+
+wir bestätigen deine Zahlung von {{kwota}} für die Bestellung {{numer}}.
+Wir machen uns ans Verpacken.
+
+Szoko Shop", 'platnosc'];
+
+    $t[] = ['wysylka', 'de', 'Paket versandt', 'Bestellung {{numer}} versandt',
+"Hallo {{imie}},
+
+das Paket mit deiner Bestellung {{numer}} ist unterwegs.
+Abholstelle: {{paczkomat}}
+
+Sendungsverfolgung: {{link}}
+
+Szoko Shop", 'wysylka'];
+
+    $t[] = ['zadanie_zaplaty', 'de', 'Zahlungsaufforderung', 'Zahlungsaufforderung — {{numer}}',
+"Hallo {{imie}},
+
+anbei unsere Zahlungsaufforderung für die Bestellung {{numer}} über {{kwota}}.
+
+{{pozycje}}
+
+Bitte überweise den Betrag bis {{termin}} auf folgendes Konto:
+{{rachunek}}
+Bitte gib als Verwendungszweck {{numer}} an.
+
+Sobald die Zahlung eingegangen ist, stellen wir die Rechnung aus und legen los.
+
+Szoko Shop", 'zadanie_zaplaty'];
+
+    $t[] = ['przypomnienie', 'de', 'Zahlungserinnerung', 'Erinnerung — {{numer}} überfällig',
+"Hallo {{imie}},
+
+wir möchten dich an die offene Rechnung {{numer}} über {{kwota}} erinnern, fällig am {{termin}}.
+
+Falls du die Überweisung bereits getätigt hast, betrachte diese Nachricht bitte als gegenstandslos und
+gib uns kurz Bescheid — wir prüfen den Zahlungseingang.
+
+Konto: {{rachunek}}
+
+Szoko Shop", 'przypomnienie'];
+
+    $t[] = ['w_realizacji', 'de', 'In Bearbeitung', 'Bestellung {{numer}} wird vorbereitet',
+"Hallo {{imie}},
+
+wir haben mit der Vorbereitung deiner Bestellung {{numer}} begonnen. Wir melden uns wieder, sobald das Paket unterwegs ist.
+
+Deine Bestellung ansehen: {{link}}
+
+Szoko Shop", 'w_realizacji'];
+
+    $t[] = ['wyslane', 'de', 'Versandt', 'Bestellung {{numer}} wurde versandt',
+"Hallo {{imie}},
+
+deine Bestellung {{numer}} ist unterwegs.
+
+Sendungsnummer: {{sledzenie}}
+Lieferart: {{dostawa}} {{paczkomat}}
+
+Deine Bestellung ansehen: {{link}}
+
+Szoko Shop", 'wyslane'];
+
+    $t[] = ['dostarczone', 'de', 'Zugestellt', 'Bestellung {{numer}} zugestellt',
+"Hallo {{imie}},
+
+deine Bestellung {{numer}} wurde zugestellt. Wir hoffen, dass alles gut angekommen ist —
+falls etwas nicht stimmt, antworte einfach auf diese Nachricht.
+
+Szoko Shop", 'dostarczone'];
+
+    $t[] = ['anulowane', 'de', 'Storniert', 'Bestellung {{numer}} storniert',
+"Hallo {{imie}},
+
+deine Bestellung {{numer}} wurde storniert. Falls das ein Versehen war oder deine Zahlung bereits unterwegs ist,
+melde dich bitte bei uns — wir klären das sofort.
+
+Szoko Shop", 'anulowane'];
+
+    $t[] = ['formularz', 'de', 'Kontaktbestätigung', 'Wir haben deine Nachricht erhalten',
+"Hallo {{imie}},
+
+danke für deine Nachricht — Betreff: {{temat}}. Wir haben sie gespeichert und
+melden uns so schnell wie möglich bei dir.
+
+Diese E-Mail ist nur eine Bestätigung, du musst nicht darauf antworten.
+
+Szoko Shop
+{{sklep}}", 'formularz'];
+
+    $t[] = ['niedokonczone', 'de', 'Deine Bestellung wartet', 'Deine Bestellung {{numer}} wartet auf die Zahlung',
+"Hallo {{imie}},
+
+deine Bestellung {{numer}} ist bereit — es fehlt nur noch die Zahlung:
+
+{{pozycje}}
+
+Zu zahlen: {{kwota}}. Die Zahlung dauert nur einen Moment:
+{{link}}
+
+Du hast es dir anders überlegt? Dann musst du nichts tun — die Bestellung verfällt von selbst.
+
+Szoko Shop
+{{sklep}}", 'niedokonczone'];
+
+    $t[] = ['niedokonczone2', 'de', 'Letzte Erinnerung', 'Letzte Erinnerung — {{numer}}',
+"Hallo {{imie}},
+
+das ist unsere letzte Nachricht zur Bestellung {{numer}} — danach schreiben wir nicht mehr.
+
+Zu zahlen: {{kwota}}
+{{link}}
+
+Wenn du die Bestellung nicht mehr möchtest, ignoriere diese E-Mail einfach.
+
+Szoko Shop
+{{sklep}}", 'niedokonczone2'];
+
     foreach ($t as $row) $ins->execute($row);
 }
 

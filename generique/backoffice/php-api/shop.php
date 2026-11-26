@@ -256,7 +256,7 @@ function wsm_shop_row_to_product(array $r, array $S): array {
         'origin'    => (string) ($r['origin'] ?? ''),
         'cocoa'     => (string) ($r['cocoa'] ?? ''),
         'unit'      => (string) ($r['unit_label'] ?? ''),
-        'badge'     => ((string) ($r['badge'] ?? '')) !== '' ? ($S['badge.' . $r['badge']] ?? (string) $r['badge']) : '',
+        'badge'     => wsm_shop_badge((string) ($r['badge'] ?? ''), $S),
         'image'     => (string) ($r['image_url'] ?? ''),
         'from'      => (string) ($r['swatch_from'] ?? '--brand-500'),
         'to'        => (string) ($r['swatch_to'] ?? '--brand-800'),
@@ -285,7 +285,7 @@ function wsm_shop_row_to_product(array $r, array $S): array {
         'price_per_kg' => wsm_sprzedaz_na_wage() ? wsm_price_per_kg($gross, (int) ($r['weight_g'] ?? 0)) : null,
         'sku'       => (string) ($r['sku'] ?? ''),
         'ean'       => (string) ($r['ean'] ?? ''),
-        'category'  => (string) ($r['category_name'] ?? ''),
+        'category'  => (string) ($S['category.' . (int) ($r['category_id'] ?? 0) . '.name'] ?? ($r['category_name'] ?? '')),
         'category_id' => (int) ($r['category_id'] ?? 0),
         'nutrition' => wsm_nutrition_decode((string) ($r['nutrition'] ?? '')),
     ];
@@ -392,7 +392,20 @@ function wsm_product_props(array $S, string $id): array {
  *
  * @return list<array{id:int,name:string,ile:int}>
  */
-function wsm_shop_categories(PDO $pdo): array {
+/**
+ * L'étiquette d'un produit, traduite : la valeur posée (« nowość », « Nowość »,
+ * « bestseller ») devient la clé badge.nowosc / badge.bestseller des textes de
+ * la boutique — minuscules, sans diacritiques. Une étiquette inconnue reste telle quelle.
+ */
+function wsm_shop_badge(string $b, array $S): string {
+    $b = trim($b);
+    if ($b === '') return '';
+    $k = strtr(mb_strtolower($b), ['ą' => 'a', 'ć' => 'c', 'ę' => 'e', 'ł' => 'l', 'ń' => 'n', 'ó' => 'o', 'ś' => 's', 'ź' => 'z', 'ż' => 'z']);
+    $k = preg_replace('/[^a-z0-9]+/', '_', $k);
+    return (string) ($S['badge.' . $k] ?? $S['badge.' . $b] ?? $b);
+}
+
+function wsm_shop_categories(PDO $pdo, array $S = []): array {
     // DEUX NIVEAUX. Un rayon parent compte ses produits ET ceux de ses
     // sous-rayons : « Akcesoria (12) » doit dire ce qu'on trouvera en cliquant.
     // Un rayon vide — lui et ses enfants — ne s'affiche pas.
@@ -416,7 +429,7 @@ function wsm_shop_categories(PDO $pdo): array {
         if ($parent === $id || !in_array($parent, $ids, true)) $parent = 0;
         $ile = (int) $r['wlasne'];
         foreach ($rows as $k) if ((int) ($k['parent_id'] ?? 0) === $id && (int) $k['id'] !== $id) $ile += (int) $k['wlasne'];
-        if ($ile > 0) $out[] = ['id' => $id, 'name' => (string) $r['name'], 'parent_id' => $parent, 'ile' => $ile];
+        if ($ile > 0) $out[] = ['id' => $id, 'name' => (string) ($S['category.' . $id . '.name'] ?? $r['name']), 'parent_id' => $parent, 'ile' => $ile];
     }
     return $out;
 }

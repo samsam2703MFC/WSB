@@ -2,10 +2,18 @@
  "_opis": "Sklep sezonowy Ola flora (/olaflora/sklep/) : dekoracje świąteczne i wianki, d'après les maquettes validées (docs/makiety-olaflora-sklep). Prix TTC en zł, EXEMPLES à valider par Ola ; photos provisoires (réalisations du site). Import : php migrate.php --import-katalog <ce fichier>.",
  "kategorie": [
   {
-   "nazwa": "Dekoracje świąteczne"
+   "nazwa": "Dekoracje świąteczne",
+   "teksty": {
+    "en": "Christmas decorations",
+    "de": "Weihnachtsdeko"
+   }
   },
   {
-   "nazwa": "Wianki"
+   "nazwa": "Wianki",
+   "teksty": {
+    "en": "Wreaths",
+    "de": "Kränze"
+   }
   }
  ],
  "kategorie_wylacz": [
@@ -266,7 +274,7 @@
     }
    },
    "waga_g": 900,
-   "badge": "nowość"
+   "badge": "nowosc"
   },
   {
    "id": "of-sw-04",

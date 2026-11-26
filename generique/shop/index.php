@@ -509,7 +509,7 @@ if ($page === '') {
     // Un identifiant inconnu — lien périmé, catégorie désactivée depuis — ne
     // renvoie pas le catalogue entier sous un titre de rayon : il ramène
     // simplement à « tout », ce qui est vrai et ne fait acheter personne à côté.
-    $kategorie = wsm_shop_categories($pdo);
+    $kategorie = wsm_shop_categories($pdo, $S);
     $katId = isset($_GET['k']) ? (int) $_GET['k'] : 0;
     if ($katId > 0 && !in_array($katId, array_map(fn($c) => (int) $c['id'], $kategorie), true)) {
         $katId = 0;
@@ -876,7 +876,7 @@ layout_head($S, $lang, $langs, $p['name'], $p['desc'], 'p', $ogImg);
       <p class="price price--lg"><?= e(zl($p['price'])) ?><?= cena_jednostka($p) ?><small><?= e($S['price.vat_incl'] ?? '') ?></small><?php
         if (!empty($p['price_per_kg'])): ?><span class="za-kg mono"><?= e(zl($p['price_per_kg'])) ?><?= e($S['price.per_kg'] ?? '') ?></span><?php endif; ?></p>
       <p class="mono muted"><?= e(zl($p['price_net'])) ?> <?= e($S['price.net'] ?? '') ?>
-        · VAT <?= e(wsm_vat_percent((float) $p['vat_rate'])) ?> %
+        · <?= e($S['price.vat_short'] ?? 'VAT') ?> <?= e(wsm_vat_percent((float) $p['vat_rate'])) ?> %
         · <?= e($S['product.' . ($p['stock'] <= 0 ? 'stock_out' : 'stock_in')] ?? '') ?></p>
 
       <?php // L'ACHAT, COMME CHEZ APPLE (maquette « UX style Apple ») : on choisit
@@ -2024,7 +2024,7 @@ if ($page === 'kasa') {
         <?php if (!empty($q['reverse_charge'])): ?>
         <dt class="small rc"><?= e($S['checkout.reverse_charge'] ?? '') ?></dt><dd class="small rc">0,00</dd>
         <?php else: foreach ($q['vat_breakdown'] as $vb): ?>
-        <dt class="small">VAT <?= (int) round($vb['rate'] * 100) ?> %</dt><dd class="small"><?= e(zl($vb['vat'])) ?></dd>
+        <dt class="small"><?= e($S['price.vat_short'] ?? 'VAT') ?> <?= (int) round($vb['rate'] * 100) ?> %</dt><dd class="small"><?= e(zl($vb['vat'])) ?></dd>
         <?php endforeach; endif; ?>
         <dt class="grand"><?= e($S['cart.total'] ?? '') ?></dt><dd class="grand"><?= e(zl($q['total_gross'])) ?></dd>
       </dl>

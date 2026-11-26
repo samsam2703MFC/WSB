@@ -133,10 +133,20 @@ function wsm_katalog_import(PDO $pdo, array $k, string $base = ''): array {
             $catId[mb_strtolower($nom)] = $id;
             $bilan['kategorie']++;
         };
+        // « teksty » d'un rayon : son nom dans les autres langues ({"en": "Wreaths", "de": "Kränze"}),
+        // rangé sous category.<id>.name ; sans lui, le rayon garde son nom polonais.
+        $nomsRayon = function (array $c) use ($pdo, &$catId, &$bilan): void {
+            $id = $catId[mb_strtolower(trim((string) $c['nazwa']))] ?? 0;
+            foreach ((array) ($c['teksty'] ?? []) as $lang => $v) {
+                $v = trim((string) (is_array($v) ? ($v['name'] ?? '') : $v));
+                if ($id > 0 && $v !== '' && $lang !== 'pl') { wsm_katalog_texte($pdo, (string) $lang, "category.$id.name", $v); $bilan['teksty']++; }
+            }
+        };
         foreach ((array) ($k['kategorie'] ?? []) as $c) {
             $nom = trim((string) $c['nazwa']);
             $pose($nom, 0);
-            foreach ((array) ($c['pod'] ?? []) as $p) $pose(trim((string) $p['nazwa']), $catId[mb_strtolower($nom)]);
+            $nomsRayon($c);
+            foreach ((array) ($c['pod'] ?? []) as $p) { $pose(trim((string) $p['nazwa']), $catId[mb_strtolower($nom)]); $nomsRayon($p); }
         }
 
         // ---- Rayons retirés ---------------------------------------------------
