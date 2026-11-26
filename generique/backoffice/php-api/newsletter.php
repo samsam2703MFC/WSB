@@ -105,7 +105,7 @@ function wsm_nl_save(PDO $pdo, array $in, string $actor): array {
     $bloki = wsm_nl_bloki_propres($in['bloki'] ?? []);
     $tl = [];
     foreach ((array) ($in['tlumaczenia'] ?? []) as $l => $x) {
-        if (!in_array($l, ['uk', 'en'], true) || !is_array($x)) continue;
+        if (!in_array($l, ['uk', 'en', 'de'], true) || !is_array($x)) continue;
         $tl[$l] = ['temat' => mb_substr(trim((string) ($x['temat'] ?? '')), 0, 250),
                    'preheader' => mb_substr(trim((string) ($x['preheader'] ?? '')), 0, 250),
                    'bloki' => array_map(fn($b) => array_map(fn($v) => mb_substr(trim(str_replace("\r", '', (string) $v)), 0, 4000),
@@ -312,7 +312,7 @@ function wsm_nl_preview(PDO $pdo, array $nl): array {
     $dest = wsm_mkt_audience_email($pdo, (string) $nl['segment']);
     $langs = []; $sans = [];
     foreach ($dest as $d) $langs[$d['lang']] = ($langs[$d['lang']] ?? 0) + 1;
-    foreach (['uk', 'en'] as $l) {
+    foreach (['uk', 'en', 'de'] as $l) {
         if (empty($langs[$l])) continue;
         $m = [];
         wsm_nl_render($pdo, $nl, $l, ['email' => 'x@example.com'], '', $m);

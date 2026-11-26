@@ -48,7 +48,7 @@ const WSM_MKT_SEGMENTS = [
 ];
 
 /** Les langues dans lesquelles une campagne peut partir. */
-const WSM_MKT_LANGS = ['pl', 'uk', 'en'];
+const WSM_MKT_LANGS = ['pl', 'uk', 'en', 'de'];
 
 /** Les clés de file que la pompe a le droit d'écouler (les autres restent à la main). */
 const WSM_MKT_POMPE_CLES = ['nl-', 'nlpotw-', 'camp-', 'relance-'];

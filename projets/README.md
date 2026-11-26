@@ -56,7 +56,7 @@ ordre, légendes, catégories, noms des filtres) et le bandeau de la page d'accu
   valables chaque année, une saison n'apparaît qu'entre ses dates ET avec un
   lien ; sans saison visible, pas de bandeau. Titre, texte et photos des deux
   cartes s'éditent comme le reste de la page. D'office : Dekoracje świąteczne
-  01.11–20.12 et Wianki 01.12–20.12, vers `sklep/#katalog` (la boutique
+  01.11–20.12 et Wianki 01.11–31.12, vers `sklep/#katalog` (la boutique
   `olaflora-sklep`, servie à /olaflora/sklep/).
 
 ## Ola flora — la page publique en PL · EN · DE
@@ -75,5 +75,5 @@ ordre, légendes, catégories, noms des filtres) et le bandeau de la page d'accu
   reviennent en polonais au serveur, la langue est notée dans `of_inquiries.source`
   (`formularz-en`, `formularz-de`). Le formulaire embarqué enregistre désormais ses
   demandes (avant : seulement `FormularzWizard.dc.html` ouvert seul).
-- Le bandeau « sezonowo » renvoie la version anglaise vers `sklep/?lang=en` (la
-  boutique parle pl / en).
+- Le bandeau « sezonowo » renvoie vers la boutique dans la langue de la page
+  (`sklep/?lang=en`, `?lang=de`).

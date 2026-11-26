@@ -300,6 +300,35 @@ function wsm_katalog_import(PDO $pdo, array $k, string $base = ''): array {
         $pdo->rollBack();
         $bilan['erreurs'][] = $t->getMessage();
     }
+
+    // LE NOM DE LA BOUTIQUE PARTOUT, à chaque import : les libellés et les modèles d'e-mail
+    // venus du semis (seed.php, content_seed.json) signent « Szoko Shop » ; boutique-vierge ne
+    // renommait que les libellés présents ce jour-là — les e-mails, et ce qu'une langue ajoutée
+    // ensuite apporte (l'allemand), partaient au nom de Szoko.
+    $marque = trim((string) ($k['teksty']['pl']['brand'] ?? ''));
+    if ($bilan['ok'] && $marque !== '' && $marque !== 'Szoko Shop') {
+        $pdo->prepare("UPDATE wsm_shop_i18n SET v = REPLACE(v, 'Szoko Shop', ?) WHERE v LIKE '%Szoko Shop%'")->execute([$marque]);
+        try {
+            $pdo->prepare("UPDATE wsm_mail_templates SET subject = REPLACE(subject, 'Szoko Shop', ?), body = REPLACE(body, 'Szoko Shop', ?)
+                            WHERE subject LIKE '%Szoko Shop%' OR body LIKE '%Szoko Shop%'")->execute([$marque, $marque]);
+        } catch (Throwable $e) { /* table absente (base très ancienne) : rien à renommer */ }
+    }
+
+    // « jezyki » : les langues PUBLIÉES de la boutique (ex. Ola flora : pl, en, de — pas
+    // d'ukrainien). Même règle que la console : une langue sous le seuil de couverture
+    // n'est pas publiée, c'est dit dans le bilan ; le polonais reste toujours.
+    if ($bilan['ok'] && !empty($k['jezyki']) && is_file(__DIR__ . '/i18n.php')) {
+        require_once __DIR__ . '/i18n.php';
+        $voulu = array_values(array_filter(array_map('strval', (array) $k['jezyki']), fn($c) => isset(WSM_LANGS[$c])));
+        $bilan['jezyki'] = [];
+        foreach (array_keys(WSM_LANGS) as $c) {
+            if ($c === WSM_LANG_BASE) continue;
+            $on = in_array($c, $voulu, true);
+            if (!$on && !in_array($c, wsm_lang_published($pdo), true)) continue;
+            [$ok, $msg] = wsm_lang_publish($pdo, $c, $on);
+            $bilan['jezyki'][] = ($ok ? '' : '✗ ') . $msg;
+        }
+    }
     return $bilan;
 }
 

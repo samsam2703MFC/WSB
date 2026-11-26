@@ -34,7 +34,7 @@ const WSM_SLAJDY_CO_DOMYSLNIE = 5;
 const WSM_SLAJDY_CO_MIN = 3;
 const WSM_SLAJDY_CO_MAX = 30;
 /** Les langues des textes ; les autres retombent sur le polonais. */
-const WSM_SLAJDY_JEZYKI = ['pl', 'uk', 'en'];
+const WSM_SLAJDY_JEZYKI = ['pl', 'uk', 'en', 'de'];
 /** Longueurs = colonnes (schéma) : au-delà, MySQL refuserait la ligne. */
 const WSM_SLAJDY_MAX = ['eyebrow' => 120, 'title' => 200, 'tekst' => 400, 'cta_label' => 80];
 /** La photo livrée avec le premier slajd (shop/assets/). */

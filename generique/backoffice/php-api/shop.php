@@ -22,7 +22,7 @@ require_once __DIR__ . '/vies.php';
 require_once __DIR__ . '/mail.php';
 require_once __DIR__ . '/stock.php';
 
-const WSM_SHOP_LANGS       = ['pl', 'uk', 'en'];
+const WSM_SHOP_LANGS       = ['pl', 'uk', 'en', 'de'];
 const WSM_SHOP_DEFAULT_LANG = 'pl';
 const WSM_SHOP_MAX_QTY     = 99;              // garde-fou : pas de panier à 10 000 unités
 const WSM_SHOP_HOME_COUNTRY = 'PL';   // marché intérieur : jamais d'autoliquidation
@@ -506,7 +506,9 @@ function wsm_discount_next(PDO $pdo, int $weightG): ?array {
 
 /** Pays ouverts à la commande, nommés dans la langue du visiteur. */
 function wsm_shop_countries(PDO $pdo, string $lang): array {
-    $col = in_array($lang, ['uk', 'en'], true) ? 'name_' . $lang : 'name_pl';
+    // uk / en ont leur colonne ; une autre langue (de…) prend le nom que donne intl,
+    // sinon l'anglais — jamais le polonais à un visiteur allemand.
+    $col = in_array($lang, ['uk', 'en'], true) ? 'name_' . $lang : ($lang === 'pl' ? 'name_pl' : 'name_en');
     try {
         $rows = $pdo->query("SELECT code, is_eu, name_pl, $col AS label
                                FROM wsm_countries WHERE active = 1
@@ -514,7 +516,10 @@ function wsm_shop_countries(PDO $pdo, string $lang): array {
     } catch (Throwable $e) { return []; }
     return array_map(fn($r) => [
         'code'  => (string) $r['code'],
-        'label' => ((string) $r['label']) !== '' ? (string) $r['label'] : (string) $r['name_pl'],
+        'label' => (!in_array($lang, ['pl', 'uk', 'en'], true) && class_exists('Locale')
+                    && ($nl = (string) \Locale::getDisplayRegion('-' . (string) $r['code'], $lang)) !== '' && $nl !== (string) $r['code'])
+                   ? $nl
+                   : (((string) $r['label']) !== '' ? (string) $r['label'] : (string) $r['name_pl']),
         'is_eu' => (int) $r['is_eu'] === 1,
     ], $rows);
 }

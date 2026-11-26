@@ -162,11 +162,11 @@
                      en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
                      de: ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'] };
     var MIES = MIESIACE[jezyk] || MIESIACE.pl;
-    // Lien vers la boutique dans la langue de la page (la boutique parle pl / en : de → en).
+    // Lien vers la boutique dans la langue de la page (la boutique parle pl / en / de).
     function linkSklep(l) {
       if (!l || jezyk === 'pl' || /[?&]lang=/.test(l)) return l;
       var h = l.indexOf('#'), a = h >= 0 ? l.slice(0, h) : l, b = h >= 0 ? l.slice(h) : '';
-      return a + (a.indexOf('?') >= 0 ? '&' : '?') + 'lang=en' + b;
+      return a + (a.indexOf('?') >= 0 ? '&' : '?') + 'lang=' + jezyk + b;
     }
     function sezony(tekst) {
       return String(tekst || '').split(/\r?\n/).map(function (l) { return l.split('|').map(function (x) { return x.trim(); }); })
@@ -220,7 +220,7 @@
       nav.appendChild(sp);
       return true;
     }
-    var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 20.12 | sklep/#katalog\nWianki | 01.12 | 20.12 | sklep/#katalog';
+    var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 20.12 | sklep/#katalog\nWianki | 01.11 | 31.12 | sklep/#katalog';
 
     // Tout texte et toute étiquette (placeholder, title, alt) d'un gabarit, dans la langue.
     function tlumaczSzablon(html) {

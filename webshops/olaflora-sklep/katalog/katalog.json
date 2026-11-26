@@ -33,6 +33,10 @@
     "en": {
      "label": "Pickup at the studio",
      "note": "Free. We confirm the pickup time by SMS."
+    },
+    "de": {
+     "label": "Abholung im Atelier",
+     "note": "Kostenlos. Den Abholtermin bestätigen wir per SMS."
     }
    }
   },
@@ -52,6 +56,10 @@
     "en": {
      "label": "Local delivery",
      "note": "We deliver ourselves, near the studio. We agree the time by phone."
+    },
+    "de": {
+     "label": "Lieferung an die Adresse",
+     "note": "Wir liefern selbst, in der Nähe des Ateliers. Den Termin vereinbaren wir telefonisch."
     }
    }
   }
@@ -113,8 +121,38 @@
    "story.pro.title": "We green interiors and create floral styling for corporate events.",
    "story.pro.text": "Receptions, regular arrangements, events — write to me and I will prepare a proposal.",
    "story.pro.cta": "Write to Ola flora"
+  },
+  "de": {
+   "brand": "Ola flora",
+   "meta.title": "Ola flora — Shop: Weihnachtsdekoration und Kränze",
+   "meta.desc": "Adventskränze, Gestecke, Girlanden und Kränze, handgemacht im Atelier von Ola flora. Abholung im Atelier oder Lieferung.",
+   "catalog.title": "Weihnachtsdekoration und Kränze",
+   "catalog.sub": "Auf Bestellung handgemacht — fertig in 3 Tagen. Abholung im Atelier oder Lieferung.",
+   "promise.title": "Aus dem Atelier, nicht aus dem Lager.",
+   "promise.sub": "Jede Dekoration mache ich für dich, aus dem, was die Saison gerade bietet.",
+   "promise.1.t": "Handgemacht",
+   "promise.1.d": "Jeder Kranz und jedes Gesteck entsteht im Atelier — keines gleicht dem anderen.",
+   "promise.2.t": "Saisonales Grün",
+   "promise.2.d": "Tanne, Eukalyptus, Ilex und Trockenblumen, die die Feiertage überdauern.",
+   "promise.3.t": "Abholung oder Lieferung",
+   "promise.3.d": "Kostenlose Abholung im Atelier oder Lieferung in der Nähe, zum vereinbarten Termin.",
+   "home.title": "Weihnachten in Blumen",
+   "checkout.note": "Abhol- oder Liefertermin, Größe, Band, Grußkarte — schreib es hier",
+   "checkout.phone_hint": "Unter dieser Nummer bestätigen wir den Abhol- oder Liefertermin.",
+   "info.darmowa": "Kostenlose Abholung im Atelier",
+   "footer.tagline": "Floristik-Atelier — Floristik, inspiriert von der Natur",
+   "footer.rights": "Alle Rechte vorbehalten. Fotos: Ola flora.",
+   "story.pro.eyebrow": "Blumen für Unternehmen",
+   "story.pro.title": "Wir begrünen Innenräume und gestalten den Blumenschmuck für Firmenveranstaltungen.",
+   "story.pro.text": "Empfang, regelmäßige Arrangements, Events — schreib mir, ich bereite einen Vorschlag vor.",
+   "story.pro.cta": "Ola flora schreiben"
   }
  },
+ "jezyki": [
+  "pl",
+  "en",
+  "de"
+ ],
  "slajdy": [
   {
    "zdjecie": "zdjecia/hero.webp",
@@ -131,6 +169,12 @@
      "title": "Christmas in flowers",
      "tekst": "Wreaths, centrepieces and Christmas decorations handmade in the studio — from fir, dried flowers and whatever the season brings. Every piece is a little different.",
      "cta_label": "See the decorations"
+    },
+    "de": {
+     "eyebrow": "saisonaler Shop",
+     "title": "Weihnachten in Blumen",
+     "tekst": "Kränze, Gestecke und Weihnachtsdekoration, handgemacht im Atelier — aus Tanne, Trockenblumen und dem, was die Saison gerade bietet. Jedes Stück ist ein bisschen anders.",
+     "cta_label": "Zur Dekoration"
     }
    }
   }
@@ -156,6 +200,11 @@
      "name": "Advent wreath with dried hydrangeas",
      "subtitle": "Ø 40 cm · 4 candles",
      "desc": "A round wreath on a fir base with dried hydrangeas, eucalyptus and a linen ribbon. Four candles included. It lasts all through Advent — and the hydrangeas even longer. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Adventskranz mit getrockneten Hortensien",
+     "subtitle": "Ø 40 cm · 4 Kerzen",
+     "desc": "Ein runder Kranz auf Tannenbasis mit getrockneten Hortensien, Eukalyptus und Leinenband. Vier Kerzen inklusive. Er hält die ganze Adventszeit — die Hortensien noch länger. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    },
    "waga_g": 1500
@@ -180,6 +229,11 @@
      "name": "Table centrepiece, fir and candles",
      "subtitle": "approx. 60 cm · 3 candles",
      "desc": "A long centrepiece for the Christmas Eve table: fir, cones, dried flowers and amber glass. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Tischgesteck mit Tanne und Kerzen",
+     "subtitle": "ca. 60 cm · 3 Kerzen",
+     "desc": "Ein langes Gesteck für den Heiligabend-Tisch: Tanne, Zapfen, Trockenblumen und Bernsteinglas. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    },
    "waga_g": 1200
@@ -204,6 +258,11 @@
      "name": "Christmas bouquet with holly",
      "subtitle": "holly · fir · ribbons",
      "desc": "A bouquet of holly, fir and eucalyptus branches with red ribbons. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Weihnachtsstrauß mit Ilex",
+     "subtitle": "Ilex · Tanne · Bänder",
+     "desc": "Ein Strauß aus Ilex, Tannen- und Eukalyptuszweigen mit roten Bändern. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    },
    "waga_g": 900,
@@ -229,6 +288,11 @@
      "name": "Mantelpiece garland, 150 cm",
      "subtitle": "150 cm · fresh greenery",
      "desc": "A garland of fir, ivy and dried flowers — for a mantelpiece, staircase or table. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Kaminsims-Girlande, 150 cm",
+     "subtitle": "150 cm · frisches Grün",
+     "desc": "Eine Girlande aus Tanne, Efeu und Trockenblumen — für Kaminsims, Treppe oder Tisch. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    },
    "waga_g": 2000
@@ -253,6 +317,11 @@
      "name": "Christmas decoration for a reception",
      "subtitle": "for businesses · with installation",
      "desc": "A Christmas arrangement for a reception, shop window or office, delivered and installed on site. Price from — we confirm the quote after a conversation. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Weihnachtsdekoration für den Empfang",
+     "subtitle": "für Unternehmen · mit Aufbau",
+     "desc": "Ein weihnachtliches Arrangement für Empfang, Schaufenster oder Büro, mit Lieferung und Aufbau vor Ort. Preis ab — das Angebot bestätigen wir nach einem Gespräch. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    }
   },
@@ -276,6 +345,11 @@
      "name": "Door wreath, eucalyptus and fir",
      "subtitle": "Ø 35 cm",
      "desc": "A door wreath of eucalyptus and fir, with a linen ribbon for hanging. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Türkranz mit Eukalyptus und Tanne",
+     "subtitle": "Ø 35 cm",
+     "desc": "Ein Türkranz aus Eukalyptus und Tanne, mit Leinenband zum Aufhängen. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    },
    "waga_g": 900
@@ -300,6 +374,11 @@
      "name": "Gypsophila and rose wreath",
      "subtitle": "Ø 40 cm",
      "desc": "A light wreath of dried gypsophila and roses — for a door, a wall or as a table decoration. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Kranz aus Schleierkraut und Rosen",
+     "subtitle": "Ø 40 cm",
+     "desc": "Ein heller Kranz aus getrocknetem Schleierkraut und Rosen — für Tür, Wand oder als Tischdekoration. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    },
    "waga_g": 800
@@ -324,6 +403,11 @@
      "name": "Mini gift wreath",
      "subtitle": "Ø 20 cm",
      "desc": "A small wreath of dried flowers, gift-wrapped. Write the size, ribbon colour and pickup date in the order notes."
+    },
+    "de": {
+     "name": "Mini-Kranz als Geschenk",
+     "subtitle": "Ø 20 cm",
+     "desc": "Ein kleiner Kranz aus Trockenblumen, als Geschenk verpackt. Größe, Bandfarbe und Abholtermin schreibst du in die Bestellnotiz."
     }
    },
    "waga_g": 300
