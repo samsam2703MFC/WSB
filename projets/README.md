@@ -50,3 +50,9 @@ ordre, légendes, catégories, noms des filtres) et le bandeau de la page d'accu
   (mot de passe : brouillon, publication, retour, envoi d'une photo),
   `_wsb/prive/app/dane.php` (ce que le back office affiche au chargement).
 - Un lien n'accepte que `https://`, `mailto:` ou `tel:`.
+- **Sezonowo w sklepie** (oferta, maquette B validée) : un bandeau glissé après
+  « 05 Kwiaty ». Une ligne par saison dans la section « Sezonowo w sklepie » de
+  la page oferta : `nazwa | od (dd.mm) | do (dd.mm) | link do sklepu` — dates
+  valables chaque année, une saison n'apparaît qu'entre ses dates ET avec un
+  lien ; sans saison visible, pas de bandeau. Titre, texte et photos des deux
+  cartes s'éditent comme le reste de la page.

@@ -70,6 +70,7 @@
     function wPomijanym(el) {
       for (var n = el; n; n = n.parentNode) {
         if (n.nodeType === 1 && n.tagName && /^(style|script|helmet|sc-for)$/i.test(n.tagName)) return true;
+        if (n.nodeType === 1 && n.getAttribute && n.getAttribute('data-of-cms') === 'pomin') return true;   // rempli par la liste « sezon »
       }
       return false;
     }
@@ -127,12 +128,61 @@
       }
     }
 
-    function wyciagnij(html) { var out = []; przejdz(szablon(html), function (i) { out.push(i); }); return out; }
+    /* « Sezonowo w sklepie » (offre, maquette B) : un bandeau glissé après « 05 Kwiaty ».
+       Une ligne par saison dans la section « oferta:sezon » : nazwa | od (dd.mm) | do (dd.mm) | link.
+       Une saison n'est visible qu'entre ses dates ET avec un lien ; sans saison visible, pas de bandeau.
+       Les cartes sont TOUJOURS glissées (cachées au besoin) : les clés des photos restent les mêmes. */
+    var SEZON_ZDJ = ['assets/photos/ola/firmy-recepcja-ostrokrzew.jpg', 'assets/photos/ola/firmy-hortensje-instalacja.jpg'];
+    var MIES = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+    function sezony(tekst) {
+      return String(tekst || '').split(/\r?\n/).map(function (l) { return l.split('|').map(function (x) { return x.trim(); }); })
+        .filter(function (c) { return c[0]; })
+        .map(function (c) {
+          var od = /^(\d{1,2})\.(\d{1,2})/.exec(c[1] || ''), dl = /^(\d{1,2})\.(\d{1,2})/.exec(c[2] || '');
+          var md = function (m) { return m ? (+m[2]) * 100 + (+m[1]) : null; };
+          var et = function (m) { return m ? (+m[1]) + ' ' + (MIES[+m[2] - 1] || '') : ''; };
+          var a = md(od), b = md(dl), d = new Date(), dz = (d.getMonth() + 1) * 100 + d.getDate();
+          var teraz = a === null || b === null ? true : (a <= b ? dz >= a && dz <= b : dz >= a || dz <= b);
+          var link = /^(https?:\/\/|\/|[a-z0-9_-]+\/)/i.test(c[3] || '') && !/^javascript:/i.test(c[3]) ? c[3] : '';
+          return { nazwa: c[0], okres: et(od) && et(dl) ? (od[2] === dl[2] ? (+od[1]) + ' – ' + et(dl) : et(od) + ' – ' + et(dl)) : '', teraz: teraz, link: link };
+        });
+    }
+    function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function wstawSezon(t, tekst, wszystko) {
+      var h = [].slice.call(t.content.querySelectorAll('h2')).filter(function (x) { return norm(x.textContent) === 'Kwiaty' && strona(x) === 'oferta'; })[0];
+      var sek = h && h.closest('section');
+      if (!sek) return false;
+      var lista = sezony(tekst), widac = 0;
+      var karty = [0, 1].map(function (i) {
+        var z = lista[i] || { nazwa: '', okres: '', teraz: false, link: '' };
+        var on = wszystko || (z.teraz && z.link);
+        if (on) widac++;
+        return '<a href="' + esc(z.link || '#') + '" style="' + (on ? 'display: flex;' : 'display: none;') + ' flex-direction: column; gap: 14px; color: #f4efe7;">' +
+          '<div style="position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #4a423a;"><img src="' + SEZON_ZDJ[i] + '" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;"></div>' +
+          '<div data-of-cms="pomin" style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px;"><span style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 300;">' + esc(z.nazwa) + '</span>' +
+          '<span style="font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #c9b99f; white-space: nowrap;">' + esc(z.okres) + '</span></div>' +
+          '<span data-of-cms="pomin" style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 1px solid #c9b99f; align-self: flex-start; padding-bottom: 4px;">w sklepie →</span></a>';
+      });
+      var w = document.createElement('section');
+      w.setAttribute('style', 'background: #2e2924; color: #ebe3d6;' + (widac ? '' : ' display: none;'));
+      w.innerHTML = '<div style="max-width: 1240px; margin: 0 auto; padding: clamp(56px, 7vw, 96px) 28px; display: flex; flex-direction: column; gap: 40px;">' +
+        '<div style="display: flex; flex-wrap: wrap; gap: 24px 64px; align-items: flex-end;"><div style="flex: 1 1 320px;">' +
+        '<span style="font-family: var(--font-display); font-style: italic; font-size: 1.5rem; color: #c9b99f;">sezonowo</span>' +
+        '<h2 style="margin: 8px 0 0; font-family: var(--font-display); font-weight: 300; font-size: clamp(2.2rem, 4vw, 3.2rem); line-height: 1.08; color: #f4efe7;">Do zamówienia w sklepie</h2></div>' +
+        '<p style="flex: 1.2 1 380px; margin: 0; color: #d8cdbd; max-width: 56ch;">Dekoracje świąteczne i wianki zamawiacie w sklepie internetowym — z odbiorem w pracowni lub dostawą.</p></div>' +
+        '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 28px;">' + karty.join('') + '</div></div>';
+      sek.after(w);
+      return widac > 0;
+    }
+    var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 15.11 | 20.12 | \nWianki | 01.12 | 20.12 | ';
+
+    function wyciagnij(html) { var out = [], t = szablon(html); wstawSezon(t, SEZON_DOMYSLNY, true); przejdz(t, function (i) { out.push(i); }); return out; }
 
     // Remplace dans le gabarit ce qui a été publié. pub = { t: {k: tekst}, z: {k: [src]}, alt: {src: alt} }
     function zastosuj(html, pub) {
-      if (!pub || (!pub.t && !pub.z)) return html;
+      pub = pub || {};
       var t = szablon(html), T = pub.t || {}, Z = pub.z || {}, A = pub.alt || {}, zmiana = false;
+      zmiana = wstawSezon(t, hasOwn(T, 'oferta:sezon') ? T['oferta:sezon'] : SEZON_DOMYSLNY, false);
       przejdz(t, function (i, n) {
         if (i.kind === 'tekst' && hasOwn(T, i.k) && String(T[i.k]).trim() !== '') {
           var m = /^(\s*)[\s\S]*?(\s*)$/.exec(n.nodeValue);
@@ -185,7 +235,7 @@
       var m = /zdjecie\.php\?id=(\d+)/.exec(src); if (m) return 'wgrane-' + m[1];
       return String(src).split('/').pop().replace(/\.[a-z0-9]+$/i, '');
     }
-    return { wyciagnij: wyciagnij, zastosuj: zastosuj, pole: pole, wartoscPola: wartoscPola, owin: owin, wycinek: wycinek, nazwaPliku: nazwaPliku, norm: norm };
+    return { SEZON_DOMYSLNY: SEZON_DOMYSLNY, wyciagnij: wyciagnij, zastosuj: zastosuj, pole: pole, wartoscPola: wartoscPola, owin: owin, wycinek: wycinek, nazwaPliku: nazwaPliku, norm: norm };
   })();
   window.__ofCms = ofCms;
   window.__ofPustyZap = { id: '', iso: '', who: '', when: '', venue: '', ceremony: '', guests: '', budget: '', style: '', palette: '',
@@ -269,6 +319,7 @@
     items.push({ k: 'home:pasek', page: 'home', kind: 'galeria', rola: 'Realizacje — pasek na stronie głównej', def: STRIP.map(function (n) { return 'assets/photos/ola/' + n + '.jpg'; }) });
     items.push({ k: 'portfolio:galeria', page: 'portfolio', kind: 'galeria', rola: 'Realizacje — galeria (kolejność jak na stronie)', def: P.map(function (p) { return p.src; }) });
     items.push({ k: 'portfolio:podpisy', page: 'portfolio', kind: 'lista', rola: 'Realizacje — podpisy i kategorie (plik | opis | kategoria)', def: P.map(function (p) { return ofCms.nazwaPliku(p.src) + ' | ' + p.a + ' | ' + p.c; }).join('\n') });
+    items.push({ k: 'oferta:sezon', page: 'oferta', kind: 'lista', rola: 'Sezonowo w sklepie — nazwa | od (dd.mm) | do (dd.mm) | link do sklepu', def: ofCms.SEZON_DOMYSLNY });
     items.push({ k: 'portfolio:kategorie', page: 'portfolio', kind: 'lista', rola: 'Realizacje — nazwy filtrów (jedna na linię)', def: CATS.map(function (c) { return c.label; }).join('\n') });
 
     var PH_DEF = {}, stan = { cmsDraft: {}, cmsPub: {}, cmsStamp: {}, cmsPhotos: {} };
@@ -464,7 +515,8 @@
     var dc = document.querySelector('x-dc');
     if (!el) return;
     var js = el.textContent;
-    if (publiczna && cmsPub) {
+    if (publiczna) {
+      cmsPub = cmsPub || {};
       var l = listyPubliczne(js, cmsPub);
       Object.keys(l).forEach(function (k) { dane[k] = l[k]; });
       if (dc) { var stary = dc.innerHTML, nowy = ofCms.zastosuj(stary, cmsPub); if (nowy !== stary) dc.innerHTML = nowy; }
