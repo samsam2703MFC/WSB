@@ -32,6 +32,24 @@ if ($ekran === 'Back office') {
     }
     $out['ZAP'] = $zap;
     $out['DOSS'] = $doss;
+
+    // CMS de la page publique : ce qui est publié, les brouillons et la photothèque.
+    of_cms_porzadki($pdo);
+    $pub = []; $szkic = []; $stamp = [];
+    $st = $pdo->prepare("SELECT s.skey, s.kind, s.draft_value, s.published_value, s.published_at FROM of_page_sections s
+                         JOIN of_pages p ON p.id = s.page_id JOIN of_sites w ON w.id = p.site_id WHERE w.tenant_id = ?");
+    $st->execute([OF_TENANT]);
+    foreach ($st as $r) {
+        if ($r['published_at'] !== null) {
+            $stamp[$r['skey']] = of_cms_stamp($r['published_at']);
+            if (!of_cms_foto((string) $r['kind']) && $r['published_value'] !== null) $pub[$r['skey']] = (string) $r['published_value'];
+        }
+        if ($r['draft_value'] !== null) $szkic[$r['skey']] = (string) $r['draft_value'];
+    }
+    $out['__cms'] = ['pub' => (object) $pub, 'szkic' => (object) $szkic, 'stamp' => (object) $stamp,
+                     'zdjecia' => (object) of_cms_wszystkie_zdjecia($pdo, 'published'),
+                     'zdjeciaSzkic' => (object) of_cms_wszystkie_zdjecia($pdo, 'draft'),
+                     'biblioteka' => of_cms_biblioteka($pdo)];
 }
 
 of_json((object) $out);

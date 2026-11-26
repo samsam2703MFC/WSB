@@ -37,7 +37,7 @@ remet à 1. `seed.sql` s'exécute avec les contrôles actifs (ordre d'insertion 
 | Cartes de mission (3.10) | `of_mission_templates`, `_template_tasks`, `of_missions`, `of_mission_tasks`, `of_mission_kit` |
 | Achats, finances (3.11) | `of_purchase_orders`, `of_shopping_items`, `of_expenses` |
 | Courrier, automatismes, SMS (3.12) | `of_mail_templates`, `of_mail_threads`, `of_mail_messages`, `of_mail_attachments`, `of_automation_rules`, `of_automation_runs`, `of_sms_messages` |
-| CMS, médias, portfolio (3.13) | `of_media`, `of_sites`, `of_pages`, `of_page_sections`, `of_page_section_photos`, `of_realisations`, `of_tags`, `of_realisation_tags`, `of_realisation_photos` |
+| CMS, médias, portfolio (3.13) | `of_media`, `of_media_blobs`, `of_sites`, `of_pages`, `of_page_sections`, `of_page_section_photos`, `of_realisations`, `of_tags`, `of_realisation_tags`, `of_realisation_photos` |
 | Assistant d'appel (3.15) | `of_call_scripts`, `_steps`, `_points`, `_step_items` |
 | Audit (3.16) | `of_audit_log` |
 

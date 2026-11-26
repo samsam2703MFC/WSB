@@ -164,6 +164,14 @@ CREATE TABLE IF NOT EXISTS of_media (
   CONSTRAINT fk_of_media_tenant FOREIGN KEY (tenant_id) REFERENCES of_tenants (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci COMMENT='Biblioteka zdjęć i plików';
 
+CREATE TABLE IF NOT EXISTS of_media_blobs (
+  media_id   BIGINT UNSIGNED NOT NULL,
+  data       MEDIUMBLOB      NOT NULL,
+  created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (media_id),
+  CONSTRAINT fk_of_media_blob FOREIGN KEY (media_id) REFERENCES of_media (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci COMMENT='Zdjęcia wgrane z CMS (zawartość pliku)';
+
 CREATE TABLE IF NOT EXISTS of_brands (
   id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   tenant_id      BIGINT UNSIGNED NOT NULL,

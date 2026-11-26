@@ -794,71 +794,13 @@ INSERT IGNORE INTO of_pages (id, site_id, slug, label, tab_anchor, visible, sort
 (3, 1, 'portfolio', 'portfolio',          'portfolio', 1, 3),
 (4, 1, 'omnie',     'o mnie',             'omnie',     1, 4),
 (5, 1, 'kontakt',   'kontakt',            'kontakt',   1, 5),
-(6, 1, 'form',      'formularz (wizard)', 'form',      1, 6);
+(6, 1, 'form',      'formularz (wizard)', 'form',      1, 6),
+(7, 1, 'wspolne',   'wspólne · menu i stopka', '',     1, 0);
 
-INSERT IGNORE INTO of_page_sections (id, page_id, sort, skey, title, kind, default_value) VALUES
--- strona główna (manquait au CMS des maquettes — textes de la page publique)
-(101, 1, 1, 'hero_tytul',    'Hero — tytuł',  'tekst', 'Florystyka inspirowana naturą'),
-(102, 1, 2, 'hero_akapit',   'Hero — akapit', 'tekst',
- 'Natura niezmiennie pozostaje moim źródłem inspiracji – od jej kolorów i faktur po zmieniający się rytm pór roku. Tworzę kompozycje pełne lekkości i swobody, dopasowane do charakteru przestrzeni, okazji i osób, dla których powstają.'),
-(103, 1, 3, 'hero_przycisk', 'Hero — przycisk', 'link', '{"label":"Poznaj ofertę →","href":"#oferta"}'),
-(104, 1, 4, 'hero_zdjecia',  'Hero — zdjęcia', 'galeria',
- '{"kalie":"kalie-jaskry-limonki","sala":"sala-paprocie","pampasy":"pampasy-aleja","bukiet":"panna-mloda-kalie"}'),
-(105, 1, 5, 'uslugi',        'Co mogę dla Ciebie stworzyć?', 'lista',
- '["Bukiety ślubne","Dekoracja sali","Dekoracja ceremonii","Kwiaty dla firm","Kwiaty"]'),
-(106, 1, 6, 'przywitanie',   'Cześć, tu Ola🌿', 'tekst',
- '{"title":"Cześć, tu Ola🌿","text":"Ola Flora powstała z miłości do kwiatów, natury i pasji do tworzenia. Od 4 lat zajmuję się florystyką, a największą radość sprawia mi to, że dzięki kwiatom mogę tworzyć coś pięknego i być częścią ważnych dla Was chwil.","cta":"Poznaj mnie bliżej →"}'),
-(107, 1, 7, 'wspolpraca',    'Współpraca krok po kroku', 'lista',
- '{"intro":"Każda uroczystość jest inna, dlatego zależy mi na tym, aby najpierw dobrze poznać Wasze pomysły i oczekiwania. Chciałabym, żeby wspólne tworzenie kwiatowej oprawy było dla Was przyjemnym doświadczeniem – od pierwszej wiadomości aż po dzień uroczystości.","steps":[{"no":"01","title":"Pierwsza wiadomość","text":"Wypełnijcie formularz kontaktowy i opowiedzcie mi trochę o Waszym dniu, planach i pomysłach."},{"no":"02","title":"Wasze inspiracje","text":"Poznaję Waszą wizję, ulubione kolory, inspiracje i założenia budżetowe."},{"no":"03","title":"Indywidualna oferta","text":"Na tej podstawie przygotowuję propozycję dekoracji wraz z koncepcją i wyceną."},{"no":"04","title":"Spotkanie","text":"Spotykamy się online lub na sali weselnej, aby spokojnie omówić pomysły i dopracować wszystkie szczegóły."},{"no":"05","title":"Rezerwacja terminu","text":"Jeśli wszystko Wam odpowiada, podpisujemy umowę i oficjalnie rezerwujemy termin."},{"no":"06","title":"Realizacja","text":"Przejmuję przygotowanie i montaż dekoracji, dbając o to, aby każdy element tworzył spójną całość."},{"no":"07","title":"Drugie życie kwiatów","text":"Jeśli tylko jest taka możliwość, przygotowuję z kwiatów po uroczystości mniejsze bukiety, którymi możecie obdarować swoich Gości."}]}'),
-(108, 1, 8, 'realizacje_pasek', 'Realizacje', 'galeria', '{"title":"Kwiaty w Waszych dniach"}'),
-(109, 1, 9, 'cta',           'Stwórzmy coś razem', 'tekst',
- '{"title":"Stwórzmy coś razem","text":"Macie już pomysł na swoją uroczystość? A może dopiero szukacie inspiracji? Napiszcie do mnie – chętnie poznam Wasze plany!","cta":"Wypełnij formularz →"}'),
--- oferta
-(201, 2, 1, 'pakiety',         'pakiety',         'lista', '3 pakiety: Kamelia, Piwonia, Magnolia'),
-(202, 2, 2, 'kwiaty_sezonowe', 'kwiaty sezonowe', 'lista', 'dostępność miesiąc po miesiącu'),
-(203, 2, 3, 'faq',             'FAQ',             'tekst', '6 pytań i odpowiedzi'),
-(204, 2, 4, 'opis_01', '01 Bukiety ślubne', 'tekst',
- 'Naturalne bukiety ślubne, w których każdy detal, od doboru kwiatów po wykończenie wstążką, ustalany jest indywidualnie, aby stworzyć bukiet idealnie dopełniający ślubną stylizację.'),
-(205, 2, 5, 'opis_02', '02 Dekoracja sali', 'tekst',
- 'Tworzę dekoracje sal weselnych, w których główną rolę odgrywają naturalne piękno kwiatów i sezonowość. Sięgam po rośliny charakterystyczne dla danej pory roku, dobierając je tak, aby całość tworzyła spójną, harmonijną i lekką oprawę Waszego dnia.'),
-(206, 2, 6, 'opis_03', '03 Dekoracja ceremonii', 'tekst',
- 'Tworzę kwiatową oprawę miejsc ceremonii, dbając o to, by każdy detal podkreślał wyjątkowość tej chwili. Naturalne kompozycje, subtelne formy i kwiaty dobrane do charakteru uroczystości tworzą piękne tło dla momentów, które zostają w pamięci na długo.'),
-(207, 2, 7, 'opis_04', '04 Kwiaty dla firm', 'tekst',
- 'Dbam o kwiatową i roślinną oprawę przestrzeni firmowych, tworząc miejsca, w których przyjemnie się przebywa. Zazieleniamy wnętrza, dekorujemy recepcje i przygotowujemy regularne kompozycje kwiatowe, a także oprawę florystyczną spotkań, eventów i firmowych wydarzeń. Dbamy o to, by zieleń i kwiaty naturalnie wpisywały się w charakter miejsca.'),
-(208, 2, 8, 'opis_05', '05 Kwiaty', 'tekst',
- 'Każda okazja zasługuje na odpowiednią oprawę. Tworzę bukiety okolicznościowe z dostawą, flowerboxy oraz kompozycje kwiatowe na przyjęcia i uroczystości. Przygotowuję również kwiaty na pożegnanie, dbając o to, by każda kompozycja oddawała charakter chwili i towarzyszące jej emocje.'),
--- portfolio
-(301, 3, 1, 'tytul',      'tytuł',      'tekst',   'Kwiaty w Waszych dniach'),
-(302, 3, 2, 'realizacje', 'realizacje', 'galeria', '12 zdjęć, format 4:5'),
-(303, 3, 3, 'opisy',      'opisy',      'tekst',   'jedno zdanie na realizację'),
--- o mnie
-(401, 4, 1, 'tekst',  'tekst',   'tekst',
- 'Ola Flora powstała z miłości do kwiatów, natury i pasji do tworzenia. Od 4 lat zajmuję się florystyką, a największą radość sprawia mi to, że dzięki kwiatom mogę tworzyć coś pięknego i być częścią ważnych dla Was chwil.\n\nW swojej pracy inspiruję się przede wszystkim naturą i zmieniającymi się porami roku. Uwielbiam sezonowe kwiaty, swobodne kompozycje i nieoczywiste połączenia. Lubię, kiedy kwiaty wyglądają naturalnie, a kompozycje mają w sobie lekkość i swobodę.\n\nWierzę, że kwiaty potrafią wyrażać emocje, tworzyć atmosferę i zupełnie odmienić charakter przestrzeni.\n\nDo każdej realizacji podchodzę indywidualnie, z sercem i zaangażowaniem. Zależy mi na tym, żeby tworzone przeze mnie aranżacje były nie tylko piękne, ale też pasowały do miejsca, okazji i osób, dla których powstają.'),
-(402, 4, 2, 'zdjecie', 'zdjęcie', 'zdjęcie', 'portret przy pracy'),
--- kontakt
-(501, 5, 1, 'telefon_mail', 'telefon i mail', 'tekst', '{{telefon}} · {{mail}}'),
-(502, 5, 2, 'instagram',    'Instagram',      'link',  '@olaflora'),
--- formularz
-(601, 6, 1, 'pytania',        '12 pytań',          'formularz',  'imiona → data → miejsce → goście → stoły → prezydialny → ceremonia → dodatki → styl → kolory → budżet → kontakt'),
-(602, 6, 2, 'kalendarz',      'kalendarz terminu', 'formularz',  'wybór dnia, weekendy wyróżnione'),
-(603, 6, 3, 'palety',         'palety kolorów',    'kolory',     '6 palet + 2 akcenty do wyboru'),
-(604, 6, 4, 'zdjecia_stylow', 'zdjęcia stylów',    'galeria',    '8 stylów, po jednym zdjęciu'),
-(605, 6, 5, 'mail_docelowy',  'mail docelowy',     'ustawienie', '');
-
-INSERT IGNORE INTO of_page_section_photos (id, section_id, media_id, sort, state) VALUES
--- hero : kalie, sala, pampasy, bukiet
-(1,  104, 132, 1, 'published'), (2,  104, 128, 2, 'published'), (3,  104, 127, 3, 'published'), (4,  104, 101, 4, 'published'),
--- pasek realizacji strony głównej
-(5,  108, 127, 1, 'published'), (6,  108, 132, 2, 'published'), (7,  108, 135, 3, 'published'), (8,  108, 136, 4, 'published'),
--- portfolio → realizacje (PH_DEF, 12)
-(9,  302, 1,  1, 'published'), (10, 302, 2,  2, 'published'), (11, 302, 3,  3, 'published'), (12, 302, 4,  4, 'published'),
-(13, 302, 5,  5, 'published'), (14, 302, 6,  6, 'published'), (15, 302, 7,  7, 'published'), (16, 302, 15, 8, 'published'),
-(17, 302, 16, 9, 'published'), (18, 302, 17, 10, 'published'), (19, 302, 18, 11, 'published'), (20, 302, 19, 12, 'published'),
--- o mnie → zdjęcie
-(21, 402, 7,  1, 'published'),
--- formularz → zdjęcia stylów (8)
-(22, 604, 2,  1, 'published'), (23, 604, 3,  2, 'published'), (24, 604, 4,  3, 'published'), (25, 604, 5,  4, 'published'),
-(26, 604, 6,  5, 'published'), (27, 604, 14, 6, 'published'), (28, 604, 17, 7, 'published'), (29, 604, 13, 8, 'published');
+-- Sections : créées par le CMS (écran « strony » du back office) au premier
+-- geste, une par texte / photo / liste de la page publique, sous la clé que
+-- calcule adapt.js (« home:t1a2b3c4d », « portfolio:galeria »…). Rien à
+-- poser ici : tant qu'une section n'est pas publiée, la page garde son texte.
 
 -- ---------------------------------------------------------------------
 -- 4.13 Realizacje — słowniki tagów

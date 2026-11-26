@@ -25,3 +25,28 @@ devis en ligne restent ouverts.
 
 Réglages par projet : `projets/<nom>.conf` — `INDEX=<page>` : la page servie à
 `/<nom>/` (sinon la liste des écrans, toujours à `/<nom>/ekrany.html`).
+
+## Ola flora — CMS de la page publique
+
+Back office → STRONA → « strony » édite la page publique (`Ola flora - wesela v2`)
+telle qu'elle est dans le zip : chaque texte, chaque photo, chaque adresse de
+lien (mail, téléphone, Instagram), le menu, la galerie des réalisations (photos,
+ordre, légendes, catégories, noms des filtres) et le bandeau de la page d'accueil.
+
+- La liste des sections n'est écrite nulle part : `adapt.js` (`ofCms`) la lit dans
+  le gabarit de la page publique, au chargement du back office ; chaque élément a
+  une clé stable (`home:t1a2b3c4d` = onglet + empreinte du texte d'origine).
+  La page publique applique la MÊME règle : un nouveau zip garde ce qui a été
+  publié, tant que le texte d'origine ne change pas.
+- « edytuj » → brouillon enregistré en base (`draft_value`, photos `state=draft`),
+  « Publikuj na żywo » → en ligne (`published_value`, `published_at`),
+  « Przywróć » → retour au texte du zip. Une section n'existe en base
+  (`of_page_sections`) qu'à partir du premier geste.
+- « ＋ dodaj zdjęcie z dysku » : la photo est réduite dans le navigateur (2000 px,
+  JPEG), gardée en base (`of_media` + `of_media_blobs`) — elle survit à un nouveau
+  zip — et servie par `_wsb/app/zdjecie.php?id=…`.
+- Points d'entrée : `_wsb/app/strona.php` (public, seulement le publié),
+  `_wsb/app/zdjecie.php` (public, photos envoyées), `_wsb/prive/app/cms.php`
+  (mot de passe : brouillon, publication, retour, envoi d'une photo),
+  `_wsb/prive/app/dane.php` (ce que le back office affiche au chargement).
+- Un lien n'accepte que `https://`, `mailto:` ou `tel:`.
