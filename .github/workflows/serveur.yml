@@ -195,6 +195,10 @@ jobs:
               n=$(curl -s --max-time 20 "https://$IP/$BOUTIQUE/$d/" | grep -c 'class="card' || true)
               k=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP/$BOUTIQUE/$d/koszyk" || true)
               echo "https://<IP>/$BOUTIQUE/$d/ → HTTP $c, $n fiches produit ; /$d/koszyk → HTTP $k"
+              h=$(curl -s --max-time 20 "https://$IP/$BOUTIQUE/$d/")
+              for ch in $(echo "$h" | grep -o '/'"$BOUTIQUE/$d"'/media/[a-z0-9]*\.webp' | head -1) $(echo "$h" | grep -o '/'"$BOUTIQUE/$d"'/[a-z/._-]*\.css' | head -2); do
+                echo "  ${ch/$BOUTIQUE/$BOUTIQUE} → HTTP $(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$IP$ch" || true)"
+              done
             done
           fi
           if [ "$A" = push ]; then
