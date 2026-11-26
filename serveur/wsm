@@ -1085,9 +1085,18 @@ cmd_projet() {
   # Aucun script serveur venu du zip ; le nôtre seulement.
   find "$d/site.nouveau" \( -iname '*.php' -o -iname '*.phtml' -o -iname '*.phar' -o -name '.htaccess' \) -delete
   rm -rf "$d/site.nouveau/_wsb"; cp -r "$DEPOT/projets/_wsb" "$d/site.nouveau/_wsb"
+  # Ce que le dépôt apporte à CE projet (projets/<nom>/) : l'API (app/ public,
+  # app/prive/ derrière le mot de passe) et adapt.js, qui relie les écrans aux tables.
+  local pr="$DEPOT/projets/$n" tags='<script src="./_wsb/stockage.js"></script>'
+  if [ -d "$pr/app" ]; then
+    install -d "$d/site.nouveau/_wsb/app" "$d/site.nouveau/_wsb/prive/app"
+    cp "$pr"/app/*.php "$d/site.nouveau/_wsb/app/" 2>/dev/null || true
+    cp "$pr"/app/prive/*.php "$d/site.nouveau/_wsb/prive/app/" 2>/dev/null || true
+  fi
+  if [ -f "$pr/adapt.js" ]; then cp "$pr/adapt.js" "$d/site.nouveau/_wsb/adapt.js"; tags+='\n<script src="./_wsb/adapt.js"></script>'; fi
   local f k=0
   while IFS= read -r -d '' f; do
-    grep -q '_wsb/stockage.js' "$f" || { sed -i '0,/<head>/s#<head>#<head>\n<script src="./_wsb/stockage.js"></script>#' "$f"; k=$((k+1)); }
+    grep -q '_wsb/stockage.js' "$f" || { sed -i "0,/<head>/s#<head>#<head>\n$tags#" "$f"; k=$((k+1)); }
   done < <(find "$d/site.nouveau" -maxdepth 1 -name '*.html' -print0)
   dire "pages reliées à la base : $k"
   # La liste des écrans (ekrany.html), et l'accueil : la page choisie dans
@@ -1117,6 +1126,12 @@ cmd_projet() {
     ( umask 027; printf "<?php return ['dsn' => 'mysql:host=%s;dbname=%s;charset=utf8mb4', 'user' => '%s', 'pass' => '%s'];\n" "$dbh" "$base" "$base" "$mdp" > "$d/config.php" )
     dire "base MySQL « $base » créée"
   else dire "base MySQL « $base » : gardée"; fi
+  # Les tables et les données de départ du projet (rejouables : rien n'est écrasé).
+  local sq; for sq in schema seed; do
+    [ -f "$DEPOT/projets/$n/$sq.sql" ] || continue
+    sql_root --default-character-set=utf8mb4 "$base" < "$DEPOT/projets/$n/$sq.sql" || mourir "$sq.sql refusé par la base"
+    dire "$sq.sql appliqué"
+  done
   if [ ! -f "$d/htpasswd" ]; then
     local pa; pa=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-14)
     ( umask 027; php -r 'echo $argv[1], ":", password_hash($argv[2], PASSWORD_BCRYPT), "\n";' "$n" "$pa" > "$d/htpasswd"
