@@ -86,7 +86,8 @@
    "home.title": "Święta w kwiatach",
    "footer.rights": "Wszelkie prawa zastrzeżone. Zdjęcia: Ola flora.",
    "info.darmowa": "Odbiór w pracowni bez opłat",
-   "checkout.note": "Termin odbioru lub dostawy, rozmiar, wstążka, bilecik — napiszcie tutaj"
+   "checkout.note": "Termin odbioru lub dostawy, rozmiar, wstążka, bilecik — napiszcie tutaj",
+   "checkout.phone_hint": "Na ten numer potwierdzimy termin odbioru lub dostawy."
   }
  },
  "slajdy": [

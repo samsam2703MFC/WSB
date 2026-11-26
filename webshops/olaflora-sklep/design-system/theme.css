@@ -97,3 +97,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .product-media { background: transparent; border-radius: 0; padding: 0; }
 .product-photo { aspect-ratio: 4 / 5; object-fit: cover; border-radius: 0; }
 .dostawa-info, .dostawa-info li, .dostawa-opcja, .cart-box, .zaplac-forma { border-radius: 0; box-shadow: none; }
+
+/* ---- Caisse et formulaires : angles droits partout (shop.css les arrondit en px) -- */
+.field input:not([type="checkbox"]):not([type="radio"]), .field textarea, .field select, .claim textarea,
+.radio, .check, .ile-opcja, .dostawa-opcja, .nl-tel input, .checkout-form fieldset { border-radius: 0; }
+.field input:not([type="checkbox"]):not([type="radio"]), .field textarea, .field select { border-color: var(--brand-300); }
+.radio, .check, .ile-opcja, .dostawa-opcja { border-color: var(--hairline); }
+.dostawa-opcja.is-on, .ile-opcja.is-on { border-color: var(--text-strong); }
+.checkout-form fieldset { background: transparent; border: 1px solid var(--hairline); }
