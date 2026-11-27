@@ -296,11 +296,57 @@ boutiques_ip() {
   done
 }
 
+# Les noms de domaine d'un projet : DOMAINE= de projets/<nom>.conf (dans le dépôt :
+# « wsm projet » réécrit projet.conf), séparés par des virgules ; le premier est
+# l'adresse principale, les autres (www…) y renvoient.
+projet_domaines() {
+  local a; a=$(sed -n 's/^DOMAINE=//p' "$DEPOT/projets/$1.conf" 2>/dev/null | head -1 | tr 'A-Z,' 'a-z ')
+  for a in $a; do [[ "$a" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$ ]] && echo "$a"; done
+}
+# Les adresses IP publiques du serveur : celles que les boutiques portent en alias.
+ips_publiques() {
+  local d ip
+  for d in "$BOUT"/*/; do
+    [ -f "$d/boutique.conf" ] || continue
+    for ip in $(meta "$(basename "$d")" ALIAS | tr ',' ' '); do [[ "$ip" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] && echo "$ip"; done
+  done | sort -u
+}
+# Le DNS de <domaine> mène-t-il ici ? Sinon aucun certificat n'est demandé : Let's
+# Encrypt échouerait (et compte les échecs). Une fois le DNS changé, « wsm ip ».
+dns_ici() {
+  local ici; ici=" $(ips_publiques | tr '\n' ' ') "
+  local ip; for ip in $(getent ahostsv4 "$1" 2>/dev/null | awk '{print $1}' | sort -u); do
+    case "$ici" in *" $ip "*) return 0;; esac
+  done
+  return 1
+}
+
+# Les blocs Apache d'un projet servi sous <chemin> (le lien de l'IP, ou le site
+# lui-même pour son domaine) : fichiers tels quels, référencement, écrans internes
+# et API privée derrière le mot de passe du projet.
+projet_blocs() { # <chemin> <projet> <RewriteBase>
+  local n="$2"
+  printf '    <Directory %s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.html\n        SetEnv PROJET_CONFIG %s/%s/config.php\n' "$1" "$PROJ" "$n"
+  # Le référencement (projets/<nom>/app/seo.php) : l'accueil et les pages publiques passent par
+  # seo.php, qui ajoute titre, description, hreflang, Open Graph et la fiche JSON-LD au <head>.
+  if [ -f "$PROJ/$n/site/_wsb/app/seo.php" ]; then
+    printf '        <IfModule mod_rewrite.c>\n            RewriteEngine On\n            RewriteBase %s\n' "$3"
+    printf '            RewriteRule ^sitemap\\.xml$ _wsb/app/sitemap.php [L]\n'
+    printf '            RewriteRule ^(index\\.html)?$ _wsb/app/seo.php?f=home [L,QSA]\n'
+    # Pas de « $1 » dans la cible : il porterait une espace, qu'Apache refuse (403) dans une requête réécrite.
+    printf '            RewriteRule ^Ola\\sflora\\s-\\swesela\\sv2\\.dc\\.html$ _wsb/app/seo.php?f=home [L,QSA]\n'
+    printf '            RewriteRule ^Ola\\sflora\\s-\\soferta\\slive\\.dc\\.html$ _wsb/app/seo.php?f=oferta [L,QSA]\n'
+    printf '        </IfModule>\n'
+  fi
+  printf '        <FilesMatch "^(Back office.*|Poczta|Super admin|Asystent rozmowy|Retroplan|Karta misji)\\.dc\\.html$">\n            AuthType Basic\n            AuthName "%s"\n            AuthUserFile %s/%s/htpasswd\n            Require valid-user\n        </FilesMatch>\n    </Directory>\n' "$n" "$PROJ" "$n"
+  printf '    <Directory %s/_wsb/prive>\n        AuthType Basic\n        AuthName "%s"\n        AuthUserFile %s/%s/htpasswd\n        Require valid-user\n    </Directory>\n' "$1" "$n" "$PROJ" "$n"
+}
+
 ip_sites_ecrire() {
   dk_on || return 0
   local d b ip alias f r="$RACINE/$IP_RACINE_NOM" defaut=""
   IPS_SERVEUR=""
-  rm -f "$RACINE"/apache/wsm-ip-*.conf "$RACINE"/apache/wsm-port-*.conf
+  rm -f "$RACINE"/apache/wsm-ip-*.conf "$RACINE"/apache/wsm-port-*.conf "$RACINE"/apache/wsm-projet-*.conf
   # La boutique de l'IP (/shop, /backoffice à la racine) : celle qui porte l'IP en alias.
   for d in "$BOUT"/*/; do
     [ -f "$d/boutique.conf" ] || continue
@@ -369,22 +415,7 @@ ip_sites_ecrire() {
       fi
       # Les projets à part : fichiers tels quels ; écrans internes et API privée
       # derrière le mot de passe du projet (Basic, la console passe en https).
-      for n in $(projets_ip); do
-        printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride None\n        Require all granted\n        DirectoryIndex index.html\n        SetEnv PROJET_CONFIG %s/%s/config.php\n' "$r" "$n" "$PROJ" "$n"
-        # Le référencement (projets/<nom>/app/seo.php) : l'accueil et les pages publiques passent par
-        # seo.php, qui ajoute titre, description, hreflang, Open Graph et la fiche JSON-LD au <head>.
-        if [ -f "$PROJ/$n/site/_wsb/app/seo.php" ]; then
-          printf '        <IfModule mod_rewrite.c>\n            RewriteEngine On\n            RewriteBase /%s/\n' "$n"
-          printf '            RewriteRule ^sitemap\\.xml$ _wsb/app/sitemap.php [L]\n'
-          printf '            RewriteRule ^(index\\.html)?$ _wsb/app/seo.php?f=home [L,QSA]\n'
-          # Pas de « $1 » dans la cible : il porterait une espace, qu'Apache refuse (403) dans une requête réécrite.
-          printf '            RewriteRule ^Ola\\sflora\\s-\\swesela\\sv2\\.dc\\.html$ _wsb/app/seo.php?f=home [L,QSA]\n'
-          printf '            RewriteRule ^Ola\\sflora\\s-\\soferta\\slive\\.dc\\.html$ _wsb/app/seo.php?f=oferta [L,QSA]\n'
-          printf '        </IfModule>\n'
-        fi
-        printf '        <FilesMatch "^(Back office.*|Poczta|Super admin|Asystent rozmowy|Retroplan|Karta misji)\\.dc\\.html$">\n            AuthType Basic\n            AuthName "%s"\n            AuthUserFile %s/%s/htpasswd\n            Require valid-user\n        </FilesMatch>\n    </Directory>\n' "$n" "$PROJ" "$n"
-        printf '    <Directory %s/%s/_wsb/prive>\n        AuthType Basic\n        AuthName "%s"\n        AuthUserFile %s/%s/htpasswd\n        Require valid-user\n    </Directory>\n' "$r" "$n" "$n" "$PROJ" "$n"
-      done
+      for n in $(projets_ip); do projet_blocs "$r/$n" "$n" "/$n/"; done
       # Les vitrines logées dans un projet : APRÈS le bloc du projet, plus précises (la configuration de LEUR boutique).
       for dp in $DANS_PROJET; do
         printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride All\n        Require all granted\n        DirectoryIndex index.php\n' "$r" "${dp%%:*}"
@@ -402,6 +433,36 @@ ip_sites_ecrire() {
       echo "    CustomLog \${APACHE_LOG_DIR}/wsm-ip-access.log combined"
       echo "</VirtualHost>"
     } > "$f"
+  done
+  # Un projet qui a son propre nom de domaine (projets/<nom>.conf : DOMAINE=) : le
+  # même site à la racine du domaine, ses vitrines dedans (ex. olaflora.pl/sklep/),
+  # en https par Traefik (compose_ecrire). Les autres noms renvoient au premier.
+  local n doms dom0 al dp2
+  for n in $(projets_ip); do
+    doms=$(projet_domaines "$n"); [ -n "$doms" ] || continue
+    dom0=$(echo "$doms" | head -1); al=$(echo "$doms" | tail -n +2 | paste -sd' ')
+    {
+      echo "# Écrit par wsm (ip_sites_ecrire) — ne pas éditer."
+      echo "<VirtualHost *:80>"
+      echo "    ServerName https://$dom0"
+      [ -n "$al" ] && echo "    ServerAlias $al"
+      echo "    DocumentRoot $PROJ/$n/site"
+      [ -n "$al" ] && printf '    <If "%%{HTTP_HOST} != '"'"'%s'"'"'">\n        Redirect permanent / https://%s/\n    </If>\n' "$dom0" "$dom0"
+      for dp2 in $DANS_PROJET; do
+        [ "${dp2%%/*}" = "$n" ] || continue
+        printf '    Alias /%s/media/ %s/%s/media/\n' "$(echo "${dp2%%:*}" | cut -d/ -f2)" "$BOUT" "${dp2##*:}"
+        printf '    <Directory %s/%s/media>\n        Options -Indexes\n        AllowOverride None\n        Require all granted\n        php_admin_flag engine off\n        <FilesMatch "\\.(php|phtml|php[0-9]|phps|cgi|pl|py|sh|htaccess)$">\n            Require all denied\n        </FilesMatch>\n    </Directory>\n' "$BOUT" "${dp2##*:}"
+      done
+      projet_blocs "$PROJ/$n/site" "$n" "/"
+      for dp2 in $DANS_PROJET; do
+        [ "${dp2%%/*}" = "$n" ] || continue
+        printf '    <Directory %s/%s>\n        Options -Indexes +FollowSymLinks\n        AllowOverride All\n        Require all granted\n        DirectoryIndex index.php\n' "$PROJ/$n/site" "$(echo "${dp2%%:*}" | cut -d/ -f2)"
+        printf '        SetEnv WSM_CONFIG_FILE %s/%s/config.php\n        SetEnv WSM_DATA_DIR    %s/%s/data\n        SetEnv WSM_MEDIA_DIR   %s/%s/media\n    </Directory>\n' "$BOUT" "${dp2##*:}" "$BOUT" "${dp2##*:}" "$BOUT" "${dp2##*:}"
+      done
+      echo "    ErrorLog \${APACHE_LOG_DIR}/wsm-projet-$n-error.log"
+      echo "    CustomLog \${APACHE_LOG_DIR}/wsm-projet-$n-access.log combined"
+      echo "</VirtualHost>"
+    } > "$RACINE/apache/wsm-projet-$n.conf"
   done
 }
 
@@ -449,6 +510,7 @@ cmd_ip() {
   fi
   recharger_apache
   local b; for b in $(boutiques_ip); do dire "$b : http://<IP>/$(chemin_ip "$b")/shop/ · /$(chemin_ip "$b")/backoffice/"; done
+  local n; for n in $(projets_ip); do projet_domaines_etat "$n"; done
 }
 
 cmd_apache() {
@@ -815,6 +877,19 @@ compose_ecrire() {
     L+=("traefik.http.routers.wsb-$b-http.rule=$regle" "traefik.http.routers.wsb-$b-http.entrypoints=$EP_HTTP"
         "traefik.http.routers.wsb-$b-http.middlewares=wsb-https" "traefik.http.routers.wsb-$b-http.service=wsb")
   done
+  # Les domaines des projets (projets/<nom>.conf : DOMAINE=), seulement ceux dont le DNS
+  # mène déjà ici : un certificat demandé avant serait refusé par Let's Encrypt.
+  local pn pd pr
+  for pn in $(projets_ip); do
+    pr=""
+    for pd in $(projet_domaines "$pn"); do dns_ici "$pd" && pr+="${pr:+ || }Host(\`$pd\`)"; done
+    [ -n "$pr" ] || continue
+    L+=("traefik.http.routers.wsb-p-$pn.rule=$pr" "traefik.http.routers.wsb-p-$pn.entrypoints=$EP_HTTPS"
+        "traefik.http.routers.wsb-p-$pn.tls=true" "traefik.http.routers.wsb-p-$pn.service=wsb")
+    [ -n "$RESOLVER" ] && L+=("traefik.http.routers.wsb-p-$pn.tls.certresolver=$RESOLVER")
+    L+=("traefik.http.routers.wsb-p-$pn-http.rule=$pr" "traefik.http.routers.wsb-p-$pn-http.entrypoints=$EP_HTTP"
+        "traefik.http.routers.wsb-p-$pn-http.middlewares=wsb-https" "traefik.http.routers.wsb-p-$pn-http.service=wsb")
+  done
   # /backoffice → /backoffice/ en http (Apache le ferait vers https:// : certificat refusé
   # pour une IP). « $$ » : compose lit un « $ » seul comme une variable.
   if [ "$IP_SLASH" = 1 ]; then
@@ -1179,6 +1254,23 @@ cmd_projet() {
   local pages; pages=$(find "$d/site" -maxdepth 1 -name '*.html' | wc -l)
   cmd_ip >/dev/null
   dire "projet $n : https://<IP>/$n/ — $pages pages"
+  projet_domaines_etat "$n"
+}
+
+# Où en sont les noms de domaine d'un projet (le journal est public : ni IP ni secret).
+projet_domaines_etat() {
+  local dom code
+  for dom in $(projet_domaines "$1"); do
+    if ! dns_ici "$dom"; then
+      dire "$dom : le DNS ne mène pas encore à ce serveur (redirection OVH ?) — enregistrement A vers le serveur, puis relancer « projet »"
+      continue
+    fi
+    code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "https://$dom/" 2>/dev/null || true)
+    case "$code" in
+      2??|3??) dire "$dom : https ✓ ($code)";;
+      *) dire "$dom : DNS ✓, https pas encore prêt (${code:-sans réponse}) — le certificat Let's Encrypt arrive en général en une minute";;
+    esac
+  done
 }
 
 # wsm supprimer <boutique> : retire une boutique du serveur, APRÈS une
