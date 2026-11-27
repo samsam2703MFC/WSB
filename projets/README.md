@@ -56,7 +56,7 @@ ordre, légendes, catégories, noms des filtres) et le bandeau de la page d'accu
   valables chaque année, une saison n'apparaît qu'entre ses dates ET avec un
   lien ; sans saison visible, pas de bandeau. Titre, texte et photos des deux
   cartes s'éditent comme le reste de la page. D'office : Dekoracje świąteczne
-  01.11–20.12 et Wianki 01.11–31.12, vers `sklep/#katalog` (la boutique
+  01.11–31.12 et Wianki 01.11–31.12, vers `sklep/#katalog` (la boutique
   `olaflora-sklep`, servie à /olaflora/sklep/).
 
 ## Ola flora — la page publique en PL · EN · DE

@@ -246,7 +246,7 @@
       st.textContent = '.of-sklep-m{display:none}@media (max-width:760px){.of-sklep-m{display:inline-flex}a[data-of-sklep]{display:none!important}}';
       (document.head || document.documentElement).appendChild(st);
     })();
-    var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 20.12 | sklep/#katalog\nWianki | 01.11 | 31.12 | sklep/#katalog';
+    var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 31.12 | sklep/#katalog\nWianki | 01.11 | 31.12 | sklep/#katalog';
 
     // Tout texte et toute étiquette (placeholder, title, alt) d'un gabarit, dans la langue.
     function tlumaczSzablon(html) {
