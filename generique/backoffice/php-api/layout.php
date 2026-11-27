@@ -44,6 +44,8 @@ function wsm_layout_home_builtins(): array {
         'obietnice' => ['label' => 'Trzy obietnice z ikonami',             'fixed' => false],
         'katalog'   => ['label' => 'Katalog produktów',                    'fixed' => true],
         'pro'       => ['label' => 'Blok dla firm (B2B)',                  'fixed' => false],
+        // Les derniers posts du compte Instagram relié (instagram.php) ; rien quand il n'y en a pas.
+        'instagram' => ['label' => 'Instagram — ostatnie posty',          'fixed' => false],
         // Le téléphone et l'e-mail sur la page d'accueil — demandés par
         // l'équipe. Les deux viennent de Treści (footer.phone, footer.email) :
         // un seul endroit à corriger le jour où le numéro change.

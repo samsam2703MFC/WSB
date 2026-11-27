@@ -132,17 +132,83 @@ function of_url_strony(string $adres, string $klucz, string $j): string {
 
 /* ---- Graph API de Meta. */
 const OF_GRAPH = 'https://graph.facebook.com/v21.0/';
-function of_graph(string $sciezka, array $p = [], string $metoda = 'GET'): array {
+function of_graph(string $sciezka, array $p = [], string $metoda = 'GET', int $czas = 20): array {
     $url = (getenv('OF_GRAPH_BASE') ?: OF_GRAPH) . ltrim($sciezka, '/');
     $ch = curl_init();
     if ($metoda === 'GET') $url .= (strpos($url, '?') === false ? '?' : '&') . http_build_query($p);
-    curl_setopt_array($ch, [CURLOPT_URL => $url, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8]);
+    curl_setopt_array($ch, [CURLOPT_URL => $url, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => $czas, CURLOPT_CONNECTTIMEOUT => min(8, $czas)]);
     if ($metoda !== 'GET') { curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $metoda); curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($p)); }
     $body = curl_exec($ch); $kod = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
     $j = json_decode((string) $body, true);
     if (!is_array($j)) return ['_blad' => $err !== '' ? $err : 'HTTP ' . $kod];
     if (isset($j['error'])) $j['_blad'] = (string) ($j['error']['message'] ?? 'błąd Meta') . (isset($j['error']['code']) ? ' (' . $j['error']['code'] . ')' : '');
     return $j;
+}
+
+/* ---- Instagram et Facebook sur le site public (27.11.2026).
+ *  · Les boutons du pied de page : les adresses saisies (Integracje → Instagram i Facebook).
+ *  · Le bandeau des derniers posts : lu PAR LE SERVEUR avec le compte Meta déjà relié (ID de
+ *    la Page + jeton), gardé une heure dans of_settings (skey ig_feed). La page ne l'attend
+ *    jamais : strona.php sert ce qui est gardé, app/instagram.php le relit en arrière-plan.
+ *    Le visiteur ne parle jamais à Meta (photos du CDN d'Instagram, aucun traceur). */
+const OF_IG_TTL = 3600;
+function of_ig_cache(PDO $pdo): array {
+    $st = $pdo->prepare("SELECT svalue FROM of_settings WHERE tenant_id = ? AND brand_key = 0 AND skey = 'ig_feed'");
+    $st->execute([OF_TENANT]);
+    $v = json_decode((string) ($st->fetchColumn() ?: ''), true);
+    return is_array($v) ? $v : [];
+}
+function of_ig_cache_zapisz(PDO $pdo, array $v): void {
+    $pdo->prepare("INSERT INTO of_settings (tenant_id, brand_id, skey, svalue, value_type, label) VALUES (?, NULL, 'ig_feed', ?, 'json', 'Instagram — ostatnie posty')
+                   ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)")
+        ->execute([OF_TENANT, json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]);
+}
+/** Ce que le site public affiche : profils vérifiés, posts gardés, faut-il relire. */
+function of_ig_social(PDO $pdo): array {
+    $ig = of_int($pdo, 'instagram')['config'];
+    $u = fn($k, $re) => preg_match($re, trim((string) ($ig[$k] ?? ''))) ? trim((string) $ig[$k]) : '';
+    $profil = $u('profil', '#^https://(www\.)?instagram\.com/[A-Za-z0-9._]{1,40}/?$#');
+    $fb = $u('facebook', '#^https://(www\.|m\.)?facebook\.com/[^\s"<>]{1,120}$#');
+    $c = of_ig_cache($pdo);
+    if ($profil === '' && preg_match('/^[A-Za-z0-9._]{1,40}$/', (string) ($c['user'] ?? ''))) $profil = 'https://www.instagram.com/' . $c['user'] . '/';
+    $wlaczone = !isset($ig['posty']) || (int) $ig['posty'] === 1;
+    $meta = of_int($pdo, 'meta');
+    $relie = ($meta['config']['page_id'] ?? '') !== '' && ($meta['sekrety']['page_token'] ?? '') !== '';
+    $posty = $wlaczone && $relie ? array_slice((array) ($c['items'] ?? []), 0, 6) : [];
+    return ['instagram' => $profil, 'facebook' => $fb, 'posty' => $posty,
+            'odswiez' => $wlaczone && $relie && (time() - (int) ($c['at'] ?? 0) >= OF_IG_TTL)];
+}
+/** Relit les derniers posts chez Meta (6 s au plus) ; un échec garde la lecture précédente. */
+function of_ig_odswiez(PDO $pdo, bool $forcer = false): array {
+    $meta = of_int($pdo, 'meta');
+    $page = (string) ($meta['config']['page_id'] ?? ''); $tok = (string) ($meta['sekrety']['page_token'] ?? '');
+    $c = of_ig_cache($pdo);
+    if ($page === '' || $tok === '') return $c;
+    if (!$forcer && time() - (int) ($c['at'] ?? 0) < OF_IG_TTL) return $c;
+    // L'heure d'abord : deux visiteurs en même temps ne relisent pas Meta deux fois.
+    of_ig_cache_zapisz($pdo, array_merge($c, ['at' => time()]));
+    $igId = (string) ($c['ig'] ?? ''); $user = (string) ($c['user'] ?? '');
+    if ($igId === '' || ($c['page'] ?? '') !== $page) {
+        $r = of_graph($page, ['access_token' => $tok, 'fields' => 'instagram_business_account{id,username}'], 'GET', 6);
+        if (isset($r['_blad'])) { $c = array_merge($c, ['at' => time(), 'erreur' => mb_substr($r['_blad'], 0, 200)]); of_ig_cache_zapisz($pdo, $c); return $c; }
+        $igId = preg_replace('~\D~', '', (string) ($r['instagram_business_account']['id'] ?? '')) ?? '';
+        $user = (string) ($r['instagram_business_account']['username'] ?? '');
+        if ($igId === '') { $c = array_merge($c, ['at' => time(), 'erreur' => 'Strona nie ma połączonego konta Instagram (firmowego).']); of_ig_cache_zapisz($pdo, $c); return $c; }
+    }
+    $r = of_graph($igId . '/media', ['access_token' => $tok, 'fields' => 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp', 'limit' => 12], 'GET', 6);
+    if (isset($r['_blad'])) { $c = array_merge($c, ['at' => time(), 'erreur' => mb_substr($r['_blad'], 0, 200)]); of_ig_cache_zapisz($pdo, $c); return $c; }
+    $items = [];
+    foreach ((array) ($r['data'] ?? []) as $m) {
+        $video = ($m['media_type'] ?? '') === 'VIDEO';
+        $src = (string) ($video ? ($m['thumbnail_url'] ?? '') : ($m['media_url'] ?? ''));
+        $link = (string) ($m['permalink'] ?? '');
+        if (!preg_match('#^https://#', $src) || !preg_match('#^https://(www\.)?instagram\.com/#', $link)) continue;
+        $alt = trim(preg_replace('/\s+/u', ' ', preg_replace('/#\S+/u', '', (string) ($m['caption'] ?? '')) ?? '') ?? '');
+        $items[] = ['src' => $src, 'link' => $link, 'alt' => mb_substr($alt, 0, 140), 'video' => $video];
+    }
+    $c = ['at' => time(), 'page' => $page, 'ig' => $igId, 'user' => $user, 'items' => $items, 'erreur' => ''];
+    of_ig_cache_zapisz($pdo, $c);
+    return $c;
 }
 
 /**

@@ -633,7 +633,10 @@
       "form.sent": "Dziękujemy! Odpowiemy najszybciej, jak to możliwe.",
       "form.choose": "— wybierz —",
       "form.not_found": "Ten formularz nie jest już dostępny.",
-      "price.vat_short": "VAT"
+      "price.vat_short": "VAT",
+      "social.follow": "Obserwuj nas",
+      "insta.title": "Na Instagramie",
+      "insta.follow": "Obserwuj"
     },
     "uk": {
       "meta.title": "Szoko Shop, крамниця шоколаду",
@@ -1020,7 +1023,10 @@
       "form.sent": "Дякуємо! Відповімо якнайшвидше.",
       "form.choose": "— оберіть —",
       "form.not_found": "Ця форма більше недоступна.",
-      "price.vat_short": "ПДВ"
+      "price.vat_short": "ПДВ",
+      "social.follow": "Стежте за нами",
+      "insta.title": "В Instagram",
+      "insta.follow": "Стежити"
     },
     "en": {
       "meta.title": "Szoko Shop, chocolate shop",
@@ -1407,7 +1413,10 @@
       "form.sent": "Thank you! We will reply as soon as possible.",
       "form.choose": "— choose —",
       "form.not_found": "This form is no longer available.",
-      "price.vat_short": "VAT"
+      "price.vat_short": "VAT",
+      "social.follow": "Follow us",
+      "insta.title": "On Instagram",
+      "insta.follow": "Follow"
     },
     "de": {
       "meta.title": "Szoko Shop, der Schokoladenshop",
@@ -1840,7 +1849,10 @@
       "form.sent": "Danke! Wir antworten so schnell wie möglich.",
       "form.choose": "— bitte wählen —",
       "form.not_found": "Dieses Formular ist nicht mehr verfügbar.",
-      "price.vat_short": "MwSt."
+      "price.vat_short": "MwSt.",
+      "social.follow": "Folgen Sie uns",
+      "insta.title": "Auf Instagram",
+      "insta.follow": "Folgen"
     }
   }
 }

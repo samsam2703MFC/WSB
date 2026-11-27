@@ -138,6 +138,11 @@ function wsm_settings_fields(): array {
                              'Bezterminowy token strony z uprawnieniami pages_manage_posts, pages_read_engagement, instagram_basic, instagram_content_publish. Nigdy nie opuszcza serwera.'],
         'meta.ig_user_id'   => ['meta', 'Instagram — ID konta firmowego', ['meta', 'ig_user_id'], 'WSM_META_IG_USER_ID', 'text',
                              'Konto firmowe połączone ze stroną. Przycisk „Sprawdź połączenie” w Marketing → Meta odczyta je sam.'],
+        // Les boutons « Obserwuj » du pied de page (instagram.php) : de simples liens, sans script de Meta.
+        'meta.instagram_url' => ['meta', 'Instagram — adres profilu', ['meta', 'instagram_url'], 'WSM_META_INSTAGRAM_URL', 'text',
+                             'https://www.instagram.com/nazwa/ — przycisk w stopce sklepu. Puste = nazwa z połączonego konta (jeśli jest).'],
+        'meta.facebook_url'  => ['meta', 'Facebook — adres strony', ['meta', 'facebook_url'], 'WSM_META_FACEBOOK_URL', 'text',
+                             'https://www.facebook.com/nazwa — przycisk w stopce sklepu.'],
         'meta.graph_version' => ['meta', 'Wersja Graph API', ['meta', 'graph_version'], 'WSM_META_GRAPH_VERSION', 'text',
                              'Puste = v23.0. Zmieniaj, gdy Meta ogłosi wycofanie wersji.'],
 

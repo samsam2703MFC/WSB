@@ -20,6 +20,7 @@ $WSM_API_DIR = is_dir(__DIR__ . '/../backoffice/api')
 require_once $WSM_API_DIR . '/db.php';
 require_once $WSM_API_DIR . '/auth.php';    // wsm_is_https() et la session partagée
 require_once $WSM_API_DIR . '/shop.php';
+if (is_file($WSM_API_DIR . '/instagram.php')) require_once $WSM_API_DIR . '/instagram.php';   // Instagram et Facebook côté visiteur
 // Les pages et blocs écrits dans la console (Strony). Fail-soft : si le
 // fichier manque à l'assemblage, la boutique vit sans pages — et le contrôle
 // de déploiement le dit — au lieu de tomber entière.

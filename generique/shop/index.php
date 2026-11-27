@@ -757,6 +757,28 @@ if ($page === '') {
     </div>
     <?php endif; ?>
   </section>
+  <?php elseif ($typ === 'instagram'): ?>
+  <?php // INSTAGRAM : les derniers posts, lus par le serveur (instagram.php). Pas de
+        // compte relié, pas de post, Meta muet : rien du tout, pas un cadre vide. ?>
+  <?php $igPosty = function_exists('wsm_ig_feed') ? wsm_ig_feed(6) : []; $igProf = function_exists('wsm_social_profils') ? wsm_social_profils()['instagram'] : '';
+        if ($igPosty): ?>
+  <section class="wrap block insta" aria-labelledby="insta-h">
+    <div class="insta-head">
+      <h2 id="insta-h"><?= e($S['insta.title'] ?? 'Instagram') ?></h2>
+      <?php if ($igProf !== ''): ?><a class="insta-follow" href="<?= e($igProf) ?>" target="_blank" rel="noopener"><?= wsm_social_ikona('instagram') ?><span><?= e($S['insta.follow'] ?? 'Obserwuj') ?></span></a><?php endif; ?>
+    </div>
+    <div class="insta-grid">
+      <?php foreach ($igPosty as $ip): ?>
+      <a href="<?= e($ip['link']) ?>" target="_blank" rel="noopener" class="insta-item">
+        <img src="<?= e($ip['src']) ?>" alt="<?= e($ip['alt'] !== '' ? $ip['alt'] : ($S['insta.title'] ?? 'Instagram')) ?>" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+        <?php if (!empty($ip['video'])): ?><span class="insta-video" aria-hidden="true">▶</span><?php endif; ?>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php else: ?>
+  <!-- instagram : brak postów albo konto niepołączone -->
+  <?php endif; ?>
   <?php elseif ($typ === 'pro' && isset($S['story.pro.title'])): ?>
   <section class="wrap block" id="pro" style="padding-top:0">
     <div class="pro">

@@ -20,6 +20,7 @@ require_once $API . '/reklama.php';
 require_once $API . '/social.php';
 require_once $API . '/shop.php';
 require_once $API . '/delivery.php';   // wsm_audit
+if (is_file($API . '/instagram.php')) require_once $API . '/instagram.php';
 
 $flash = ''; $kind = 'ok'; $check = null;
 $qui = (string) ($me['nom'] ?? '');
@@ -123,6 +124,16 @@ $etap = function (bool $ok, string $titre, string $txt, bool $attente = false): 
   $etap($cfg['ig'] !== '' && $igAdres === '', 'Instagram — publikowanie postów',
       $cfg['ig'] === '' ? 'Konto firmowe Instagram połączone ze stroną. „Sprawdź połączenie” odczyta jego ID.'
                         : ($igAdres === '' ? 'Gotowe — zdjęcia pobierane przez Instagram z ' . h($shop) . '/media/jpg/.' : 'Połączone, ale: ' . h($igAdres) . '.'), $cfg['ig'] !== '');
+  // Côté visiteur (instagram.php) : le bandeau de l'accueil et les boutons du pied de page.
+  if (function_exists('wsm_ig_etat')) {
+      $ige = wsm_ig_etat(); $prof = array_filter(wsm_social_profils());
+      $etap($ige['relie'] && $ige['posts'] > 0, 'Instagram na stronie głównej sklepu',
+          !$ige['relie'] ? 'Po połączeniu konta Instagram ostatnie posty pokażą się na stronie głównej (Wygląd → Układ strony: „Instagram — ostatnie posty”).'
+          : ($ige['erreur'] !== '' ? 'Ostatni odczyt nie powiódł się: ' . h($ige['erreur']) . ' — token strony potrzebuje uprawnienia instagram_basic.'
+          : ($ige['lu'] === '' ? 'Posty zostaną odczytane przy pierwszej wizycie na stronie głównej.' : $ige['posts'] . ' postów' . ($ige['user'] !== '' ? ' z @' . h($ige['user']) : '') . ' · odczyt ' . h($ige['lu']) . ' (co godzinę).')), $ige['relie']);
+      $etap((bool) $prof, 'Przyciski „Obserwuj” w stopce',
+          $prof ? 'W stopce: ' . h(implode(' · ', array_map('ucfirst', array_keys($prof)))) . '.' : 'Wpisz adresy profilu Instagram i strony Facebook poniżej.');
+  }
   ?>
   </ul>
   <?php if ($isAdmin): ?>

@@ -2,7 +2,7 @@
 // Public : ce que la page « Ola flora - wesela v2 » doit afficher à la place du
 // texte d'origine — seulement les sections PUBLIÉES (jamais les brouillons).
 declare(strict_types=1);
-require __DIR__ . '/lib.php';
+require __DIR__ . '/ustawienia_lib.php';
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') { of_json(['error' => 'metoda'], 405); exit; }
 $pdo = of_pdo();
 $lang = in_array($_GET['lang'] ?? '', ['en', 'de'], true) ? (string) $_GET['lang'] : 'pl';
@@ -29,5 +29,6 @@ if ($z) {
     }
 }
 header('Cache-Control: no-cache');
+try { $social = of_ig_social($pdo); } catch (Throwable $e) { $social = ['instagram' => '', 'facebook' => '', 'posty' => [], 'odswiez' => false]; }
 $slownik = $lang !== 'pl' ? ((require __DIR__ . '/slownik.php')[$lang] ?? []) : [];
-of_json(['lang' => $lang, 't' => (object) $t, 'tl' => (object) $tl, 'z' => (object) $z, 'alt' => (object) $alt, 'kat' => (object) $kat, 'slownik' => (object) $slownik]);
+of_json(['lang' => $lang, 't' => (object) $t, 'tl' => (object) $tl, 'z' => (object) $z, 'alt' => (object) $alt, 'kat' => (object) $kat, 'slownik' => (object) $slownik, 'social' => $social]);

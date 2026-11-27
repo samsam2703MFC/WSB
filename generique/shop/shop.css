@@ -1408,3 +1408,19 @@ h3 { font-weight: var(--weight-bold); }
 
 /* Accueil sans nagłówek (Układ strony) : la bande des promesses ne laisse pas de vide sous l'en-tête. */
 main > .obietnice-pas:first-child { margin-top: 0; }
+
+/* Instagram (instagram.php) : six photos carrées, trois au téléphone ; le bouton Obserwuj. */
+.insta-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: var(--space-5); }
+.insta-head h2 { margin: 0; }
+.insta-follow, .foot-social a { display: inline-flex; align-items: center; gap: 8px; color: var(--text-strong); text-decoration: none; }
+.insta-follow { font-weight: 600; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+.insta-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.insta-item { position: relative; display: block; aspect-ratio: 1; overflow: hidden; background: var(--surface-sunken, #eee); border-radius: var(--radius-md, 6px); }
+.insta-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s ease; }
+.insta-item:hover img { transform: scale(1.04); }
+.insta-video { position: absolute; right: 8px; top: 8px; color: #fff; font-size: 13px; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.foot-social { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 14px 0 0; }
+.foot-social .seller-label { width: 100%; }
+.foot-social a:hover span { text-decoration: underline; }
+@media (max-width: 760px) { .insta-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } }
+@media (prefers-reduced-motion: reduce) { .insta-item img { transition: none; } }

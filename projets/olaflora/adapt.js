@@ -246,6 +246,67 @@
       st.textContent = '.of-sklep-m{display:none}@media (max-width:760px){.of-sklep-m{display:inline-flex}a[data-of-sklep]{display:none!important}}';
       (document.head || document.documentElement).appendChild(st);
     })();
+    // INSTAGRAM ET FACEBOOK (27.11.2026) : les liens « @olaflora » du gabarit mènent au profil
+    // réglé dans le back office (Integracje → Instagram i Facebook), Facebook s'ajoute au pied
+    // de page, et les derniers posts (lus par le serveur, gardés une heure) forment un bandeau
+    // au-dessus du pied. Rien de Meta ne se charge chez le visiteur : de simples liens et images.
+    function wstawSocial(t, so) {
+      if (!so) return false;
+      var stopka = t.content.querySelector('footer'), zmiana = false;
+      var IKO = {
+        instagram: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:0 0 auto"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>',
+        facebook: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:0 0 auto"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8.5a.5.5 0 0 1 .5-.5z"/></svg>'
+      };
+      var uzytk = so.instagram ? (/instagram\.com\/([A-Za-z0-9._]+)/.exec(so.instagram) || [])[1] : '';
+      [].slice.call(t.content.querySelectorAll('a[href*="instagram.com"]')).forEach(function (a) {
+        if (!so.instagram) return;
+        a.setAttribute('href', so.instagram); a.setAttribute('rel', 'noopener');
+        if (uzytk) [].slice.call(a.childNodes).concat([].slice.call(a.querySelectorAll('span'))).forEach(function (n) {
+          if (n.nodeType === 3 && /^\s*@\S+\s*$/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/@\S+/, '@' + uzytk);
+          else if (n.nodeType === 1 && /^\s*@\S+\s*$/.test(n.textContent) && !n.children.length) n.textContent = '@' + uzytk;
+        });
+        if (stopka && stopka.contains(a) && !a.querySelector('svg')) {
+          a.insertAdjacentHTML('afterbegin', IKO.instagram);
+          a.setAttribute('style', 'display: inline-flex; align-items: center; gap: 7px;');
+        }
+        zmiana = true;
+      });
+      var linki = stopka && stopka.querySelector('a[href^="mailto:"]');
+      if (so.facebook && linki && !stopka.querySelector('a[data-of-fb]')) {
+        var fb = document.createElement('a');
+        fb.setAttribute('href', so.facebook); fb.setAttribute('target', '_blank'); fb.setAttribute('rel', 'noopener');
+        fb.setAttribute('data-of-fb', '1'); fb.setAttribute('data-of-cms', 'pomin');
+        fb.setAttribute('style', 'display: inline-flex; align-items: center; gap: 7px;');
+        fb.innerHTML = IKO.facebook + 'Facebook';
+        linki.parentNode.appendChild(fb); zmiana = true;
+      }
+      var posty = (so.posty || []).filter(function (p) { return /^https:\/\//.test(p.src || '') && /^https:\/\/(www\.)?instagram\.com\//.test(p.link || ''); });
+      if (stopka && posty.length >= 3 && so.instagram) {
+        var T = { pl: ['na Instagramie', 'Obserwuj'], en: ['on Instagram', 'Follow'], de: ['auf Instagram', 'Folgen'] }[jezyk] || ['na Instagramie', 'Obserwuj'];
+        var w = document.createElement('section');
+        w.setAttribute('data-of-cms', 'pomin'); w.setAttribute('data-of-ig', '1');
+        w.setAttribute('style', 'background: #f4efe7; border-top: 1px solid #d8cdbd;');
+        w.innerHTML = '<div style="max-width: 1240px; margin: 0 auto; padding: clamp(48px, 6vw, 80px) 28px; display: flex; flex-direction: column; gap: 28px;">' +
+          '<div style="display: flex; flex-wrap: wrap; gap: 16px 40px; align-items: flex-end; justify-content: space-between;"><div>' +
+          '<span style="font-family: var(--font-display); font-style: italic; font-size: 1.4rem; color: #8a7a64;">' + esc(T[0]) + '</span>' +
+          '<h2 style="margin: 6px 0 0; font-family: var(--font-display); font-weight: 300; font-size: clamp(2rem, 3.6vw, 2.8rem); line-height: 1.08; color: #2e2924;">@' + esc(uzytk || 'olaflora') + '</h2></div>' +
+          '<a href="' + esc(so.instagram) + '" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #2e2924; border-bottom: 1px solid #2e2924; padding-bottom: 4px;">' + IKO.instagram + esc(T[1]) + '</a></div>' +
+          '<div class="of-ig-siatka">' + posty.slice(0, 6).map(function (p) {
+            return '<a href="' + esc(p.link) + '" target="_blank" rel="noopener" title="' + esc(p.alt || '') + '" style="position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #e6dccd;">' +
+              '<img src="' + esc(p.src) + '" alt="' + esc(p.alt || '') + '" loading="lazy" referrerpolicy="no-referrer" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;">' +
+              (p.video ? '<span aria-hidden="true" style="position: absolute; top: 10px; right: 10px; width: 0; height: 0; border-left: 12px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4));"></span>' : '') + '</a>';
+          }).join('') + '</div></div>';
+        stopka.parentNode.insertBefore(w, stopka);
+        zmiana = true;
+      }
+      return zmiana;
+    }
+    (function ofStylesIg() {
+      if (document.getElementById('of-ig-css')) return;
+      var st = document.createElement('style'); st.id = 'of-ig-css';
+      st.textContent = '.of-ig-siatka{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.of-ig-siatka a img{transition:transform .5s ease}.of-ig-siatka a:hover img{transform:scale(1.04)}@media (max-width:760px){.of-ig-siatka{grid-template-columns:repeat(3,1fr);gap:6px}}';
+      (document.head || document.documentElement).appendChild(st);
+    })();
     var SEZON_DOMYSLNY = 'Dekoracje świąteczne | 01.11 | 31.12 | sklep/#katalog\nWianki | 01.11 | 31.12 | sklep/#katalog';
 
     // Tout texte et toute étiquette (placeholder, title, alt) d'un gabarit, dans la langue.
@@ -284,6 +345,7 @@
       var sez = jezyk !== 'pl' && pelny(TL, 'oferta:sezon') ? TL['oferta:sezon'] : (pelny(T, 'oferta:sezon') ? T['oferta:sezon'] : SEZON_DOMYSLNY);
       zmiana = wstawSezon(t, sez, false);
       zmiana = wstawJezyki(t) || zmiana;
+      zmiana = wstawSocial(t, pub.social) || zmiana;
       przejdz(t, function (i, n) {
         if (i.kind === 'tekst') {
           // PL : le publié, sinon le gabarit. EN / DE : la section de la langue, sinon la traduction
@@ -760,6 +822,8 @@
       Object.keys(l).forEach(function (k) { dane[k] = l[k]; });
       if (dc) { var stary = dc.innerHTML, nowy = ofCms.zastosuj(stary, cmsPub); if (nowy !== stary) dc.innerHTML = nowy; }
       przechwycFetch(function (tpl) { return ofCms.zastosuj(tpl, cmsPub); }, ['FormularzWizard']);
+      // Les posts Instagram gardés ont plus d'une heure : relus en arrière-plan pour le visiteur suivant.
+      if (cmsPub.social && cmsPub.social.odswiez) { try { fetch(base + 'app/instagram.php', { credentials: 'same-origin' }); } catch (e) {} }
     }
     if (formularz) {
       js = ofCms.tlumaczJs(js);

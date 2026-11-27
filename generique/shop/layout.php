@@ -189,6 +189,13 @@ function layout_footer(array $S, string $lang = ''): void {
         <a href="<?= e(u('zwroty')) ?>"><?= e($S['returns.footer_link'] ?? '') ?></a>
       </p>
       <?php endif; ?>
+      <?php // OBSERWUJ : les profils réglés dans Marketing → Meta. De simples liens —
+            // aucun script de Meta sur la page, donc rien à consentir. ?>
+      <?php $prof = function_exists('wsm_social_profils') ? array_filter(wsm_social_profils()) : []; if ($prof): ?>
+      <p class="foot-social"><span class="seller-label"><?= e($S['social.follow'] ?? 'Obserwuj nas') ?></span>
+        <?php foreach ($prof as $k => $url): ?><a href="<?= e($url) ?>" target="_blank" rel="noopener" aria-label="<?= e(($k === 'instagram' ? 'Instagram' : 'Facebook') . ' — ' . ($S['brand'] ?? '')) ?>"><?= wsm_social_ikona($k) ?><span><?= $k === 'instagram' ? 'Instagram' : 'Facebook' ?></span></a><?php endforeach; ?>
+      </p>
+      <?php endif; ?>
       <p class="foot-copy"><?= e(date('Y')) ?> · <?= e($S['brand'] ?? '') ?> · <?= e($S['footer.rights'] ?? '') ?></p>
     </div>
     <nav class="foot-links" aria-label="<?= e($S['footer.contact'] ?? '') ?>">

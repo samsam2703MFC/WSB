@@ -90,7 +90,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $u = fn($k) => preg_match('~^https://[^\s]+$~', $tekst($k, 300)) ? $tekst($k, 300) : '';
         $user = ltrim(preg_replace('~[^A-Za-z0-9._@]~', '', $tekst('ig_user', 60)) ?? '', '@');
         $profil = $u('ig_profil') ?: ($user !== '' ? 'https://www.instagram.com/' . $user . '/' : '');
-        of_int_zapisz($pdo, 'instagram', ['user' => $user, 'profil' => $profil, 'facebook' => $u('fb_profil')], null, $profil !== '' ? 'ok' : 'nieskonfig');
+        of_int_zapisz($pdo, 'instagram', ['user' => $user, 'profil' => $profil, 'facebook' => $u('fb_profil'), 'posty' => empty($_POST['posty']) ? 0 : 1], null, $profil !== '' ? 'ok' : 'nieskonfig');
+        if (!empty($_POST['posty'])) { try { of_ig_odswiez($pdo, true); } catch (Throwable $x) { /* dit dans l'état ci-dessous */ } }
         $wroc('integracje', 'Zapisano profile.', '', 'instagram');
     }
     if ($a === 'google_zapisz') {
@@ -312,6 +313,15 @@ table.frazy td.poz { width: 110px; } table.frazy td.kier { width: 54px; text-ali
       <label class="pole">Adres profilu Instagram<input name="ig_profil" placeholder="https://www.instagram.com/…/" value="<?= $h($ig['config']['profil'] ?? '') ?>"></label>
       <label class="pole">Adres strony na Facebooku<input name="fb_profil" placeholder="https://www.facebook.com/…" value="<?= $h($ig['config']['facebook'] ?? '') ?>"></label>
     </div>
+    <?php $igc = of_ig_cache($pdo); $igPosty = !isset($ig['config']['posty']) || (int) $ig['config']['posty'] === 1;
+          $igRelie = ($meta['config']['page_id'] ?? '') !== '' && ($meta['sekrety']['page_token'] ?? '') !== ''; ?>
+    <label class="pole" style="flex-direction:row;align-items:center;gap:10px;margin-top:14px"><input type="checkbox" name="posty" value="1" <?= $igPosty ? 'checked' : '' ?> style="width:auto">
+      Pokaż ostatnie posty z Instagrama na stronie (nad stopką)</label>
+    <p class="pomoc" style="margin:6px 0 0;font-size:13px;color:#6a6157">
+      <?php if (!$igRelie): ?>Posty wymagają połączenia Meta (ID strony i token strony powyżej) — strona na Facebooku musi mieć połączone konto Instagram (firmowe).
+      <?php elseif (($igc['erreur'] ?? '') !== ''): ?>Ostatni odczyt: <?= $h($igc['erreur']) ?> — sprawdź token strony (uprawnienie instagram_basic).
+      <?php elseif (!empty($igc['at'])): ?>Na stronie: <?= count((array) ($igc['items'] ?? [])) ?> postów<?= !empty($igc['user']) ? ' z @' . $h($igc['user']) : '' ?> · odczytano <?= $h(date('Y-m-d H:i', (int) $igc['at'])) ?> (odświeżane co godzinę).
+      <?php else: ?>Posty zostaną pobrane po zapisaniu.<?php endif; ?></p>
     <div class="przyciski"><button class="glowny" name="akcja" value="instagram_zapisz">Zapisz</button></div>
   </form>
 </section>
